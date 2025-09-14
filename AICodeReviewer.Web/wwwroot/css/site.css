@@ -54,3 +54,47 @@ body {
     border-color: #ffeaa7;
     color: #856404;
 }
+
+/* Document management section */
+.document-section {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin: 2rem auto;
+    max-width: 600px;
+}
+
+.document-section h5 {
+    color: #495057;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.document-section .form-check {
+    margin-bottom: 0.5rem;
+}
+
+.document-section .form-check-input {
+    margin-top: 0.3rem;
+}
+
+.document-section .form-check-label {
+    margin-left: 0.5rem;
+    color: #495057;
+}
+
+.document-section .btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    padding: 0.5rem 1.5rem;
+}
+
+.document-section .input-group {
+    margin-bottom: 1rem;
+}
+
+.document-section .alert {
+    margin-top: 1rem;
+    margin-bottom: 0;
+}
