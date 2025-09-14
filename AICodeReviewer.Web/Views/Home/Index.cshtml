@@ -82,5 +82,53 @@
         }
     </div>
     
+    <!-- AI Analysis Section -->
+    <div class="analysis-section mt-5">
+        <h5>🤖 AI Code Analysis</h5>
+        
+        <!-- Run Analysis Button -->
+        @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
+        {
+            <form asp-action="RunAnalysis" method="post">
+                <button type="submit" class="btn btn-success btn-lg">
+                    🚀 Run AI Analysis
+                </button>
+            </form>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                📋 Please select coding standards documents above to enable AI analysis
+            </div>
+        }
+        
+        <!-- Analysis Results -->
+        @{
+            var analysisResult = Context.Session.GetString("AnalysisResult");
+            var analysisError = Context.Session.GetString("AnalysisError");
+        }
+        
+        @if (!string.IsNullOrEmpty(analysisResult))
+        {
+            <div class="analysis-results mt-4">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">🔍 AI Analysis Results</h6>
+                    </div>
+                    <div class="card-body">
+                        <pre class="analysis-text" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
+                    </div>
+                </div>
+            </div>
+        }
+        
+        @if (!string.IsNullOrEmpty(analysisError))
+        {
+            <div class="alert alert-danger mt-3">
+                ❌ @analysisError
+            </div>
+        }
+    </div>
+    
     <p class="mt-4">Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
