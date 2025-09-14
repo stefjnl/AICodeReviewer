@@ -1,8 +1,27 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
 }
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    
+    @if (ViewBag.BranchInfo != null)
+    {
+        <div class="git-status">
+            @if (ViewBag.IsError)
+            {
+                <div class="alert alert-warning" role="alert">
+                    ⚠️ @ViewBag.BranchInfo
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success" role="alert">
+                    🌿 Current branch: <strong>@ViewBag.BranchInfo</strong>
+                </div>
+            }
+        </div>
+    }
+    
+    <p class="mt-4">Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
