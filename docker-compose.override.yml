@@ -1,0 +1,9 @@
+# Override configuration for development
+# Use this when you want Docker on a different port
+services:
+  aicodereviewer:
+    ports:
+      - "8098:8097"  # Map container's 8097 to host's 8098
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8097

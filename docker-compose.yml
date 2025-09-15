@@ -1,0 +1,68 @@
+services:
+  aicodereviewer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aicodereviewer-app
+    ports:
+      - "8097:8097"
+    environment:
+      - ASPNETCORE_URLS=http://+:8097
+      - ASPNETCORE_ENVIRONMENT=Production
+      - OpenRouter__ApiKey=${OPENROUTER_API_KEY:?API key is required. Set OPENROUTER_API_KEY environment variable.}
+      - OpenRouter__Model=${OPENROUTER_MODEL:-moonshotai/kimi-k2-0905}
+    volumes:
+      # Persist git repositories between container restarts
+      - git-repos:/app/git-repos
+      # Mount local git config if needed
+      - ~/.gitconfig:/home/appuser/.gitconfig:ro
+    networks:
+      - aicodereviewer-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8097/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.aicodereviewer.service=web"
+      - "com.aicodereviewer.version=1.0"
+
+  # Optional: Add a reverse proxy (nginx) for production
+  nginx:
+    image: nginx:alpine
+    container_name: aicodereviewer-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - aicodereviewer
+    networks:
+      - aicodereviewer-network
+    restart: unless-stopped
+    profiles:
+      - production
+    labels:
+      - "com.aicodereviewer.service=nginx"
+      - "com.aicodereviewer.version=1.0"
+
+volumes:
+  git-repos:
+    driver: local
+    labels:
+      - "com.aicodereviewer.volume=git-repos"
+
+networks:
+  aicodereviewer-network:
+    driver: bridge
+    labels:
+      - "com.aicodereviewer.network=main"
