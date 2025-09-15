@@ -114,10 +114,8 @@
         else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
         {
             <div class="alert alert-info alert-custom">
-                <div class="d-flex align-items-center">
-                    <span class="me-2">📋</span>
-                    <span>No .md documents found in the specified folder</span>
-                </div>
+                <span class="alert-icon" aria-label="Information icon">ℹ️</span>
+                <span>No .md documents found in the specified folder</span>
             </div>
         }
         
@@ -125,12 +123,10 @@
         @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
         {
             <div class="alert alert-success alert-custom">
-                <div class="d-flex align-items-center">
-                    <span class="me-2">✅</span>
-                    <div>
-                        <strong>Selected Documents:</strong>
-                        <span class="helper-text d-block">@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</span>
-                    </div>
+                <span class="alert-icon" aria-label="Success icon">✅</span>
+                <div>
+                    <strong>Selected Documents:</strong>
+                    <span class="helper-text d-block">@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</span>
                 </div>
             </div>
         }
@@ -139,10 +135,8 @@
         @if (ViewBag.DocumentScanError != null)
         {
             <div class="alert alert-warning alert-custom">
-                <div class="d-flex align-items-center">
-                    <span class="me-2">⚠️</span>
-                    <span>@ViewBag.DocumentScanError</span>
-                </div>
+                <span class="alert-icon" aria-label="Warning icon">⚠️</span>
+                <span>@ViewBag.DocumentScanError</span>
             </div>
         }
     </div>
@@ -336,10 +330,8 @@
                 @if (ViewBag.GitDiffError)
                 {
                     <div class="alert alert-warning alert-custom">
-                        <div class="d-flex align-items-center">
-                            <span class="me-2">⚠️</span>
-                            <span>@ViewBag.GitDiff</span>
-                        </div>
+                        <span class="alert-icon" aria-label="Warning icon">⚠️</span>
+                        <span>@ViewBag.GitDiff</span>
                     </div>
                 }
                 else
@@ -389,6 +381,15 @@
         </h2>
         <p class="section-subtitle">Analyze your code against the selected coding standards.</p>
         
+        <!-- AI Code Analysis Info Message -->
+        <div class="ai-analysis-info">
+            <span class="info-icon" aria-label="Information icon">ℹ️</span>
+            <div class="info-content">
+                <strong>AI Analysis Ready</strong>
+                <span class="helper-text">Select coding standards and configure your repository to begin analysis</span>
+            </div>
+        </div>
+        
         <!-- Progress Container -->
         <div id="progressContainer" style="display: none;" class="progress-section">
             <div class="loading-container">
@@ -424,10 +425,8 @@
         else
         {
             <div class="alert alert-info alert-custom">
-                <div class="d-flex align-items-center">
-                    <span class="me-2">📋</span>
-                    <span>Please select coding standards documents above to enable AI analysis</span>
-                </div>
+                <span class="alert-icon" aria-label="Information icon">ℹ️</span>
+                <span>Please select coding standards documents above to enable AI analysis</span>
             </div>
         }
         
@@ -474,10 +473,8 @@
         @if (!string.IsNullOrEmpty(analysisError))
         {
             <div class="alert alert-danger alert-custom" id="analysisErrorSection">
-                <div class="d-flex align-items-center">
-                    <span class="me-2">❌</span>
-                    <span>@analysisError</span>
-                </div>
+                <span class="alert-icon" aria-label="Error icon">❌</span>
+                <span>@analysisError</span>
             </div>
         }
     </div>
@@ -1245,5 +1242,77 @@
                 updateRadioSelection(firstRadio);
             }
         });
+        
+        // Repository validation status functionality
+        function updateRepositoryButtonStatus(isValid) {
+            const setRepoBtn = document.querySelector('button[aria-label="Set repository path"]');
+            if (!setRepoBtn) return;
+            
+            // Remove existing status classes
+            setRepoBtn.classList.remove('repo-status-valid', 'repo-status-warning', 'repo-status-invalid');
+            
+            if (isValid === true) {
+                setRepoBtn.classList.add('repo-status-valid');
+                setRepoBtn.innerHTML = '<span class="btn-icon">✅</span>Set Repository';
+            } else if (isValid === false) {
+                setRepoBtn.classList.add('repo-status-invalid');
+                setRepoBtn.innerHTML = '<span class="btn-icon">❌</span>Invalid Path';
+            } else {
+                setRepoBtn.classList.add('repo-status-warning');
+                setRepoBtn.innerHTML = '<span class="btn-icon">⚠️</span>Set Repository';
+            }
+        }
+        
+        // Validate repository path on input
+        const repoInput = document.getElementById('repositoryPathInput');
+        if (repoInput) {
+            repoInput.addEventListener('input', function() {
+                const path = this.value.trim();
+                if (path.length === 0) {
+                    updateRepositoryButtonStatus(null); // warning state
+                } else if (path.includes('\\') || path.includes('/')) {
+                    updateRepositoryButtonStatus(true); // valid state
+                } else {
+                    updateRepositoryButtonStatus(false); // invalid state
+                }
+            });
+            
+            // Initialize with current value
+            repoInput.dispatchEvent(new Event('input'));
+        }
+        
+        // Enhanced validation message styling
+        function updateValidationMessage(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            // Remove existing classes
+            element.classList.remove('validation-success', 'validation-warning', 'validation-error');
+            
+            // Add appropriate class and message
+            element.classList.add('validation-' + type);
+            element.innerHTML = message;
+            
+            // Add icon based on type
+            let icon = '';
+            switch(type) {
+                case 'success':
+                    icon = '✅';
+                    break;
+                case 'warning':
+                    icon = '⚠️';
+                    break;
+                case 'error':
+                    icon = '❌';
+                    break;
+                case 'info':
+                    icon = 'ℹ️';
+                    break;
+            }
+            
+            if (icon) {
+                element.innerHTML = icon + ' ' + message;
+            }
+        }
     });
 </script>

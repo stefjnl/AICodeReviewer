@@ -1,6 +1,50 @@
 /* Enhanced Visual Hierarchy and Spacing System */
 /* Based on 8px base unit system */
 
+/* Consistent Color Palette - UI-prompt.md Requirements */
+:root {
+    /* Primary Colors */
+    --color-primary: #007bff;
+    --color-secondary: #6c757d;
+    --color-success: #28a745;
+    --color-warning: #ffc107;
+    --color-info: #17a2b8;
+    --color-danger: #dc3545;
+    
+    /* Background Colors */
+    --color-bg-light: #f8f9fa;
+    --color-bg-white: #ffffff;
+    
+    /* Text Colors */
+    --color-text-dark: #1a1a1a;
+    --color-text-primary: #333333;
+    --color-text-secondary: #666666;
+    --color-text-muted: #6c757d;
+    
+    /* Selection Colors */
+    --color-selected-bg: #e6f7ff;
+    --color-selected-border: #17a2b8;
+    --color-selected-text: #007bff;
+    
+    /* Hover Colors */
+    --color-hover-bg: #f0f8ff;
+    --color-hover-border: #cccccc;
+    
+    /* Focus Colors */
+    --color-focus: #007bff;
+    --color-focus-ring: rgba(0, 123, 255, 0.4);
+    
+    /* Status Message Colors */
+    --color-info-bg: #e7f3ff;
+    --color-info-border: #17a2b8;
+    --color-success-bg: #d4edda;
+    --color-success-border: #28a745;
+    --color-warning-bg: #fff3cd;
+    --color-warning-border: #ffc107;
+    --color-danger-bg: #f8d7da;
+    --color-danger-border: #dc3545;
+}
+
 /* Typography Hierarchy */
 .section-heading {
     font-size: 20px;
@@ -211,12 +255,12 @@
 
 /* Text Utilities */
 .text-primary-dark {
-    color: #0056b3;
+    color: var(--color-primary);
     font-weight: 600;
 }
 
 .text-secondary-light {
-    color: #6c757d;
+    color: var(--color-secondary);
     font-size: 14px;
 }
 
@@ -738,8 +782,8 @@
 
 /* Primary Button Styles */
 .btn-primary-enhanced {
-    background-color: #007bff;
-    color: #ffffff;
+    background-color: var(--color-primary);
+    color: var(--color-bg-white);
     box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
 }
 
@@ -750,7 +794,7 @@
 }
 
 .btn-primary-enhanced:focus {
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.4);
+    box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
 .btn-primary-enhanced:active {
@@ -758,10 +802,18 @@
     box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
 }
 
+.btn-primary-enhanced:disabled {
+    background-color: var(--color-secondary);
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* Secondary Button Styles */
 .btn-secondary-enhanced {
-    background-color: #f8f9fa;
-    color: #495057;
+    background-color: var(--color-bg-light);
+    color: var(--color-text-primary);
     border: 1px solid #ced4da;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -774,8 +826,8 @@
 }
 
 .btn-secondary-enhanced:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    border-color: var(--color-focus);
+    box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
 .btn-secondary-enhanced:active {
@@ -783,10 +835,18 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+.btn-secondary-enhanced:disabled {
+    background-color: var(--color-secondary);
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* Success Button Styles */
 .btn-success-enhanced {
-    background-color: #28a745;
-    color: #ffffff;
+    background-color: var(--color-success);
+    color: var(--color-bg-white);
     box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
 }
 
@@ -798,6 +858,198 @@
 
 .btn-success-enhanced:focus {
     box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.4);
+}
+
+.btn-success-enhanced:disabled {
+    background-color: var(--color-secondary);
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Info Button Styles */
+.btn-info-enhanced {
+    background-color: var(--color-info);
+    color: var(--color-bg-white);
+    box-shadow: 0 2px 4px rgba(23, 162, 184, 0.2);
+}
+
+.btn-info-enhanced:hover {
+    background-color: #138496;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+.btn-info-enhanced:focus {
+    box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.4);
+}
+
+.btn-info-enhanced:disabled {
+    background-color: var(--color-secondary);
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Warning Button Styles */
+.btn-warning-enhanced {
+    background-color: var(--color-warning);
+    color: var(--color-text-dark);
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+}
+
+.btn-warning-enhanced:hover {
+    background-color: #e0a800;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.btn-warning-enhanced:focus {
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.4);
+}
+
+.btn-warning-enhanced:disabled {
+    background-color: var(--color-secondary);
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Danger Button Styles */
+.btn-danger-enhanced {
+    background-color: var(--color-danger);
+    color: var(--color-bg-white);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.btn-danger-enhanced:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger-enhanced:focus {
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.4);
+}
+
+.btn-danger-enhanced:disabled {
+    background-color: var(--color-secondary);
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* AI Code Analysis Message - Info Styling */
+.ai-analysis-info {
+    background-color: var(--color-info-bg);
+    border: 1px solid var(--color-info-border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.ai-analysis-info:hover {
+    background-color: #d1ecf1;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.2);
+}
+
+.ai-analysis-info .info-icon {
+    font-size: 18px;
+    color: var(--color-info);
+    flex-shrink: 0;
+}
+
+.ai-analysis-info .info-content {
+    flex-grow: 1;
+}
+
+.ai-analysis-info .info-content strong {
+    color: var(--color-text-dark);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.ai-analysis-info .info-content .helper-text {
+    color: var(--color-text-primary);
+    font-size: 14px;
+}
+
+/* Status Message Variants */
+.status-message-info {
+    background-color: var(--color-info-bg);
+    border: 1px solid var(--color-info-border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-message-info .status-icon {
+    font-size: 18px;
+    color: var(--color-info);
+    flex-shrink: 0;
+}
+
+.status-message-success {
+    background-color: var(--color-success-bg);
+    border: 1px solid var(--color-success-border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-message-success .status-icon {
+    font-size: 18px;
+    color: var(--color-success);
+    flex-shrink: 0;
+}
+
+.status-message-warning {
+    background-color: var(--color-warning-bg);
+    border: 1px solid var(--color-warning-border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-message-warning .status-icon {
+    font-size: 18px;
+    color: var(--color-warning);
+    flex-shrink: 0;
+}
+
+.status-message-danger {
+    background-color: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-message-danger .status-icon {
+    font-size: 18px;
+    color: var(--color-danger);
+    flex-shrink: 0;
 }
 
 /* Outline Button Styles */
@@ -1019,12 +1271,15 @@
     display: block;
 }
 
+/* Enhanced Radio Button Selection Colors - UI-prompt.md Requirements */
 .radio-option-container {
     display: flex;
     align-items: flex-start;
-    margin-bottom: 16px;
-    padding: 12px;
+    background-color: transparent;
+    border: 1px solid transparent;
     border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
@@ -1032,17 +1287,28 @@
 }
 
 .radio-option-container:hover {
-    background-color: #f8f9fa;
-    border-color: #007bff;
+    background-color: var(--color-hover-bg);
+    border-color: var(--color-hover-border);
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .radio-option-container.selected {
-    background-color: #e7f3ff;
-    border: 1px solid #007bff;
+    background-color: var(--color-selected-bg);
+    border: 1px solid var(--color-selected-border);
+}
+
+.radio-option-container.selected .radio-label-text {
+    color: var(--color-selected-text);
+    font-weight: 600;
+}
+
+.radio-option-container.selected .radio-description {
+    color: var(--color-text-primary);
 }
 
 .radio-option-container:focus-within {
-    outline: 2px solid #007bff;
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
     background-color: #f0f7ff;
 }
@@ -1100,10 +1366,102 @@
 
 .radio-description {
     font-size: 12px;
-    color: #6c757d;
+    color: var(--color-text-muted);
     line-height: 1.3;
     margin-top: 4px;
     display: block;
+}
+
+/* Repository validation status colors */
+.repo-status-valid {
+    background-color: var(--color-success) !important;
+    color: var(--color-bg-white) !important;
+}
+
+.repo-status-valid:hover {
+    background-color: #1e7e34 !important;
+}
+
+.repo-status-warning {
+    background-color: var(--color-warning) !important;
+    color: var(--color-text-dark) !important;
+}
+
+.repo-status-warning:hover {
+    background-color: #e0a800 !important;
+}
+
+.repo-status-invalid {
+    background-color: var(--color-danger) !important;
+    color: var(--color-bg-white) !important;
+}
+
+.repo-status-invalid:hover {
+    background-color: #c82333 !important;
+}
+
+/* Enhanced Alert Styles with Consistent Colors */
+.alert-custom {
+    margin-bottom: 16px;
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.alert-custom:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.alert-info {
+    background-color: var(--color-info-bg);
+    border: 1px solid var(--color-info-border);
+    color: var(--color-text-dark);
+}
+
+.alert-info .alert-icon {
+    color: var(--color-info);
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.alert-success {
+    background-color: var(--color-success-bg);
+    border: 1px solid var(--color-success-border);
+    color: var(--color-text-dark);
+}
+
+.alert-success .alert-icon {
+    color: var(--color-success);
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.alert-warning {
+    background-color: var(--color-warning-bg);
+    border: 1px solid var(--color-warning-border);
+    color: var(--color-text-dark);
+}
+
+.alert-warning .alert-icon {
+    color: var(--color-warning);
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.alert-danger {
+    background-color: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-border);
+    color: var(--color-text-dark);
+}
+
+.alert-danger .alert-icon {
+    color: var(--color-danger);
+    font-size: 18px;
+    flex-shrink: 0;
 }
 
 .radio-icon {
