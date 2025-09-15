@@ -196,7 +196,7 @@
         }
         
         <!-- Analysis Results - Always include but conditionally show/hide -->
-        <div class="analysis-results mt-4" id="analysisResultsSection" data-analysis-id="@(analysisId ?? "")" style="@((!string.IsNullOrEmpty(analysisId) || !string.IsNullOrEmpty(analysisResult) || !string.IsNullOrEmpty(analysisError)) ? "" : "display: none;")">
+        <div class="analysis-results mt-4" id="analysisResultsSection" data-analysis-id="@(string.IsNullOrEmpty(analysisId) ? "" : analysisId)" style="@((!string.IsNullOrEmpty(analysisId) || !string.IsNullOrEmpty(analysisResult) || !string.IsNullOrEmpty(analysisError)) ? "" : "display: none;")">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5>🔍 AI Analysis Results</h5>
                 <div class="btn-group" role="group" id="analysisButtonsContainer">
@@ -351,8 +351,8 @@
         
         console.log('🔄 injectAnalysisButtons called, analysisId:', analysisId);
         
-        // If no analysis ID yet, don't inject
-        if (!analysisId) {
+        // If no analysis ID yet, don't inject (check for null, undefined, or empty string)
+        if (!analysisId || analysisId === '') {
             console.log('❌ No analysisId found, skipping button injection');
             return;
         }
@@ -402,13 +402,13 @@
             setInterval(() => {
                 const section = document.getElementById('analysisResultsSection');
                 const analysisId = section?.dataset.analysisId;
-                if (section && analysisId && !section.querySelector('#bottomPanelBtn')) {
-                    console.log('🔄 Polling: Found analysisId, injecting buttons...');
+                if (section && analysisId && analysisId !== '' && !section.querySelector('#bottomPanelBtn')) {
+                    console.log('🔄 Polling: Found valid analysisId, injecting buttons...');
                     injectAnalysisButtons();
                 }
             }, 2000);
         } else {
-            console.log('❌ analysisResultsSection not found on page load - analysis may not be complete yet');
+            console.log('ℹ️ analysisResultsSection hidden - no analysis data available yet');
         }
     });
     
