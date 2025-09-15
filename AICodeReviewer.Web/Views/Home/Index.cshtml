@@ -1,9 +1,29 @@
 @{
     ViewData["Title"] = "Home Page";
+    var analysisResult = Context.Session.GetString("AnalysisResult");
+    var analysisError = Context.Session.GetString("AnalysisError");
+    var analysisId = Context.Session.GetString("AnalysisId");
 }
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
+    
+    <!-- Debug info for development -->
+    <script>
+        console.log('📊 Session Debug Info:');
+        console.log('Analysis ID: @(analysisId ?? "null")');
+        console.log('Analysis Result: @(analysisResult ?? "null")');
+        console.log('Analysis Error: @(analysisError ?? "null")');
+        
+        // Set global analysis ID for view switching
+        @if (!string.IsNullOrEmpty(analysisId))
+        {
+            <text>
+            window.currentAnalysisId = '@analysisId';
+            console.log('🆔 Set window.currentAnalysisId to:', window.currentAnalysisId);
+            </text>
+        }
+    </script>
     
     @if (ViewBag.BranchInfo != null)
     {
@@ -129,6 +149,18 @@
         }
     </div>
     
+    <!-- Language Selection Section -->
+    <div class="language-section mt-5">
+        <h5>🐍 Programming Language</h5>
+        <div class="mb-3">
+            <label for="languageSelect" class="form-label">Select the programming language for analysis:</label>
+            <select class="form-select" id="languageSelect" name="language">
+                <option value="NET" selected>.NET</option>
+                <option value="Python">Python</option>
+            </select>
+        </div>
+    </div>
+    
     <!-- AI Analysis Section -->
     <div class="analysis-section mt-5">
         <h5>🤖 AI Code Analysis</h5>
@@ -175,36 +207,222 @@
             </div>
         }
         
-        <!-- Analysis Results -->
-        @{
-            var analysisResult = Context.Session.GetString("AnalysisResult");
-            var analysisError = Context.Session.GetString("AnalysisError");
-        }
-        
-        @if (!string.IsNullOrEmpty(analysisResult))
-        {
-            <div class="analysis-results mt-4">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="mb-0">🔍 AI Analysis Results</h6>
+        <!-- Analysis Results - Always include but conditionally show/hide -->
+        <div class="analysis-results mt-4" id="analysisResultsSection" data-analysis-id="@(string.IsNullOrEmpty(analysisId) ? "" : analysisId)" style="@((!string.IsNullOrEmpty(analysisId) || !string.IsNullOrEmpty(analysisResult) || !string.IsNullOrEmpty(analysisError)) ? "" : "display: none;")">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>🔍 AI Analysis Results</h5>
+                <div class="btn-group" role="group" id="analysisButtonsContainer">
+                    <!-- Buttons will be injected here by JS if needed -->
+                </div>
+            </div>
+            
+            <!-- Bottom Panel View -->
+            <div id="bottomPanelView">
+                @if (!string.IsNullOrEmpty(analysisResult))
+                {
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">Analysis Results</h6>
+                        </div>
+                        <div class="card-body">
+                            <pre class="analysis-text" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <pre class="analysis-text" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            <span>Analysis results will appear here...</span>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <!-- Side Panel View (initially hidden) -->
+            <div id="sidePanelView" style="display: none;">
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span>Loading side-panel view...</span>
                     </div>
                 </div>
             </div>
-        }
+        </div>
         
         @if (!string.IsNullOrEmpty(analysisError))
         {
-            <div class="alert alert-danger mt-3">
+            <div class="alert alert-danger mt-3" id="analysisErrorSection">
                 ❌ @analysisError
             </div>
         }
     </div>
-    
-    <p class="mt-4">Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
 </div>
 
 <!-- SignalR Client Library -->
 <script src="https://unpkg.com/@@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
+
+<script>
+    // View switching functions - use the global currentAnalysisId from site.js
+    function switchToBottomPanel() {
+        const bottomPanelView = document.getElementById('bottomPanelView');
+        const sidePanelView = document.getElementById('sidePanelView');
+        const bottomPanelBtn = document.getElementById('bottomPanelBtn');
+        const sidePanelBtn = document.getElementById('sidePanelBtn');
+        
+        if (bottomPanelView) bottomPanelView.style.display = 'block';
+        if (sidePanelView) sidePanelView.style.display = 'none';
+        
+        // Update button states
+        if (bottomPanelBtn) {
+            bottomPanelBtn.classList.remove('btn-outline-primary');
+            bottomPanelBtn.classList.add('btn-primary');
+        }
+        if (sidePanelBtn) {
+            sidePanelBtn.classList.remove('btn-primary');
+            sidePanelBtn.classList.add('btn-outline-primary');
+        }
+        
+        console.log('Switched to bottom panel view');
+    }
+    
+    function switchToSidePanel() {
+        const bottomPanelView = document.getElementById('bottomPanelView');
+        const sidePanelView = document.getElementById('sidePanelView');
+        const bottomPanelBtn = document.getElementById('bottomPanelBtn');
+        const sidePanelBtn = document.getElementById('sidePanelBtn');
+        
+        if (bottomPanelView) bottomPanelView.style.display = 'none';
+        if (sidePanelView) sidePanelView.style.display = 'block';
+        
+        // Update button states
+        if (sidePanelBtn) {
+            sidePanelBtn.classList.remove('btn-outline-primary');
+            sidePanelBtn.classList.add('btn-primary');
+        }
+        if (bottomPanelBtn) {
+            bottomPanelBtn.classList.remove('btn-primary');
+            bottomPanelBtn.classList.add('btn-outline-primary');
+        }
+        
+        // Load side panel view
+        loadSidePanelView();
+        
+        console.log('Switched to side panel view');
+    }
+    
+    function loadSidePanelView() {
+        // Use the global currentAnalysisId from site.js
+        if (!window.currentAnalysisId) {
+            const sidePanelView = document.getElementById('sidePanelView');
+            if (sidePanelView) {
+                sidePanelView.innerHTML = '<div class="alert alert-warning">No analysis ID available for side-panel view</div>';
+            }
+            return;
+        }
+        
+        // Show loading state
+        const sidePanelView = document.getElementById('sidePanelView');
+        if (sidePanelView) {
+            sidePanelView.innerHTML =
+                '<div class="alert alert-info">' +
+                '<div class="d-flex align-items-center">' +
+                '<div class="spinner-border spinner-border-sm me-2" role="status"></div>' +
+                '<span>Loading side-panel view...</span>' +
+                '</div>' +
+                '</div>';
+        }
+        
+        // Redirect to results page with the analysis ID
+        window.location.href = `/results/${window.currentAnalysisId}`;
+    }
+    
+    // Initialize view based on current state
+    document.addEventListener('DOMContentLoaded', function() {
+        // Only initialize if the view switching elements exist
+        const analysisResultsSection = document.getElementById('analysisResultsSection');
+        if (analysisResultsSection) {
+            // Set initial state to bottom panel view
+            switchToBottomPanel();
+            
+            // Hide the old analysis result section if it exists
+            const oldResult = document.querySelector('.analysis-results pre');
+            if (oldResult && oldResult.parentElement.parentElement.classList.contains('card')) {
+                oldResult.parentElement.parentElement.parentElement.style.display = 'none';
+            }
+        }
+    });
+    
+    // Function to dynamically inject the view-switching buttons
+    function injectAnalysisButtons() {
+        const container = document.getElementById('analysisButtonsContainer');
+        const analysisId = document.getElementById('analysisResultsSection')?.dataset.analysisId;
+        
+        console.log('🔄 injectAnalysisButtons called, analysisId:', analysisId);
+        
+        // If no analysis ID yet, don't inject (check for null, undefined, or empty string)
+        if (!analysisId || analysisId === '') {
+            console.log('❌ No analysisId found, skipping button injection');
+            return;
+        }
+
+        // Prevent duplicate injection
+        if (container.querySelector('#bottomPanelBtn')) {
+            console.log('✅ Buttons already injected, skipping');
+            return;
+        }
+
+        console.log('🔧 Creating analysis buttons...');
+
+        // Create buttons
+        const bottomBtn = document.createElement('button');
+        bottomBtn.type = 'button';
+        bottomBtn.className = 'btn btn-outline-primary';
+        bottomBtn.id = 'bottomPanelBtn';
+        bottomBtn.onclick = switchToBottomPanel;
+        bottomBtn.textContent = '📋 Bottom Panel';
+
+        const sideBtn = document.createElement('button');
+        sideBtn.type = 'button';
+        sideBtn.className = 'btn btn-outline-primary';
+        sideBtn.id = 'sidePanelBtn';
+        sideBtn.onclick = switchToSidePanel;
+        sideBtn.textContent = '🔀 Side Panel';
+
+        // Clear container and append
+        container.innerHTML = '';
+        container.appendChild(bottomBtn);
+        container.appendChild(sideBtn);
+
+        // Initially set to bottom panel
+        switchToBottomPanel();
+
+        console.log('✅ Analysis buttons injected dynamically');
+    }
+    
+    // Only run if the section exists
+    document.addEventListener('DOMContentLoaded', function() {
+        const section = document.getElementById('analysisResultsSection');
+        if (section) {
+            console.log('✅ analysisResultsSection found, injecting buttons...');
+            injectAnalysisButtons();
+            
+            // Poll for new analysisId (in case it gets updated dynamically)
+            setInterval(() => {
+                const section = document.getElementById('analysisResultsSection');
+                const analysisId = section?.dataset.analysisId;
+                if (section && analysisId && analysisId !== '' && !section.querySelector('#bottomPanelBtn')) {
+                    console.log('🔄 Polling: Found valid analysisId, injecting buttons...');
+                    injectAnalysisButtons();
+                }
+            }, 2000);
+        } else {
+            console.log('ℹ️ analysisResultsSection hidden - no analysis data available yet');
+        }
+    });
+    
+    // Make it globally available
+    window.injectAnalysisButtons = injectAnalysisButtons;
+</script>

@@ -34,10 +34,34 @@ function initializeSignalR() {
                     .catch(err => console.error("Failed to leave SignalR group:", err));
             }
             
-            // Redirect to results page for detailed review
-            setTimeout(() => {
-                window.location.href = `/results/${currentAnalysisId}`;
-            }, 1000); // Small delay to show completion message
+            // Store analysis ID in session for view switching
+            if (currentAnalysisId) {
+                console.log('🔄 Storing analysis ID in session:', currentAnalysisId);
+                fetch('/Home/StoreAnalysisId', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ analysisId: currentAnalysisId })
+                }).then(() => {
+                    console.log('✅ Analysis ID stored, refreshing page to show results section...');
+                    
+                    // ✅ REFRESH PAGE TO SHOW THE ANALYSIS RESULTS SECTION
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 300); // Small delay to ensure session is persisted
+                }).catch(err => {
+                    console.error("Failed to store analysis ID:", err);
+                    console.log('🔄 Falling back to page reload...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 300);
+                });
+            }
+            
+            // Set the global analysis ID for view switching
+            window.currentAnalysisId = currentAnalysisId;
+            console.log('Analysis complete! Use the view switching buttons above to choose between Bottom Panel and Side Panel views.');
         }
     });
 
@@ -88,7 +112,8 @@ function startAnalysis() {
     const formData = {
         repositoryPath: repositoryPath,
         selectedDocuments: selectedDocuments,
-        documentsFolder: '' // Will use session default
+        documentsFolder: '', // Will use session default
+        language: document.getElementById('languageSelect')?.value || 'NET'
     };
     
     // Start analysis with JSON
@@ -158,6 +183,12 @@ function pollStatus(analysisId) {
                 // Show error result card
                 document.getElementById('analysisResult').style.display = 'block';
                 document.getElementById('result').innerText = '❌ Error checking status: ' + error.message;
+                
+                // Also refresh page in case of error to show error message
+                setTimeout(() => {
+                    console.log('🔄 Refreshing page due to analysis error...');
+                    window.location.reload();
+                }, 300);
             });
     }, 1000); // Poll every second
 }
