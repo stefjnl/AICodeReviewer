@@ -36,7 +36,9 @@ public class HomeController : Controller
         ViewBag.IsError = isError;
 
         // Repository path management for Git diff extraction
-        var repositoryPath = HttpContext.Session.GetString("RepositoryPath") ?? _environment.ContentRootPath;
+        // Default to parent directory (AICodeReviewer) instead of AICodeReviewer.Web
+        var defaultRepositoryPath = Path.Combine(_environment.ContentRootPath, "..");
+        var repositoryPath = HttpContext.Session.GetString("RepositoryPath") ?? defaultRepositoryPath;
         ViewBag.RepositoryPath = repositoryPath;
 
         // Extract Git diff if repository path is set
@@ -115,7 +117,9 @@ public class HomeController : Controller
         try
         {
             // Use request data or fall back to session data
-            var repositoryPath = request.RepositoryPath ?? HttpContext.Session.GetString("RepositoryPath") ?? _environment.ContentRootPath;
+            // Default to parent directory (AICodeReviewer) instead of AICodeReviewer.Web
+            var defaultRepositoryPath = Path.Combine(_environment.ContentRootPath, "..");
+            var repositoryPath = request.RepositoryPath ?? HttpContext.Session.GetString("RepositoryPath") ?? defaultRepositoryPath;
             var selectedDocuments = request.SelectedDocuments ?? HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
             var documentsFolder = request.DocumentsFolder ?? HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
             var apiKey = _configuration["OpenRouter:ApiKey"];
@@ -130,6 +134,13 @@ public class HomeController : Controller
             if (selectedDocuments.Count == 0)
             {
                 return Json(new { success = false, error = "No coding standards selected" });
+            }
+
+            // Validate git repository
+            var (branchInfo, isGitError) = GitHelper.DetectRepository(repositoryPath);
+            if (isGitError || branchInfo == "No git repository found")
+            {
+                return Json(new { success = false, error = "No valid git repository found at the specified path. Please select a valid git repository." });
             }
 
             // Generate unique analysis ID
