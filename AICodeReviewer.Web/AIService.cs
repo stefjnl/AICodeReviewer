@@ -59,7 +59,7 @@ public static class AIService
             var languageEnum = Enum.TryParse<SupportedLanguage>(language, true, out var parsedLanguage)
                 ? parsedLanguage
                 : SupportedLanguage.NET; // Default fallback
-            
+
             var prompt = BuildPrompt(gitDiff, codingStandards, requirements, languageEnum);
 
             var template = _languageTemplates.TryGetValue(languageEnum, out var langTemplate)
@@ -136,63 +136,31 @@ public static class AIService
             ? string.Join("\n", standards)
             : $"Follow general {template.LanguageName} best practices";
 
-        var role = template.Role;
-        var languageName = template.LanguageName;
-        var namingConvention = template.NamingConvention;
-        var asyncPattern = template.AsyncPattern;
-        var bestPractices = template.BestPractices;
+        return $@"Review this {template.LanguageName} code diff. Provide feedback using EXACTLY this format:
 
-        var exampleResponse = language switch
-        {
-            SupportedLanguage.Python => @"**Warning** Performance - Line 45: Synchronous database call blocks thread
-            Suggestion: Replace .get() with async version and add await
+            **Critical** [Category] - [FileName] Line [X]: [Issue description]
+            Suggestion: [Specific fix]
 
-            **Style** Naming - Line 12: Variable name 'userName' doesn't follow snake_case conventions
-            Suggestion: Rename to 'user_name' using snake_case for local variables",
+            **Warning** [Category] - [FileName] Line [X]: [Issue description]  
+            Suggestion: [Specific fix]
 
-            _ => @"**Warning** Performance - Line 45: Synchronous database call blocks thread
-            Suggestion: Replace .GetString() with .GetStringAsync() and add await
+            **Suggestion** [Category] - [FileName] Line [X]: [Issue description]
+            Suggestion: [Specific fix]
 
-            **Style** Naming - Line 12: Variable name 'repositoryPath' doesn't follow conventions
-            Suggestion: Rename to 'repositoryPath' using camelCase for local variables"
-        };
+            **Style** [Category] - [FileName] Line [X]: [Issue description]
+            Suggestion: [Specific fix]
 
-        return $@"You are a {role} reviewing code changes. Analyze this code diff and provide specific, actionable feedback.
-
-            CODING STANDARDS TO ENFORCE:
+            CODING STANDARDS:
             {standardsText}
 
-            REQUIREMENTS CONTEXT:
-            {requirements ?? "No specific requirements provided"}
+            REQUIREMENTS:
+            {requirements ?? "No requirements provided"}
 
-            CODE CHANGES TO REVIEW:
+            DIFF:
             {gitDiff}
 
-            RESPONSE FORMAT REQUIRED:
-            For each issue found, use this exact format:
-
-            **[SEVERITY]** [Category] - Line [number]: [Brief description]
-            Suggestion: [Specific actionable fix]
-
-            SEVERITY OPTIONS: Critical, Warning, Suggestion, Style
-            CATEGORY OPTIONS: Security, Performance, Error Handling, Style, Architecture
-
-            EXAMPLE RESPONSES:
-            {exampleResponse}
-
-            **Critical** Security - Line 67: User input not validated before database query
-            Suggestion: Add input validation and use parameterized queries
-
-            FOCUS ON:
-            - Specific line numbers and file paths when possible
-            - Concrete, actionable suggestions
-            - Violations of the provided coding standards
-            - Security, performance, and maintainability issues
-            - {languageName}-specific best practices ({bestPractices})
-
-            AVOID:
-            - General assessments or summaries
-            - Theoretical explanations
-            - Repetitive feedback about the same pattern";
+            Categories: Security, Performance, Error Handling, Architecture, Style
+            Order: Critical issues first, then Warning, Suggestion, Style
+            Include filename before line number for every issue.";
     }
 }

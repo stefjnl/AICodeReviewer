@@ -118,14 +118,18 @@ function startAnalysis() {
         selectedDocuments.push(checkbox.value);
     });
     
+    console.log('📋 Selected documents from checkboxes:', selectedDocuments);
+    
     const formData = {
         repositoryPath: repositoryPath,
         selectedDocuments: selectedDocuments,
-        documentsFolder: '', // Will use session default
         language: document.getElementById('languageSelect')?.value || 'NET',
         analysisType: analysisType,
         commitId: commitId
+        // documentsFolder is intentionally omitted to use session default
     };
+    
+    console.log('📤 Sending form data:', formData);
     
     // Start analysis with JSON
     fetch('/Home/RunAnalysis', {

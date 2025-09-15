@@ -139,10 +139,15 @@ public class HomeController : Controller
             var defaultRepositoryPath = Path.Combine(_environment.ContentRootPath, "..");
             var repositoryPath = request.RepositoryPath ?? HttpContext.Session.GetString("RepositoryPath") ?? defaultRepositoryPath;
             var selectedDocuments = request.SelectedDocuments ?? HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
-            var documentsFolder = request.DocumentsFolder ?? HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
+            var documentsFolder = !string.IsNullOrEmpty(request.DocumentsFolder) ? request.DocumentsFolder : HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
             var language = request.Language ?? HttpContext.Session.GetString("Language") ?? "NET";
             var analysisType = request.AnalysisType ?? "uncommitted";
             var commitId = request.CommitId;
+            
+            // DEBUG: Log document selection details
+            _logger.LogInformation($"[RunAnalysis] Request SelectedDocuments: {(request.SelectedDocuments != null ? string.Join(", ", request.SelectedDocuments) : "null")}");
+            _logger.LogInformation($"[RunAnalysis] Session SelectedDocuments: {string.Join(", ", HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>())}");
+            _logger.LogInformation($"[RunAnalysis] Final selectedDocuments count: {selectedDocuments.Count}");
             
             var apiKey = _configuration["OpenRouter:ApiKey"];
             var model = _configuration["OpenRouter:Model"];
@@ -347,6 +352,9 @@ public class HomeController : Controller
             // Load selected documents
             _logger.LogInformation($"[Analysis {analysisId}] Loading {selectedDocuments.Count} selected documents");
             var codingStandards = new List<string>();
+            _logger.LogInformation($"[Analysis {analysisId}] Documents folder path: {documentsFolder}");
+            _logger.LogInformation($"[Analysis {analysisId}] Documents folder exists: {Directory.Exists(documentsFolder)}");
+            
             foreach (var docName in selectedDocuments)
             {
                 _logger.LogInformation($"[Analysis {analysisId}] Loading document: {docName} from folder: {documentsFolder}");
@@ -363,6 +371,7 @@ public class HomeController : Controller
                 }
             }
             _logger.LogInformation($"[Analysis {analysisId}] Document loading complete - loaded {codingStandards.Count} documents");
+            _logger.LogInformation($"[Analysis {analysisId}] Final codingStandards count: {codingStandards.Count}");
 
             // Update status via SignalR
             _logger.LogInformation($"[Analysis {analysisId}] Starting AI analysis phase");
