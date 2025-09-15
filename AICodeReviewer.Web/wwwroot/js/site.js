@@ -99,13 +99,29 @@ function startAnalysis() {
         return;
     }
     
-    // Get analysis type and validate commit ID if needed
+    // Get analysis type and validate specific requirements
     const analysisType = document.querySelector('input[name="analysisType"]:checked')?.value || 'uncommitted';
     const commitId = document.getElementById('commitId')?.value?.trim();
+    const filePath = document.getElementById('filePath')?.value?.trim();
     
     if (analysisType === 'commit' && !commitId) {
         alert('Please enter a commit ID for commit analysis');
         return;
+    }
+    
+    if (analysisType === 'singlefile' && !filePath) {
+        alert('Please enter a file path for single file analysis');
+        return;
+    }
+    
+    // Validate file path for single file analysis
+    if (analysisType === 'singlefile' && filePath) {
+        const allowedExtensions = ['.cs', '.js', '.py'];
+        const extension = filePath.toLowerCase().substring(filePath.lastIndexOf('.'));
+        if (!allowedExtensions.includes(extension)) {
+            alert('Unsupported file type. Allowed extensions: ' + allowedExtensions.join(', '));
+            return;
+        }
     }
     
     // Show progress immediately
@@ -120,12 +136,42 @@ function startAnalysis() {
     
     console.log('📋 Selected documents from checkboxes:', selectedDocuments);
     
+    // For single file analysis, we need to provide the full path
+    let fullFilePath = filePath;
+    if (analysisType === 'singlefile') {
+        if (window.selectedFile) {
+            // Use the file object properties
+            fullFilePath = window.selectedFile.name;
+            
+            // Note: For security reasons, browsers don't provide full path access
+            // The server will need to handle relative paths or the user needs to manually enter the full path
+            console.log('Selected file:', window.selectedFile.name, 'Size:', window.selectedFile.size, 'Type:', window.selectedFile.type);
+        }
+        
+        // Validate that we have a reasonable file path
+        if (!fullFilePath || fullFilePath === '') {
+            alert('Please select a file or enter a valid file path');
+            hideProgress();
+            return;
+        }
+        
+        // Validate file extension
+        const allowedExtensions = ['.cs', '.js', '.py'];
+        const extension = fullFilePath.toLowerCase().substring(fullFilePath.lastIndexOf('.'));
+        if (!allowedExtensions.includes(extension)) {
+            alert('Unsupported file type. Allowed extensions: ' + allowedExtensions.join(', '));
+            hideProgress();
+            return;
+        }
+    }
+
     const formData = {
         repositoryPath: repositoryPath,
         selectedDocuments: selectedDocuments,
         language: document.getElementById('languageSelect')?.value || 'NET',
         analysisType: analysisType,
-        commitId: commitId
+        commitId: commitId,
+        filePath: fullFilePath
         // documentsFolder is intentionally omitted to use session default
     };
     

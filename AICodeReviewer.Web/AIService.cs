@@ -46,22 +46,22 @@ public static class AIService
     };
 
     public static async Task<(string analysis, bool isError, string? errorMessage)> AnalyzeCodeAsync(
-        string gitDiff, List<string> codingStandards, string requirements, string apiKey, string model, string language)
+        string content, List<string> codingStandards, string requirements, string apiKey, string model, string language, bool isFileContent = false)
     {
         try
         {
             if (string.IsNullOrEmpty(apiKey))
                 return ("", true, "OpenRouter API key not configured");
 
-            if (string.IsNullOrEmpty(gitDiff))
-                return ("", true, "No code changes to analyze");
+            if (string.IsNullOrEmpty(content))
+                return ("", true, isFileContent ? "No file content to analyze" : "No code changes to analyze");
 
             // Convert string language to enum
             var languageEnum = Enum.TryParse<SupportedLanguage>(language, true, out var parsedLanguage)
                 ? parsedLanguage
                 : SupportedLanguage.NET; // Default fallback
 
-            var prompt = BuildPrompt(gitDiff, codingStandards, requirements, languageEnum);
+            var prompt = BuildPrompt(content, codingStandards, requirements, languageEnum, isFileContent);
 
             var template = _languageTemplates.TryGetValue(languageEnum, out var langTemplate)
                 ? langTemplate
@@ -148,7 +148,29 @@ public static class AIService
         }
     });
 
-    private static string BuildPrompt(string gitDiff, List<string> standards, string requirements, SupportedLanguage language)
+    private static readonly Lazy<string> _singleFilePromptTemplate = new(() =>
+    {
+        try
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            const string resourceName = "AICodeReviewer.Web.Resources.SingleFilePromptTemplate.txt";
+            
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                throw new InvalidOperationException($"Embedded resource '{resourceName}' not found");
+            }
+            
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to load single file prompt template from embedded resource", ex);
+        }
+    });
+
+    private static string BuildPrompt(string content, List<string> standards, string requirements, SupportedLanguage language, bool isFileContent = false)
     {
         if (!_languageTemplates.TryGetValue(language, out var template))
         {
@@ -159,12 +181,13 @@ public static class AIService
             ? string.Join("\n", standards)
             : $"Follow general {template.LanguageName} best practices";
 
-        var promptTemplate = _promptTemplate.Value;
+        // Choose the appropriate template based on content type
+        var promptTemplate = isFileContent ? _singleFilePromptTemplate.Value : _promptTemplate.Value;
         
         return promptTemplate
             .Replace("{LanguageName}", template.LanguageName)
             .Replace("{StandardsText}", standardsText)
             .Replace("{Requirements}", requirements ?? "No requirements provided")
-            .Replace("{GitDiff}", gitDiff);
+            .Replace("{GitDiff}", content);
     }
 }

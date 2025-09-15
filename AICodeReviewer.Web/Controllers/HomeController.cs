@@ -143,6 +143,7 @@ public class HomeController : Controller
             var language = request.Language ?? HttpContext.Session.GetString("Language") ?? "NET";
             var analysisType = request.AnalysisType ?? "uncommitted";
             var commitId = request.CommitId;
+            var filePath = request.FilePath;
             
             // DEBUG: Log document selection details
             _logger.LogInformation($"[RunAnalysis] Request SelectedDocuments: {(request.SelectedDocuments != null ? string.Join(", ", request.SelectedDocuments) : "null")}");
@@ -166,22 +167,46 @@ public class HomeController : Controller
                 return Json(new { success = false, error = "No coding standards selected" });
             }
 
-            // Validate git repository
-            var (branchInfo, isGitError) = GitHelper.DetectRepository(repositoryPath);
-            if (isGitError || branchInfo == "No git repository found")
+            // Validate based on analysis type
+            if (analysisType == "singlefile")
             {
-                return Json(new { success = false, error = "No valid git repository found at the specified path. Please select a valid git repository." });
-            }
-
-            // Validate commit ID if commit analysis requested
-            if (analysisType == "commit")
-            {
-                if (string.IsNullOrEmpty(commitId))
+                // Validate file path for single file analysis
+                if (string.IsNullOrEmpty(filePath))
                 {
-                    return Json(new { success = false, error = "Commit ID is required for commit analysis" });
+                    return Json(new { success = false, error = "File path is required for single file analysis" });
                 }
-                
-                // Additional validation can be added here if needed
+
+                // Validate file exists and is readable
+                if (!System.IO.File.Exists(filePath))
+                {
+                    return Json(new { success = false, error = $"File not found: {filePath}" });
+                }
+
+                // Validate file extension
+                var allowedExtensions = new[] { ".cs", ".js", ".py" };
+                var extension = Path.GetExtension(filePath).ToLower();
+                if (!allowedExtensions.Contains(extension))
+                {
+                    return Json(new { success = false, error = $"Unsupported file type. Allowed extensions: {string.Join(", ", allowedExtensions)}" });
+                }
+            }
+            else
+            {
+                // Validate git repository for git-based analysis
+                var (branchInfo, isGitError) = GitHelper.DetectRepository(repositoryPath);
+                if (isGitError || branchInfo == "No git repository found")
+                {
+                    return Json(new { success = false, error = "No valid git repository found at the specified path. Please select a valid git repository." });
+                }
+
+                // Validate commit ID if commit analysis requested
+                if (analysisType == "commit")
+                {
+                    if (string.IsNullOrEmpty(commitId))
+                    {
+                        return Json(new { success = false, error = "Commit ID is required for commit analysis" });
+                    }
+                }
             }
 
             // Generate unique analysis ID
@@ -208,7 +233,7 @@ public class HomeController : Controller
             {
                 try
                 {
-                    await RunBackgroundAnalysisWithCache(analysisId, repositoryPath, selectedDocuments, docsFolder, apiKey, model, language, analysisType, commitId);
+                    await RunBackgroundAnalysisWithCache(analysisId, repositoryPath, selectedDocuments, docsFolder, apiKey, model, language, analysisType, commitId, filePath);
                 }
                 catch (Exception ex)
                 {
@@ -256,7 +281,7 @@ public class HomeController : Controller
         await Task.CompletedTask;
     }
 
-    private async Task RunBackgroundAnalysisWithCache(string analysisId, string repositoryPath, List<string> selectedDocuments, string documentsFolder, string apiKey, string model, string language, string analysisType = "uncommitted", string? commitId = null)
+    private async Task RunBackgroundAnalysisWithCache(string analysisId, string repositoryPath, List<string> selectedDocuments, string documentsFolder, string apiKey, string model, string language, string analysisType = "uncommitted", string? commitId = null, string? filePath = null)
     {
         _logger.LogInformation($"[Analysis {analysisId}] Starting background analysis");
         _logger.LogInformation($"[Analysis {analysisId}] Repository path: {repositoryPath}");
@@ -294,40 +319,58 @@ public class HomeController : Controller
                 _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Reading git changes...'");
             }
 
-            // Get git diff based on analysis type
+            // Get content based on analysis type
             _logger.LogInformation($"[Analysis {analysisId}] Analysis type: {analysisType}");
-            string gitDiff;
-            bool gitError;
+            string content;
+            bool contentError;
+            bool isFileContent = false;
             
-            if (analysisType == "commit" && !string.IsNullOrEmpty(commitId))
+            if (analysisType == "singlefile" && !string.IsNullOrEmpty(filePath))
+            {
+                _logger.LogInformation($"[Analysis {analysisId}] Reading single file: {filePath}");
+                try
+                {
+                    content = await System.IO.File.ReadAllTextAsync(filePath);
+                    contentError = false;
+                    isFileContent = true;
+                    _logger.LogInformation($"[Analysis {analysisId}] File read successfully, length: {content.Length}");
+                }
+                catch (Exception ex)
+                {
+                    content = $"Error reading file: {ex.Message}";
+                    contentError = true;
+                    _logger.LogError(ex, $"[Analysis {analysisId}] Failed to read file: {filePath}");
+                }
+            }
+            else if (analysisType == "commit" && !string.IsNullOrEmpty(commitId))
             {
                 _logger.LogInformation($"[Analysis {analysisId}] Extracting commit diff for commit: {commitId}");
-                (gitDiff, gitError) = GitService.GetCommitDiff(repositoryPath, commitId);
+                (content, contentError) = GitService.GetCommitDiff(repositoryPath, commitId);
             }
             else
             {
                 _logger.LogInformation($"[Analysis {analysisId}] Extracting uncommitted changes");
-                (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
+                (content, contentError) = GitService.ExtractDiff(repositoryPath);
             }
             
-            _logger.LogInformation($"[Analysis {analysisId}] Git diff extraction complete - Error: {gitError}, Diff length: {gitDiff?.Length ?? 0}");
+            _logger.LogInformation($"[Analysis {analysisId}] Content extraction complete - Error: {contentError}, Content length: {content?.Length ?? 0}");
             
-            // Store git diff in cache for results display
-            if (!gitError && !string.IsNullOrEmpty(gitDiff))
+            // Store content in cache for results display
+            if (!contentError && !string.IsNullOrEmpty(content))
             {
-                _cache.Set($"diff_{analysisId}", gitDiff, new MemoryCacheEntryOptions()
+                _cache.Set($"content_{analysisId}", content, new MemoryCacheEntryOptions()
                     .SetSlidingExpiration(TimeSpan.FromMinutes(30))
                     .SetSize(1));
-                _logger.LogInformation($"[Analysis {analysisId}] Stored git diff in cache ({gitDiff.Length} bytes)");
+                _logger.LogInformation($"[Analysis {analysisId}] Stored content in cache ({content.Length} bytes)");
             }
             
-            if (gitError)
+            if (contentError)
             {
-                _logger.LogError($"[Analysis {analysisId}] Git diff extraction failed: {gitDiff}");
+                _logger.LogError($"[Analysis {analysisId}] Content extraction failed: {content}");
                 if (result != null)
                 {
                     result.Status = "Error";
-                    result.Error = $"Git diff error: {gitDiff}";
+                    result.Error = isFileContent ? $"File reading error: {content}" : $"Git diff error: {content}";
                     result.CompletedAt = DateTime.UtcNow;
                     
                     var cacheOptions2 = new MemoryCacheEntryOptions()
@@ -338,7 +381,7 @@ public class HomeController : Controller
                 }
                 return;
             }
-            _logger.LogInformation($"[Analysis {analysisId}] Git diff extracted successfully");
+            _logger.LogInformation($"[Analysis {analysisId}] Content extracted successfully");
 
             // Update status via SignalR
             _logger.LogInformation($"[Analysis {analysisId}] Starting document loading phase");
@@ -378,11 +421,11 @@ public class HomeController : Controller
             
             // Collect successful documents
             var codingStandards = new List<string>();
-            foreach (var (content, docError, docName) in documentResults)
+            foreach (var (docContent, docError, docName) in documentResults)
             {
                 if (!docError)
                 {
-                    codingStandards.Add(content);
+                    codingStandards.Add(docContent);
                 }
             }
             
@@ -404,10 +447,11 @@ public class HomeController : Controller
 
             // Call AI service with timeout protection
             _logger.LogInformation($"[Analysis {analysisId}] Calling AI service with:");
-            _logger.LogInformation($"[Analysis {analysisId}] - Git diff length: {gitDiff?.Length ?? 0}");
+            _logger.LogInformation($"[Analysis {analysisId}] - Content length: {content?.Length ?? 0}");
             _logger.LogInformation($"[Analysis {analysisId}] - Coding standards count: {codingStandards.Count}");
             _logger.LogInformation($"[Analysis {analysisId}] - API key configured: {!string.IsNullOrEmpty(apiKey)}");
             _logger.LogInformation($"[Analysis {analysisId}] - Model: {model}");
+            _logger.LogInformation($"[Analysis {analysisId}] - Analysis type: {(isFileContent ? "Single File" : "Git Diff")}");
             
             // Add timeout protection (60 seconds)
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
@@ -422,7 +466,7 @@ public class HomeController : Controller
                 
                 // Call AI service with timeout
                 var (analysisResult, isError, errorMsg) = await Task.Run(async () =>
-                    await AIService.AnalyzeCodeAsync(gitDiff, codingStandards, requirements, apiKey, model, language),
+                    await AIService.AnalyzeCodeAsync(content, codingStandards, requirements, apiKey, model, language, isFileContent),
                     cts.Token);
                 
                 analysis = analysisResult;

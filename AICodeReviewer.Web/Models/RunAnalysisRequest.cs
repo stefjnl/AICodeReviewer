@@ -6,6 +6,8 @@ public class RunAnalysisRequest
     public List<string>? SelectedDocuments { get; set; }
     public string? DocumentsFolder { get; set; }
     public string? Language { get; set; }
-    public string? AnalysisType { get; set; } // "uncommitted" or "commit"
+    public string? AnalysisType { get; set; } // "uncommitted", "commit", or "singlefile"
     public string? CommitId { get; set; } // Only used when AnalysisType = "commit"
+    public string? FilePath { get; set; } // Only used when AnalysisType = "singlefile"
+    public string? FileContent { get; set; } // Optional: file content for single file analysis
 }
