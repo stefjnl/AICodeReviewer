@@ -163,7 +163,13 @@ public class HomeController : Controller
                     _logger.LogError(ex, "Background analysis failed for analysis {AnalysisId}", analysisId);
                     await BroadcastError(analysisId, $"Background analysis error: {ex.Message}");
                 }
-            });
+            }).ContinueWith(t =>
+            {
+                if (t.IsFaulted && t.Exception != null)
+                {
+                    _logger.LogError(t.Exception, "Unobserved exception in background task for analysis {AnalysisId}", analysisId);
+                }
+            }, TaskContinuationOptions.OnlyOnFaulted);
 
             return Json(new { success = true, analysisId = analysisId });
         }
@@ -228,9 +234,12 @@ public class HomeController : Controller
             _logger.LogInformation($"[Analysis {analysisId}] Found existing result in cache");
 
             // Update status via SignalR
-            result.Status = "Reading git changes...";
-            await BroadcastProgress(analysisId, "Reading git changes...");
-            _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Reading git changes...'");
+            if (result != null)
+            {
+                result.Status = "Reading git changes...";
+                await BroadcastProgress(analysisId, "Reading git changes...");
+                _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Reading git changes...'");
+            }
 
             // Get git diff
             _logger.LogInformation($"[Analysis {analysisId}] Extracting git diff from repository");
@@ -240,23 +249,30 @@ public class HomeController : Controller
             if (gitError)
             {
                 _logger.LogError($"[Analysis {analysisId}] Git diff extraction failed: {gitDiff}");
-                result.Status = "Error";
-                result.Error = $"Git diff error: {gitDiff}";
-                result.CompletedAt = DateTime.UtcNow;
-                var cacheOptions2 = new MemoryCacheEntryOptions()
-                    .SetSlidingExpiration(TimeSpan.FromMinutes(30))
-                    .SetSize(1);
-                _cache.Set($"analysis_{analysisId}", result, cacheOptions2);
-                _logger.LogInformation($"[Analysis {analysisId}] Set error status and completed");
+                if (result != null)
+                {
+                    result.Status = "Error";
+                    result.Error = $"Git diff error: {gitDiff}";
+                    result.CompletedAt = DateTime.UtcNow;
+                    
+                    var cacheOptions2 = new MemoryCacheEntryOptions()
+                        .SetSlidingExpiration(TimeSpan.FromMinutes(30))
+                        .SetSize(1);
+                    _cache.Set($"analysis_{analysisId}", result, cacheOptions2);
+                    _logger.LogInformation($"[Analysis {analysisId}] Set error status and completed");
+                }
                 return;
             }
             _logger.LogInformation($"[Analysis {analysisId}] Git diff extracted successfully");
 
             // Update status via SignalR
             _logger.LogInformation($"[Analysis {analysisId}] Starting document loading phase");
-            result.Status = "Loading documents...";
-            await BroadcastProgress(analysisId, "Loading documents...");
-            _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Loading documents...'");
+            if (result != null)
+            {
+                result.Status = "Loading documents...";
+                await BroadcastProgress(analysisId, "Loading documents...");
+                _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Loading documents...'");
+            }
             
             // Load selected documents
             _logger.LogInformation($"[Analysis {analysisId}] Loading {selectedDocuments.Count} selected documents");
@@ -280,9 +296,12 @@ public class HomeController : Controller
 
             // Update status via SignalR
             _logger.LogInformation($"[Analysis {analysisId}] Starting AI analysis phase");
-            result.Status = "AI analysis...";
-            await BroadcastProgress(analysisId, "AI analysis...");
-            _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'AI analysis...'");
+            if (result != null)
+            {
+                result.Status = "AI analysis...";
+                await BroadcastProgress(analysisId, "AI analysis...");
+                _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'AI analysis...'");
+            }
             
             // Get requirements
             string requirements = "Follow .NET best practices and coding standards";
@@ -371,9 +390,12 @@ public class HomeController : Controller
             {
                 if (_cache.TryGetValue($"analysis_{analysisId}", out AnalysisResult? errorResult))
                 {
-                    errorResult.Status = "Error";
-                    errorResult.Error = $"Analysis error: {ex.Message}";
-                    errorResult.CompletedAt = DateTime.UtcNow;
+                    var finalErrorResult = new AnalysisResult {
+                        Status = "Error",
+                        Error = $"Analysis error: {ex.Message}",
+                        CompletedAt = DateTime.UtcNow
+                    };
+                    _cache.Set($"analysis_{analysisId}", finalErrorResult, new MemoryCacheEntryOptions().SetSize(1));
                     await BroadcastError(analysisId, $"Analysis error: {ex.Message}");
                     _logger.LogInformation($"[Analysis {analysisId}] Set error status due to exception: {ex.Message}");
                 }
@@ -396,8 +418,15 @@ public class HomeController : Controller
             var progressDto = new ProgressDto(status, null, null, false);
             await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
             
-            // Keep cache for fallback
-            _cache.Set($"analysis_{analysisId}", progressDto, new MemoryCacheEntryOptions().SetSize(1));
+            // Keep cache for fallback - create AnalysisResult from ProgressDto
+            var cacheResult = new AnalysisResult
+            {
+                Status = progressDto.Status,
+                Result = progressDto.Result,
+                Error = progressDto.Error,
+                CreatedAt = DateTime.UtcNow
+            };
+            _cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
         }
         catch (Exception ex)
         {
@@ -412,7 +441,16 @@ public class HomeController : Controller
             var progressDto = new ProgressDto("Analysis complete", result, null, true);
             await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
             
-            _cache.Set($"analysis_{analysisId}", progressDto, new MemoryCacheEntryOptions().SetSize(1));
+            // Cache as AnalysisResult - create AnalysisResult from ProgressDto
+            var cacheResult = new AnalysisResult
+            {
+                Status = progressDto.Status,
+                Result = progressDto.Result,
+                Error = progressDto.Error,
+                CreatedAt = DateTime.UtcNow,
+                CompletedAt = DateTime.UtcNow
+            };
+            _cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
         }
         catch (Exception ex)
         {
@@ -427,7 +465,16 @@ public class HomeController : Controller
             var progressDto = new ProgressDto("Analysis failed", null, error, true);
             await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
             
-            _cache.Set($"analysis_{analysisId}", progressDto, new MemoryCacheEntryOptions().SetSize(1));
+            // Cache as AnalysisResult - create AnalysisResult from ProgressDto
+            var cacheResult = new AnalysisResult
+            {
+                Status = progressDto.Status,
+                Result = progressDto.Result,
+                Error = progressDto.Error,
+                CreatedAt = DateTime.UtcNow,
+                CompletedAt = DateTime.UtcNow
+            };
+            _cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
         }
         catch (Exception ex)
         {

@@ -45,11 +45,14 @@ function initializeSignalR() {
     });
 }
 
-// Fallback polling function (keep existing pollStatus logic)
+// Fallback polling function with delay to prevent hammering the server
 function startPollingFallback() {
     console.log("Using polling fallback");
     if (currentAnalysisId) {
-        pollStatus(currentAnalysisId); // Your existing polling function
+        // Add a small delay to prevent server hammering
+        setTimeout(() => {
+            pollStatus(currentAnalysisId);
+        }, 1000); // 1 second delay
     } else {
         console.error("No analysisId available for fallback polling");
         hideProgress();
