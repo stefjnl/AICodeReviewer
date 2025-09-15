@@ -135,7 +135,7 @@ public class HomeController : Controller
             var repositoryPath = request.RepositoryPath ?? HttpContext.Session.GetString("RepositoryPath") ?? defaultRepositoryPath;
             var selectedDocuments = request.SelectedDocuments ?? HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
             var documentsFolder = request.DocumentsFolder ?? HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
-            var language = request.Language ?? HttpContext.Session.GetString("Language") ?? ".NET";
+            var language = request.Language ?? HttpContext.Session.GetString("Language") ?? "NET";
             var apiKey = _configuration["OpenRouter:ApiKey"];
             var model = _configuration["OpenRouter:Model"];
 

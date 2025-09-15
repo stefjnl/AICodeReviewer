@@ -113,7 +113,7 @@ function startAnalysis() {
         repositoryPath: repositoryPath,
         selectedDocuments: selectedDocuments,
         documentsFolder: '', // Will use session default
-        language: document.getElementById('languageSelect')?.value || '.NET'
+        language: document.getElementById('languageSelect')?.value || 'NET'
     };
     
     // Start analysis with JSON

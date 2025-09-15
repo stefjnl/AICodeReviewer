@@ -52,3 +52,12 @@ public static class FeedbackConstants
         { Severity.Info, "ℹ️" }
     };
 }
+
+/// <summary>
+/// Supported programming languages for AI code analysis
+/// </summary>
+public enum SupportedLanguage
+{
+    NET,
+    Python
+}
