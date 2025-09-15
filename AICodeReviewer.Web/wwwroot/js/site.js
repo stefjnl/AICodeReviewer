@@ -29,8 +29,9 @@ function initializeSignalR() {
         
         if (data.isComplete) {
             hideProgress();
-            if (currentAnalysisId) {
-                signalRConnection.invoke("LeaveAnalysisGroup", currentAnalysisId);
+            if (currentAnalysisId && signalRConnection) {
+                signalRConnection.invoke("LeaveAnalysisGroup", currentAnalysisId)
+                    .catch(err => console.error("Failed to leave SignalR group:", err));
             }
         }
     });
@@ -47,7 +48,12 @@ function initializeSignalR() {
 // Fallback polling function (keep existing pollStatus logic)
 function startPollingFallback() {
     console.log("Using polling fallback");
-    pollStatus(currentAnalysisId); // Your existing polling function
+    if (currentAnalysisId) {
+        pollStatus(currentAnalysisId); // Your existing polling function
+    } else {
+        console.error("No analysisId available for fallback polling");
+        hideProgress();
+    }
 }
 
 // US-006A: Async analysis with progress updates

@@ -152,7 +152,18 @@ public class HomeController : Controller
 
             // Start background analysis with captured references
             var docsFolder = request.DocumentsFolder ?? HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
-            _ = Task.Run(async () => await RunBackgroundAnalysisWithCache(analysisId, repositoryPath, selectedDocuments, docsFolder, apiKey, model));
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await RunBackgroundAnalysisWithCache(analysisId, repositoryPath, selectedDocuments, docsFolder, apiKey, model);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Background analysis failed for analysis {AnalysisId}", analysisId);
+                    await BroadcastError(analysisId, $"Background analysis error: {ex.Message}");
+                }
+            });
 
             return Json(new { success = true, analysisId = analysisId });
         }
@@ -173,7 +184,8 @@ public class HomeController : Controller
         if (_cache.TryGetValue($"analysis_{analysisId}", out AnalysisResult? result))
         {
             _logger.LogInformation($"[Analysis {analysisId}] Serving result: Status={result.Status}, ResultLength={result.Result?.Length ?? 0}");
-            return Json(new { status = result.Status, result = result.Result, error = result.Error, isComplete = result.IsComplete });
+            var progressDto = new ProgressDto(result.Status, result.Result, result.Error, result.IsComplete);
+            return Json(progressDto);
         }
 
         return Json(new { status = "NotFound", result = (string?)null, error = "Analysis not found or expired", isComplete = true });
@@ -381,19 +393,15 @@ public class HomeController : Controller
     {
         try
         {
-            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", new {
-                status = status,
-                result = (string?)null,
-                error = (string?)null,
-                isComplete = false
-            });
+            var progressDto = new ProgressDto(status, null, null, false);
+            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
             
             // Keep cache for fallback
-            _cache.Set($"analysis_{analysisId}", new { status = status, isComplete = false }, new MemoryCacheEntryOptions().SetSize(1));
+            _cache.Set($"analysis_{analysisId}", progressDto, new MemoryCacheEntryOptions().SetSize(1));
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SignalR broadcast failed: {ex.Message}");
+            _logger.LogWarning(ex, "SignalR broadcast failed for analysis {AnalysisId}", analysisId);
         }
     }
 
@@ -401,18 +409,14 @@ public class HomeController : Controller
     {
         try
         {
-            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", new {
-                status = "Analysis complete",
-                result = result,
-                error = (string?)null,
-                isComplete = true
-            });
+            var progressDto = new ProgressDto("Analysis complete", result, null, true);
+            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
             
-            _cache.Set($"analysis_{analysisId}", new { status = "Complete", result = result, isComplete = true }, new MemoryCacheEntryOptions().SetSize(1));
+            _cache.Set($"analysis_{analysisId}", progressDto, new MemoryCacheEntryOptions().SetSize(1));
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SignalR broadcast failed: {ex.Message}");
+            _logger.LogWarning(ex, "SignalR broadcast failed for analysis {AnalysisId}", analysisId);
         }
     }
 
@@ -420,18 +424,14 @@ public class HomeController : Controller
     {
         try
         {
-            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", new {
-                status = "Analysis failed",
-                result = (string?)null,
-                error = error,
-                isComplete = true
-            });
+            var progressDto = new ProgressDto("Analysis failed", null, error, true);
+            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
             
-            _cache.Set($"analysis_{analysisId}", new { status = "Error", error = error, isComplete = true }, new MemoryCacheEntryOptions().SetSize(1));
+            _cache.Set($"analysis_{analysisId}", progressDto, new MemoryCacheEntryOptions().SetSize(1));
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SignalR broadcast failed: {ex.Message}");
+            _logger.LogWarning(ex, "SignalR broadcast failed for analysis {AnalysisId}", analysisId);
         }
     }
 
