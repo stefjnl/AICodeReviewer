@@ -44,11 +44,11 @@
     }
     
     <!-- Document Management Section -->
-    <div class="document-section mt-4">
+    <div class="document-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
         <h5>📁 Requirements Documents</h5>
         
         <!-- Folder Configuration -->
-        <div class="mb-3">
+        <div class="mb-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
             <form asp-action="SetDocumentsFolder" method="post">
                 <div class="input-group">
                     <input type="text" class="form-control" name="folderPath"
@@ -103,7 +103,7 @@
     </div>
     
     <!-- Language Selection Section -->
-    <div class="language-section mt-4">
+    <div class="language-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
         <h5>🐍 Programming Language</h5>
         <div class="mb-3">
             <label for="languageSelect" class="form-label">Select the programming language for analysis:</label>
@@ -119,7 +119,7 @@
         <h5>📁 Git Repository</h5>
         
         <!-- Repository Path Configuration -->
-        <div class="mb-3">
+        <div class="mb-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
             <form asp-action="SetRepositoryPath" method="post">
                 <div class="input-group">
                     <input type="text" class="form-control" name="repositoryPath"
@@ -181,7 +181,7 @@
         </div>
         
         <!-- Analysis Type Selection -->
-        <div class="analysis-type-section mt-3">
+        <div class="analysis-type-section mt-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
             <h6>🔍 Analysis Type</h6>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
@@ -202,7 +202,7 @@
                 </label>
             </div>
             <div class="mt-2" id="commitIdContainer" style="display: none;">
-                <div class="input-group">
+                <div class="input-group" style="max-width: 600px; margin-left: auto; margin-right: auto;">
                     <input type="text" class="form-control" id="commitId" name="commitId"
                            placeholder="Enter commit ID (full or partial hash)">
                     <button class="btn btn-outline-secondary" type="button" id="validateCommit">Validate</button>
@@ -210,7 +210,7 @@
                 <div id="commitValidationResult" class="form-text"></div>
             </div>
             <div class="mt-2" id="filePickerContainer" style="display: none;">
-                <div class="input-group">
+                <div class="input-group" style="max-width: 600px; margin-left: auto; margin-right: auto;">
                     <input type="text" class="form-control" id="filePath" name="filePath"
                            placeholder="Enter full file path (e.g., C:\path\to\file.py or /path/to/file.py)"
                            style="transition: background-color 0.3s, border-color 0.3s;">
