@@ -59,6 +59,31 @@
             </form>
         </div>
         
+        <!-- Analysis Type Selection -->
+        <div class="analysis-type-section mt-3">
+            <h6>🔍 Analysis Type</h6>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
+                <label class="form-check-label" for="uncommittedChanges">
+                    Uncommitted Changes
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
+                <label class="form-check-label" for="specificCommit">
+                    Specific Commit
+                </label>
+            </div>
+            <div class="mt-2" id="commitIdContainer" style="display: none;">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="commitId" name="commitId"
+                           placeholder="Enter commit ID (full or partial hash)">
+                    <button class="btn btn-outline-secondary" type="button" id="validateCommit">Validate</button>
+                </div>
+                <div id="commitValidationResult" class="form-text"></div>
+            </div>
+        </div>
+        
         <!-- Git Diff Display -->
         @if (ViewBag.GitDiff != null)
         {
@@ -425,4 +450,66 @@
     
     // Make it globally available
     window.injectAnalysisButtons = injectAnalysisButtons;
+    
+    // Radio button change handler for analysis type
+    document.addEventListener('DOMContentLoaded', function() {
+        const uncommittedRadio = document.getElementById('uncommittedChanges');
+        const commitRadio = document.getElementById('specificCommit');
+        const commitIdContainer = document.getElementById('commitIdContainer');
+        const commitIdInput = document.getElementById('commitId');
+        
+        function toggleCommitIdField() {
+            if (commitRadio.checked) {
+                commitIdContainer.style.display = 'block';
+                commitIdInput.required = true;
+            } else {
+                commitIdContainer.style.display = 'none';
+                commitIdInput.required = false;
+                commitIdInput.value = '';
+                document.getElementById('commitValidationResult').innerHTML = '';
+            }
+        }
+        
+        uncommittedRadio.addEventListener('change', toggleCommitIdField);
+        commitRadio.addEventListener('change', toggleCommitIdField);
+        
+        // Validate commit button handler
+        document.getElementById('validateCommit').addEventListener('click', async function() {
+            const commitId = commitIdInput.value.trim();
+            const validationResult = document.getElementById('commitValidationResult');
+            const repositoryPath = '@Html.Raw(ViewBag.RepositoryPath)';
+            
+            console.log('Validating commit:', commitId);
+            console.log('Repository path:', repositoryPath);
+            
+            if (!commitId) {
+                validationResult.innerHTML = '<span class="text-warning">Please enter a commit ID</span>';
+                return;
+            }
+            
+            validationResult.innerHTML = '<span class="text-info">Validating...</span>';
+            
+            try {
+                const response = await fetch('/Home/ValidateCommit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        commitId: commitId,
+                        repositoryPath: repositoryPath
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    validationResult.innerHTML = '<span class="text-success">✓ Valid commit: ' + result.message + '</span>';
+                } else {
+                    validationResult.innerHTML = '<span class="text-danger">✗ ' + result.error + '</span>';
+                }
+            } catch (error) {
+                validationResult.innerHTML = '<span class="text-danger">✗ Validation failed: ' + error.message + '</span>';
+            }
+        });
+    });
 </script>

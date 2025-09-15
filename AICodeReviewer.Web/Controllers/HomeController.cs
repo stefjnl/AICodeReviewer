@@ -5,6 +5,7 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Diagnostics;
 using Microsoft.AspNetCore.SignalR;
 using AICodeReviewer.Web.Hubs;
+using LibGit2Sharp;
 
 namespace AICodeReviewer.Web.Controllers;
 
@@ -40,6 +41,10 @@ public class HomeController : Controller
         var defaultRepositoryPath = Path.Combine(_environment.ContentRootPath, "..");
         var repositoryPath = HttpContext.Session.GetString("RepositoryPath") ?? defaultRepositoryPath;
         ViewBag.RepositoryPath = repositoryPath;
+        
+        _logger.LogInformation($"Index method - Default path: {defaultRepositoryPath}");
+        _logger.LogInformation($"Index method - Session path: {HttpContext.Session.GetString("RepositoryPath")}");
+        _logger.LogInformation($"Index method - Final path: {repositoryPath}");
 
         // Extract Git diff if repository path is set
         var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
@@ -136,6 +141,9 @@ public class HomeController : Controller
             var selectedDocuments = request.SelectedDocuments ?? HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
             var documentsFolder = request.DocumentsFolder ?? HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
             var language = request.Language ?? HttpContext.Session.GetString("Language") ?? "NET";
+            var analysisType = request.AnalysisType ?? "uncommitted";
+            var commitId = request.CommitId;
+            
             var apiKey = _configuration["OpenRouter:ApiKey"];
             var model = _configuration["OpenRouter:Model"];
 
@@ -158,6 +166,17 @@ public class HomeController : Controller
             if (isGitError || branchInfo == "No git repository found")
             {
                 return Json(new { success = false, error = "No valid git repository found at the specified path. Please select a valid git repository." });
+            }
+
+            // Validate commit ID if commit analysis requested
+            if (analysisType == "commit")
+            {
+                if (string.IsNullOrEmpty(commitId))
+                {
+                    return Json(new { success = false, error = "Commit ID is required for commit analysis" });
+                }
+                
+                // Additional validation can be added here if needed
             }
 
             // Generate unique analysis ID
@@ -184,7 +203,7 @@ public class HomeController : Controller
             {
                 try
                 {
-                    await RunBackgroundAnalysisWithCache(analysisId, repositoryPath, selectedDocuments, docsFolder, apiKey, model, language);
+                    await RunBackgroundAnalysisWithCache(analysisId, repositoryPath, selectedDocuments, docsFolder, apiKey, model, language, analysisType, commitId);
                 }
                 catch (Exception ex)
                 {
@@ -232,7 +251,7 @@ public class HomeController : Controller
         await Task.CompletedTask;
     }
 
-    private async Task RunBackgroundAnalysisWithCache(string analysisId, string repositoryPath, List<string> selectedDocuments, string documentsFolder, string apiKey, string model, string language)
+    private async Task RunBackgroundAnalysisWithCache(string analysisId, string repositoryPath, List<string> selectedDocuments, string documentsFolder, string apiKey, string model, string language, string analysisType = "uncommitted", string? commitId = null)
     {
         _logger.LogInformation($"[Analysis {analysisId}] Starting background analysis");
         _logger.LogInformation($"[Analysis {analysisId}] Repository path: {repositoryPath}");
@@ -270,9 +289,22 @@ public class HomeController : Controller
                 _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Reading git changes...'");
             }
 
-            // Get git diff
-            _logger.LogInformation($"[Analysis {analysisId}] Extracting git diff from repository");
-            var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
+            // Get git diff based on analysis type
+            _logger.LogInformation($"[Analysis {analysisId}] Analysis type: {analysisType}");
+            string gitDiff;
+            bool gitError;
+            
+            if (analysisType == "commit" && !string.IsNullOrEmpty(commitId))
+            {
+                _logger.LogInformation($"[Analysis {analysisId}] Extracting commit diff for commit: {commitId}");
+                (gitDiff, gitError) = GitService.GetCommitDiff(repositoryPath, commitId);
+            }
+            else
+            {
+                _logger.LogInformation($"[Analysis {analysisId}] Extracting uncommitted changes");
+                (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
+            }
+            
             _logger.LogInformation($"[Analysis {analysisId}] Git diff extraction complete - Error: {gitError}, Diff length: {gitDiff?.Length ?? 0}");
             
             // Store git diff in cache for results display
@@ -532,6 +564,44 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "SignalR broadcast failed for analysis {AnalysisId}", analysisId);
+        }
+    }
+
+    [HttpPost]
+    public IActionResult ValidateCommit([FromBody] ValidateCommitRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(request?.CommitId))
+            {
+                return Json(new { success = false, error = "Commit ID is required" });
+            }
+
+            var defaultRepositoryPath = Path.Combine(_environment.ContentRootPath, "..");
+            var repositoryPath = request.RepositoryPath ?? HttpContext.Session.GetString("RepositoryPath") ?? defaultRepositoryPath;
+            
+            _logger.LogInformation($"Validating commit {request.CommitId} in repository: {repositoryPath}");
+            
+            using var repo = new Repository(repositoryPath);
+            var commit = repo.Lookup<Commit>(request.CommitId);
+            
+            if (commit == null)
+            {
+                return Json(new { success = false, error = $"Commit '{request.CommitId}' not found" });
+            }
+            
+            var message = $"{commit.Sha.Substring(0, 7)} - {commit.MessageShort}";
+            return Json(new { success = true, message = message });
+        }
+        catch (RepositoryNotFoundException)
+        {
+            _logger.LogError($"Repository not found at path: {request.RepositoryPath ?? HttpContext.Session.GetString("RepositoryPath") ?? Path.Combine(_environment.ContentRootPath, "..")}");
+            return Json(new { success = false, error = "Not a git repository" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error validating commit {request.CommitId}");
+            return Json(new { success = false, error = $"Validation error: {ex.Message}" });
         }
     }
 
