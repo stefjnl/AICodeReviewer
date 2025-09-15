@@ -122,11 +122,11 @@
         <!-- Selected Documents Summary -->
         @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
         {
-            <div class="alert alert-success alert-custom">
+            <div class="alert alert-success alert-custom selected-documents-summary">
                 <span class="alert-icon" aria-label="Success icon">✅</span>
                 <div>
-                    <strong>Selected Documents:</strong>
-                    <span class="helper-text d-block">@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</span>
+                    <strong class="selected-documents-title">Selected Documents:</strong>
+                    <span class="helper-text d-block selected-documents-list">@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</span>
                 </div>
             </div>
         }
@@ -856,20 +856,34 @@
             }
         });
 
-        // Enhanced checkbox functionality
+        // Enhanced checkbox functionality with redesigned visual feedback
         function toggleCheckbox(checkbox) {
             const container = checkbox.closest('.custom-checkbox-container');
             const visual = container.querySelector('.custom-checkbox-visual');
+            
+            // Add immediate click feedback with redesigned pulse animation
+            visual.style.animation = 'checkbox-pulse 0.2s ease';
             
             if (checkbox.checked) {
                 visual.classList.add('checked');
                 container.classList.add('checked');
                 container.setAttribute('aria-checked', 'true');
+                
+                // Add redesigned checkmark animation
+                setTimeout(() => {
+                    visual.style.animation = 'bounce-in 0.3s ease, fade-in 0.3s ease';
+                }, 50);
             } else {
                 visual.classList.remove('checked');
                 container.classList.remove('checked');
                 container.setAttribute('aria-checked', 'false');
+                
+                // Add smooth transition for uncheck
+                visual.style.animation = 'fade-in 0.2s ease';
             }
+            
+            // Update selected documents summary if it exists
+            updateSelectedDocumentsSummary();
         }
 
         // Initialize checkboxes on page load
@@ -895,6 +909,39 @@
             }
         });
 
+        // Function to update selected documents summary
+        function updateSelectedDocumentsSummary() {
+            const summaryElement = document.querySelector('.selected-documents-summary');
+            if (!summaryElement) return;
+            
+            const checkedContainers = document.querySelectorAll('.custom-checkbox-container.checked');
+            const selectedCount = checkedContainers.length;
+            
+            if (selectedCount > 0) {
+                // Add animation to summary
+                summaryElement.style.animation = 'fade-in 0.3s ease';
+                
+                // Update count display if needed
+                const titleElement = summaryElement.querySelector('.selected-documents-title');
+                if (titleElement) {
+                    titleElement.textContent = `Selected Documents: ${selectedCount}`;
+                }
+                
+                // Show summary with animation
+                summaryElement.style.display = 'flex';
+                summaryElement.style.opacity = '0';
+                setTimeout(() => {
+                    summaryElement.style.opacity = '1';
+                }, 50);
+            } else {
+                // Hide summary with animation
+                summaryElement.style.opacity = '0';
+                setTimeout(() => {
+                    summaryElement.style.display = 'none';
+                }, 300);
+            }
+        }
+        
         // Make containers focusable and keyboard navigable
         document.querySelectorAll('.custom-checkbox-container').forEach(function(container) {
             container.setAttribute('tabindex', '0');

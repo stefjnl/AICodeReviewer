@@ -111,7 +111,7 @@
     line-height: 1.5;
 }
 
-/* Enhanced Section Headings */
+/* Enhanced Section Headings - High Contrast */
 .section-heading-enhanced {
     font-size: 18px;
     font-weight: 700;
@@ -120,6 +120,17 @@
     line-height: 1.3;
     display: flex;
     align-items: center;
+    letter-spacing: -0.01em;
+}
+
+/* Enhanced typography hierarchy for better contrast */
+.section-subtitle {
+    font-size: 12px;
+    color: #666666;
+    font-weight: 400;
+    line-height: 1.4;
+    margin-bottom: 16px;
+    margin-top: -8px;
 }
 
 .section-icon {
@@ -139,7 +150,7 @@
     margin-top: -8px; /* Compensate for heading margin */
 }
 
-/* Container System */
+/* Container System - Enhanced Visual Quality */
 .content-section {
     background-color: #ffffff;
     border: 1px solid #e0e0e0;
@@ -147,11 +158,12 @@
     padding: 24px;
     margin-bottom: 32px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    transition: box-shadow 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .content-section:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
 }
 
 /* Spacing Utilities */
@@ -234,12 +246,19 @@
     margin-right: 12px;
 }
 
-/* Card Enhancements */
+/* Card Enhancements - Premium Visual Quality */
 .card-enhanced {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     margin-bottom: 16px;
+    background-color: #ffffff;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-enhanced:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
 }
 
 .card-header-enhanced {
@@ -429,12 +448,15 @@
     display: flex;
     align-items: flex-start;
     cursor: pointer;
-    padding: 8px 12px;
-    margin-bottom: 4px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 6px;
+    border-radius: 8px;
     position: relative;
     transform: translateY(0);
+    border: 1px solid transparent;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .custom-checkbox-container:hover {
@@ -443,9 +465,24 @@
     box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
 }
 
+/* Selected state - light blue background for modern look */
 .custom-checkbox-container.checked {
-    background-color: #e7f3ff;
+    background-color: #e6f7ff;
+    border: 1px solid #17a2b8;
     animation: bounce-in 0.3s ease;
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.15);
+}
+
+/* Enhanced selected state with icon */
+.custom-checkbox-container.checked::before {
+    content: "✅";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: #17a2b8;
+    animation: fade-in 0.3s ease;
 }
 
 .custom-checkbox-input {
@@ -456,6 +493,7 @@
     pointer-events: none;
 }
 
+/* Redesigned Checkbox Visual - Modern, Professional Design */
 .custom-checkbox-visual {
     width: 24px;
     height: 24px;
@@ -465,12 +503,32 @@
     align-items: center;
     justify-content: center;
     background-color: white;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
     flex-shrink: 0;
     margin-right: 12px;
     margin-top: 2px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Unchecked state - clean and modern */
+.custom-checkbox-visual {
+    border: 2px solid #ccc;
+    background-color: white;
+}
+
+/* Hover state - enhanced interaction */
+.custom-checkbox-container:hover .custom-checkbox-visual {
+    transform: scale(1.05);
+    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+/* Active/click state - tactile feedback */
+.custom-checkbox-container:active .custom-checkbox-visual {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
 }
 
 .custom-checkbox-visual::before {
@@ -491,9 +549,11 @@
     height: 40px;
 }
 
+/* Checked state - solid blue fill with white checkmark */
 .custom-checkbox-visual.checked {
     background-color: #007bff;
-    border-color: #007bff;
+    border-color: #0056b3;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     animation: bounce-in 0.3s ease;
 }
 
@@ -501,19 +561,69 @@
     content: "✓";
     color: white;
     font-size: 14px;
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-weight: bold;
     line-height: 1;
     animation: fade-in 0.3s ease;
 }
 
+/* Pulse animation for click feedback */
+@keyframes checkbox-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.98); }
+    100% { transform: scale(1); }
+}
+
+.custom-checkbox-container:checked .custom-checkbox-visual {
+    animation: checkbox-pulse 0.2s ease;
+}
+
+/* Enhanced click feedback for checkboxes */
+.custom-checkbox-container:active .custom-checkbox-visual {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}
+
+.custom-checkbox-container.checked:active .custom-checkbox-visual {
+    transform: scale(0.95);
+}
+
+/* Pulse animation for checkbox selection */
+@keyframes checkbox-pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+.custom-checkbox-visual.checked {
+    animation: bounce-in 0.3s ease, checkbox-pulse 0.6s ease;
+}
+
+/* Enhanced label readability with modern typography */
 .custom-checkbox-label {
     font-size: 14px;
     font-weight: 500;
-    color: #1a1a1a;
+    color: #333333;
     line-height: 1.4;
     flex-grow: 1;
     user-select: none;
-    padding-top: 4px;
+    padding-top: 2px;
+    margin-left: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: 0.01em;
 }
 
 .custom-checkbox-container:focus-within .custom-checkbox-visual {
@@ -525,10 +635,24 @@
     background-color: #f0f7ff;
 }
 
-/* Selected state for entire row with animation */
+/* Enhanced selected state for entire row with animation */
 .custom-checkbox-container.checked {
-    background-color: #e7f3ff;
+    background-color: #d4edda;
+    border: 1px solid #28a745;
     animation: bounce-in 0.3s ease;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+}
+
+/* Add checkmark icon to selected items */
+.custom-checkbox-container.checked::before {
+    content: "✅";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: #28a745;
+    animation: fade-in 0.3s ease;
 }
 
 /* Enhanced checkbox group title */
@@ -2064,4 +2188,114 @@
     .input-group-enhanced {
         flex-direction: column;
     }
+}
+
+/* Enhanced Selected Documents Summary - Light Blue Theme */
+.selected-documents-summary {
+    background-color: #e6f7ff !important;
+    border-color: #17a2b8 !important;
+    border-left: 4px solid #17a2b8;
+    animation: fade-in 0.5s ease;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.selected-documents-title {
+    color: #0c5460;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.selected-documents-title::before {
+    content: "✅";
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+.selected-documents-list {
+    color: #0c5460;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* UI Consistency Improvements */
+/* Standardized button sizes and spacing */
+.btn-enhanced {
+    min-height: 40px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Consistent form control sizing */
+.form-control,
+.form-select {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
+/* Standardized card spacing */
+.card-enhanced {
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Consistent section spacing */
+.content-section {
+    margin-bottom: 32px;
+}
+
+/* Standardized alert styling */
+.alert-custom {
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+/* Consistent icon sizing */
+.btn-icon,
+.alert-icon,
+.section-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* Standardized heading hierarchy */
+.section-heading-enhanced {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.subsection-heading {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+/* Consistent form group spacing */
+.form-group {
+    margin-bottom: 20px;
+}
+
+/* Standardized input group spacing */
+.input-group-enhanced {
+    gap: 8px;
+}
+
+/* Consistent validation message styling */
+.validation-message {
+    font-size: 13px;
+    margin-top: 4px;
+    min-height: 18px;
 }
