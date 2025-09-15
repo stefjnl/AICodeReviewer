@@ -23,6 +23,53 @@
         </div>
     }
     
+    <!-- Repository Path Section -->
+    <div class="repository-section mt-4">
+        <h5>📁 Git Repository</h5>
+        
+        <!-- Repository Path Configuration -->
+        <div class="mb-3">
+            <form asp-action="SetRepositoryPath" method="post">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="repositoryPath"
+                           placeholder="Repository path"
+                           value="@ViewBag.RepositoryPath">
+                    <button class="btn btn-outline-secondary" type="submit">Set Repository</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Git Diff Display -->
+        @if (ViewBag.GitDiff != null)
+        {
+            <div class="git-diff-section">
+                @if (ViewBag.GitDiffError)
+                {
+                    <div class="alert alert-warning">
+                        ⚠️ @ViewBag.GitDiff
+                    </div>
+                }
+                else
+                {
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <button class="btn btn-link text-white" type="button" data-bs-toggle="collapse" data-bs-target="#gitDiffCollapse">
+                                    📊 Git Changes (Click to expand/collapse)
+                                </button>
+                            </h6>
+                        </div>
+                        <div class="collapse" id="gitDiffCollapse">
+                            <div class="card-body">
+                                <pre class="git-diff-text" style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em; max-height: 300px; overflow-y: auto;">@ViewBag.GitDiff</pre>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    
     <!-- Document Management Section -->
     <div class="document-section mt-5">
         <h5>📁 Requirements Documents</h5>

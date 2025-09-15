@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AICodeReviewer.Web; // Add this to access DocumentService and AIService
+using AICodeReviewer.Web.Services; // Add this to access GitService
 
 namespace AICodeReviewer.Web.Controllers;
 
@@ -32,6 +33,15 @@ public class HomeController : Controller
         ViewBag.BranchInfo = branchInfo;
         ViewBag.IsError = isError;
         
+        // Repository path management for Git diff extraction
+        var repositoryPath = HttpContext.Session.GetString("RepositoryPath") ?? _environment.ContentRootPath;
+        ViewBag.RepositoryPath = repositoryPath;
+        
+        // Extract Git diff if repository path is set
+        var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
+        ViewBag.GitDiff = gitDiff;
+        ViewBag.GitDiffError = gitError;
+        
         // Document management
         var documentsFolder = HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
         ViewBag.DocumentsFolder = documentsFolder;
@@ -57,6 +67,20 @@ public class HomeController : Controller
     public IActionResult Privacy()
     {
         return View();
+    }
+
+    [HttpPost]
+    public IActionResult SetRepositoryPath(string repositoryPath)
+    {
+        // Validate and normalize path
+        string normalizedPath = string.IsNullOrWhiteSpace(repositoryPath)
+            ? _environment.ContentRootPath
+            : Path.IsPathRooted(repositoryPath)
+                ? repositoryPath
+                : Path.Combine(_environment.ContentRootPath, repositoryPath);
+        
+        HttpContext.Session.SetString("RepositoryPath", normalizedPath);
+        return RedirectToAction("Index");
     }
 
     [HttpPost]
@@ -90,31 +114,17 @@ public class HomeController : Controller
             var apiKey = _configuration["OpenRouter:ApiKey"];
             var model = _configuration["OpenRouter:Model"];
 
-            // Get git diff (enhanced mock data to demonstrate AI capabilities)
-            var (branchInfo, isError) = GitHelper.DetectRepository(_environment.ContentRootPath);
-            string gitDiff = isError ? @"// No git changes detected" : @"diff --git a/UserService.cs b/UserService.cs
-index 1234567..abcdefg 100644
---- a/UserService.cs
-+++ b/UserService.cs
-@@ -10,8 +10,15 @@ namespace MyApp.Services
-     public class UserService
-     {
--        public void ProcessUserData(string userInput)
-+        public async Task<string> ProcessUserDataAsync(string userInput, ILogger logger)
-         {
--            // TODO: Implement processing
-+            if (string.IsNullOrWhiteSpace(userInput))
-+                throw new ArgumentNullException(nameof(userInput));
-+
-+            if (logger == null)
-+                throw new ArgumentNullException(nameof(logger));
-+
-+            logger.LogInformation($""Processing user data: {userInput}"");
-+
-+            return await Task.FromResult($""Processed: {userInput}"");
-         }
-     }
- }";
+            // Get git diff from the actual repository
+            var repositoryPath = HttpContext.Session.GetString("RepositoryPath") ?? _environment.ContentRootPath;
+            var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
+            
+            if (gitError)
+            {
+                // Store error in session and redirect back to index
+                HttpContext.Session.SetString("AnalysisResult", "");
+                HttpContext.Session.SetString("AnalysisError", $"Git diff error: {gitDiff}");
+                return RedirectToAction("Index");
+            }
 
             // Get selected documents and load their content
             var selectedDocuments = HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
