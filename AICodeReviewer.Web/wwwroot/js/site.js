@@ -1,7 +1,54 @@
-// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
 
-// Write your JavaScript code.
+// Add these global variables at top
+let signalRConnection = null;
+let currentAnalysisId = null;
+
+// Initialize SignalR when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSignalR();
+});
+
+// Initialize SignalR connection
+function initializeSignalR() {
+    signalRConnection = new signalR.HubConnectionBuilder()
+        .withUrl("/hubs/progress")
+        .build();
+
+    signalRConnection.on("UpdateProgress", function (data) {
+        document.getElementById('progressMessage').innerText = data.status;
+        
+        if (data.result) {
+            document.getElementById('result').innerText = data.result;
+            document.getElementById('analysisResult').style.display = 'block';
+        }
+        
+        if (data.error) {
+            document.getElementById('result').innerText = '❌ Error: ' + (data.error || 'Unknown error');
+            document.getElementById('analysisResult').style.display = 'block';
+        }
+        
+        if (data.isComplete) {
+            hideProgress();
+            if (currentAnalysisId) {
+                signalRConnection.invoke("LeaveAnalysisGroup", currentAnalysisId);
+            }
+        }
+    });
+
+    signalRConnection.start().then(function () {
+        console.log("SignalR connected successfully");
+    }).catch(function (err) {
+        console.error("SignalR connection failed:", err);
+        // Fallback to polling if SignalR fails
+        startPollingFallback();
+    });
+}
+
+// Fallback polling function (keep existing pollStatus logic)
+function startPollingFallback() {
+    console.log("Using polling fallback");
+    pollStatus(currentAnalysisId); // Your existing polling function
+}
 
 // US-006A: Async analysis with progress updates
 function startAnalysis() {
@@ -46,7 +93,16 @@ function startAnalysis() {
     })
     .then(data => {
         if (data.success) {
-            pollStatus(data.analysisId);
+            currentAnalysisId = data.analysisId;
+            if (signalRConnection && signalRConnection.state === signalR.HubConnectionState.Connected) {
+                signalRConnection.invoke("JoinAnalysisGroup", currentAnalysisId)
+                    .catch(err => {
+                        console.error("Failed to join SignalR group:", err);
+                        startPollingFallback();
+                    });
+            } else {
+                startPollingFallback();
+            }
         } else {
             hideProgress();
             alert('Error starting analysis: ' + (data.error || 'Unknown error'));
@@ -69,12 +125,12 @@ function pollStatus(analysisId) {
                     clearInterval(interval);
                     hideProgress();
                     
-                    // 👇 SHOW THE RESULT CARD - This is the missing piece!
-                    document.getElementById('analysisResult').style.display = 'block'; // ← ADD THIS LINE!
+                    // SHOW THE RESULT CARD
+                    document.getElementById('analysisResult').style.display = 'block';
 
-                    // 👇 DISPLAY THE RESULT TEXT
+                    // DISPLAY THE RESULT TEXT
                     if (data.status === 'Complete') {
-                        document.getElementById('result').innerText = data.result; // ← DISPLAY IT!
+                        document.getElementById('result').innerText = data.result;
                     } else {
                         document.getElementById('result').innerText = '❌ Error: ' + (data.error || 'Unknown error');
                     }
@@ -84,6 +140,7 @@ function pollStatus(analysisId) {
             .catch(error => {
                 clearInterval(interval);
                 hideProgress();
+
                 // Show error result card
                 document.getElementById('analysisResult').style.display = 'block';
                 document.getElementById('result').innerText = '❌ Error checking status: ' + error.message;
@@ -100,7 +157,6 @@ function showProgress() {
 function hideProgress() {
     document.getElementById('progressContainer').style.display = 'none';
     document.getElementById('analysisForm').style.display = 'block';
-    // Don't hide result here - let the pollStatus function handle showing the result
 }
 
 function updateProgress(status) {

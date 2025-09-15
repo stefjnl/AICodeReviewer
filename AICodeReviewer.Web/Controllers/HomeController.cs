@@ -1,13 +1,10 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
 using AICodeReviewer.Web.Models;
-using System.Text.Json;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AICodeReviewer.Web;
 using AICodeReviewer.Web.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using System.Diagnostics;
+using Microsoft.AspNetCore.SignalR;
+using AICodeReviewer.Web.Hubs;
 
 namespace AICodeReviewer.Web.Controllers;
 
@@ -18,8 +15,9 @@ public class HomeController : Controller
     private readonly IConfiguration _configuration;
     private readonly string _defaultDocumentsPath;
     private readonly IMemoryCache _cache;
+    private readonly IHubContext<ProgressHub> _hubContext;
 
-    public HomeController(ILogger<HomeController> logger, IWebHostEnvironment environment, IConfiguration configuration, IMemoryCache cache)
+    public HomeController(ILogger<HomeController> logger, IWebHostEnvironment environment, IConfiguration configuration, IMemoryCache cache, IHubContext<ProgressHub> hubContext)
     {
         _logger = logger;
         _environment = environment;
@@ -27,6 +25,7 @@ public class HomeController : Controller
         // Documents folder is in the root of the application, not in the Web project
         _defaultDocumentsPath = Path.Combine(_environment.ContentRootPath, "..", "Documents");
         _cache = cache;
+        _hubContext = hubContext;
     }
 
     public IActionResult Index()
@@ -216,12 +215,9 @@ public class HomeController : Controller
             }
             _logger.LogInformation($"[Analysis {analysisId}] Found existing result in cache");
 
-            // Update status in cache
+            // Update status via SignalR
             result.Status = "Reading git changes...";
-            var cacheOptions1 = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(30))
-                .SetSize(1);
-            _cache.Set($"analysis_{analysisId}", result, cacheOptions1);
+            await BroadcastProgress(analysisId, "Reading git changes...");
             _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Reading git changes...'");
 
             // Get git diff
@@ -244,13 +240,10 @@ public class HomeController : Controller
             }
             _logger.LogInformation($"[Analysis {analysisId}] Git diff extracted successfully");
 
-            // Update status in cache
+            // Update status via SignalR
             _logger.LogInformation($"[Analysis {analysisId}] Starting document loading phase");
             result.Status = "Loading documents...";
-            var cacheOptions3 = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(30))
-                .SetSize(1);
-            _cache.Set($"analysis_{analysisId}", result, cacheOptions3);
+            await BroadcastProgress(analysisId, "Loading documents...");
             _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Loading documents...'");
             
             // Load selected documents
@@ -273,13 +266,10 @@ public class HomeController : Controller
             }
             _logger.LogInformation($"[Analysis {analysisId}] Document loading complete - loaded {codingStandards.Count} documents");
 
-            // Update status in cache
+            // Update status via SignalR
             _logger.LogInformation($"[Analysis {analysisId}] Starting AI analysis phase");
             result.Status = "AI analysis...";
-            var cacheOptions4 = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(30))
-                .SetSize(1);
-            _cache.Set($"analysis_{analysisId}", result, cacheOptions4);
+            await BroadcastProgress(analysisId, "AI analysis...");
             _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'AI analysis...'");
             
             // Get requirements
@@ -345,6 +335,17 @@ public class HomeController : Controller
                 RequestId = result.RequestId  // preserve if you have it
             };
 
+            // Broadcast completion via SignalR
+            if (aiError)
+            {
+                await BroadcastError(analysisId, $"AI analysis failed: {errorMessage}");
+            }
+            else
+            {
+                await BroadcastComplete(analysisId, analysis);
+            }
+
+            // Still update cache for fallback
             _cache.Set($"analysis_{analysisId}", finalResult, new MemoryCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromMinutes(30))
                 .SetSize(1));
@@ -361,10 +362,7 @@ public class HomeController : Controller
                     errorResult.Status = "Error";
                     errorResult.Error = $"Analysis error: {ex.Message}";
                     errorResult.CompletedAt = DateTime.UtcNow;
-                    var cacheOptions6 = new MemoryCacheEntryOptions()
-                        .SetSlidingExpiration(TimeSpan.FromMinutes(30))
-                        .SetSize(1);
-                    _cache.Set($"analysis_{analysisId}", errorResult, cacheOptions6);
+                    await BroadcastError(analysisId, $"Analysis error: {ex.Message}");
                     _logger.LogInformation($"[Analysis {analysisId}] Set error status due to exception: {ex.Message}");
                 }
             }
@@ -376,6 +374,64 @@ public class HomeController : Controller
         finally
         {
             _logger.LogInformation($"[Analysis {analysisId}] Background analysis task completed");
+        }
+    }
+
+    private async Task BroadcastProgress(string analysisId, string status)
+    {
+        try
+        {
+            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", new {
+                status = status,
+                result = (string?)null,
+                error = (string?)null,
+                isComplete = false
+            });
+            
+            // Keep cache for fallback
+            _cache.Set($"analysis_{analysisId}", new { status = status, isComplete = false }, new MemoryCacheEntryOptions().SetSize(1));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SignalR broadcast failed: {ex.Message}");
+        }
+    }
+
+    private async Task BroadcastComplete(string analysisId, string result)
+    {
+        try
+        {
+            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", new {
+                status = "Analysis complete",
+                result = result,
+                error = (string?)null,
+                isComplete = true
+            });
+            
+            _cache.Set($"analysis_{analysisId}", new { status = "Complete", result = result, isComplete = true }, new MemoryCacheEntryOptions().SetSize(1));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SignalR broadcast failed: {ex.Message}");
+        }
+    }
+
+    private async Task BroadcastError(string analysisId, string error)
+    {
+        try
+        {
+            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", new {
+                status = "Analysis failed",
+                result = (string?)null,
+                error = error,
+                isComplete = true
+            });
+            
+            _cache.Set($"analysis_{analysisId}", new { status = "Error", error = error, isComplete = true }, new MemoryCacheEntryOptions().SetSize(1));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SignalR broadcast failed: {ex.Message}");
         }
     }
 

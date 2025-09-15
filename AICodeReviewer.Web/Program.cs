@@ -1,3 +1,5 @@
+using AICodeReviewer.Web.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -11,6 +13,9 @@ builder.Services.AddMemoryCache(options =>
 {
     options.SizeLimit = 1000; // Max 1000 entries (prevents memory bloat)
 });
+
+// In service registration section
+builder.Services.AddSignalR();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole(); // For dev
@@ -50,5 +55,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+// After app.UseRouting()
+app.MapHub<ProgressHub>("/hubs/progress");
 
 app.Run();
