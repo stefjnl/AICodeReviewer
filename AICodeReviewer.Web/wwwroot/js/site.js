@@ -34,10 +34,22 @@ function initializeSignalR() {
                     .catch(err => console.error("Failed to leave SignalR group:", err));
             }
             
-            // Redirect to results page for detailed review
-            setTimeout(() => {
-                window.location.href = `/results/${currentAnalysisId}`;
-            }, 1000); // Small delay to show completion message
+            // Store analysis ID in session for view switching
+            if (currentAnalysisId) {
+                fetch('/Home/StoreAnalysisId', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ analysisId: currentAnalysisId })
+                }).then(() => {
+                    // Show the analysis results section with view switching buttons
+                    console.log('Analysis completed. Use the view switching buttons to choose your preferred display format.');
+                }).catch(err => console.error("Failed to store analysis ID:", err));
+            }
+            
+            // Don't automatically redirect - let user choose the view with the toggle buttons
+            console.log('Analysis complete! Use the view switching buttons above to choose between Bottom Panel and Side Panel views.');
         }
     });
 

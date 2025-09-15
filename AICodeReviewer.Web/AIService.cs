@@ -86,24 +86,48 @@ public static class AIService
     private static string BuildPrompt(string gitDiff, List<string> standards, string requirements)
     {
         var standardsText = standards?.Any() == true
-            ? string.Join("\n- ", standards)
-            : "No specific standards selected";
+            ? string.Join("\n", standards)
+            : "Follow general .NET best practices";
 
-        return $@"Please review this .NET code diff and provide feedback.
+        return $@"You are a senior .NET code reviewer. Analyze this code diff and provide specific, actionable feedback.
 
-SELECTED CODING STANDARDS:
-- {standardsText}
+            CODING STANDARDS TO ENFORCE:
+            {standardsText}
 
-REQUIREMENTS:
-{requirements ?? "No specific requirements provided"}
+            REQUIREMENTS CONTEXT:
+            {requirements ?? "No specific requirements provided"}
 
-CODE CHANGES:
-{gitDiff}
+            CODE CHANGES TO REVIEW:
+            {gitDiff}
 
-Please provide:
-1. Overall code quality assessment
-2. Any violations of the selected coding standards
-3. Suggestions for improvement
-4. Severity level (Critical/Warning/Info) for each issue";
+            RESPONSE FORMAT REQUIRED:
+            For each issue found, use this exact format:
+
+            **[SEVERITY]** [Category] - Line [number]: [Brief description]
+            Suggestion: [Specific actionable fix]
+
+            SEVERITY OPTIONS: Critical, Warning, Suggestion, Style
+            CATEGORY OPTIONS: Security, Performance, Error Handling, Style, Architecture
+
+            EXAMPLE RESPONSES:
+            **Warning** Performance - Line 45: Synchronous database call blocks thread
+            Suggestion: Replace .GetString() with .GetStringAsync() and add await
+
+            **Style** Naming - Line 12: Variable name 'repositoryPath' doesn't follow conventions  
+            Suggestion: Rename to 'repositoryPath' using camelCase for local variables
+
+            **Critical** Security - Line 67: User input not validated before database query
+            Suggestion: Add input validation and use parameterized queries
+
+            FOCUS ON:
+            - Specific line numbers and file paths when possible
+            - Concrete, actionable suggestions
+            - Violations of the provided coding standards
+            - Security, performance, and maintainability issues
+
+            AVOID:
+            - General assessments or summaries
+            - Theoretical explanations
+            - Repetitive feedback about the same pattern";
     }
 }

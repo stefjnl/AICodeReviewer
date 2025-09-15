@@ -249,20 +249,20 @@ class ResultsApp {
     createFeedbackElement(item) {
         const element = document.createElement('div');
         element.className = 'feedback-item';
-        element.dataset.severity = item.severity;
+        element.dataset.severity = item.severityString;
         element.dataset.filePath = item.filePath || '';
         element.dataset.lineNumber = item.lineNumber || '';
         
         // Enhanced HTML structure for better display
         element.innerHTML = `
             <div class="feedback-header">
-                <span class="feedback-severity severity-${item.severity.toLowerCase()}">
-                    ${item.severity}
+                <span class="feedback-severity severity-${item.severityString.toLowerCase()}">
+                    ${item.severityString}
                 </span>
                 <div class="feedback-meta">
                     ${item.filePath ? `<span class="feedback-file">${this.truncatePath(item.filePath)}</span>` : ''}
                     ${item.lineNumber ? `<span class="feedback-line">Line ${item.lineNumber}</span>` : ''}
-                    ${item.category ? `<span class="feedback-category">${item.category}</span>` : ''}
+                    ${item.categoryString ? `<span class="feedback-category">${item.categoryString}</span>` : ''}
                 </div>
             </div>
             <div class="feedback-content">
@@ -369,10 +369,10 @@ class ResultsApp {
             timestamp: new Date().toISOString(),
             summary: {
                 total: this.analysisResults.feedback.length,
-                critical: this.analysisResults.feedback.filter(f => f.severity === 'Critical').length,
-                warning: this.analysisResults.feedback.filter(f => f.severity === 'Warning').length,
-                suggestion: this.analysisResults.feedback.filter(f => f.severity === 'Suggestion').length,
-                style: this.analysisResults.feedback.filter(f => f.severity === 'Style').length
+                critical: this.analysisResults.feedback.filter(f => f.severityString === 'Critical').length,
+                warning: this.analysisResults.feedback.filter(f => f.severityString === 'Warning').length,
+                suggestion: this.analysisResults.feedback.filter(f => f.severityString === 'Suggestion').length,
+                style: this.analysisResults.feedback.filter(f => f.severityString === 'Style').length
             },
             feedback: this.analysisResults.feedback
         };

@@ -1,4 +1,5 @@
 using AICodeReviewer.Web.Hubs;
+using AICodeReviewer.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,9 @@ builder.Services.AddMemoryCache(options =>
 {
     options.SizeLimit = 1000; // Max 1000 entries (prevents memory bloat)
 });
+
+// Register custom services
+builder.Services.AddScoped<AIPromptResponseService>();
 
 // In service registration section
 builder.Services.AddSignalR();

@@ -461,6 +461,9 @@ public class HomeController : Controller
             var progressDto = new ProgressDto("Analysis complete", result, null, true);
             await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
             
+            // Store analysis ID in session for view switching
+            HttpContext.Session.SetString("AnalysisId", analysisId);
+            
             // Cache as AnalysisResult - create AnalysisResult from ProgressDto
             var cacheResult = new AnalysisResult
             {
@@ -476,6 +479,18 @@ public class HomeController : Controller
         {
             _logger.LogWarning(ex, "SignalR broadcast failed for analysis {AnalysisId}", analysisId);
         }
+    }
+
+    [HttpPost]
+    public IActionResult StoreAnalysisId([FromBody] StoreAnalysisIdRequest request)
+    {
+        if (string.IsNullOrEmpty(request?.AnalysisId))
+        {
+            return BadRequest(new { error = "Analysis ID is required" });
+        }
+        
+        HttpContext.Session.SetString("AnalysisId", request.AnalysisId);
+        return Json(new { success = true });
     }
 
     private async Task BroadcastError(string analysisId, string error)
