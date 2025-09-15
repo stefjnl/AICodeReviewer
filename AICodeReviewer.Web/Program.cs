@@ -1,7 +1,13 @@
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    // Disable antiforgery validation for AJAX endpoints
+    options.Filters.Add(new Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryTokenAttribute());
+});
+
+
 
 // Add session support for document management
 builder.Services.AddSession(options =>
@@ -13,6 +19,8 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
+app.UseCors("AllowLocalhost");
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -22,6 +30,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowLocalhost"); // Add CORS middleware BEFORE routing
 app.UseRouting();
 app.UseSession(); // Enable session middleware
 

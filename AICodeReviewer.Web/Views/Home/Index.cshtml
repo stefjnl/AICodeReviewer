@@ -133,14 +133,24 @@
     <div class="analysis-section mt-5">
         <h5>🤖 AI Code Analysis</h5>
         
-        <!-- Run Analysis Button -->
+        <!-- Progress Container -->
+        <div id="progressContainer" style="display: none;" class="mt-4">
+            <div class="alert alert-info">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                    <span id="progressMessage">Starting analysis...</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Run Analysis Form -->
         @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
         {
-            <form asp-action="RunAnalysis" method="post">
-                <button type="submit" class="btn btn-success btn-lg">
+            <div id="analysisForm">
+                <button type="button" class="btn btn-success btn-lg" onclick="startAnalysis()">
                     🚀 Run AI Analysis
                 </button>
-            </form>
+            </div>
         }
         else
         {

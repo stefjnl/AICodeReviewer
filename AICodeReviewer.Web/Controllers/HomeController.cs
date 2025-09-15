@@ -105,31 +105,87 @@ public class HomeController : Controller
         return RedirectToAction("Index");
     }
 
+
     [HttpPost]
-    public async Task<IActionResult> RunAnalysis()
+    [IgnoreAntiforgeryToken]
+    public IActionResult RunAnalysis([FromBody] RunAnalysisRequest request)
     {
         try
         {
-            // Get configuration values
+            // Use request data or fall back to session data
+            var repositoryPath = request.RepositoryPath ?? HttpContext.Session.GetString("RepositoryPath") ?? _environment.ContentRootPath;
+            var selectedDocuments = request.SelectedDocuments ?? HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
+            var documentsFolder = request.DocumentsFolder ?? HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
             var apiKey = _configuration["OpenRouter:ApiKey"];
             var model = _configuration["OpenRouter:Model"];
 
-            // Get git diff from the actual repository
-            var repositoryPath = HttpContext.Session.GetString("RepositoryPath") ?? _environment.ContentRootPath;
-            var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
-            
-            if (gitError)
+            // Validate required fields
+            if (string.IsNullOrEmpty(apiKey))
             {
-                // Store error in session and redirect back to index
-                HttpContext.Session.SetString("AnalysisResult", "");
-                HttpContext.Session.SetString("AnalysisError", $"Git diff error: {gitDiff}");
-                return RedirectToAction("Index");
+                return Json(new { success = false, error = "API key not configured" });
             }
 
-            // Get selected documents and load their content
-            var selectedDocuments = HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
-            var documentsFolder = HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
+            if (selectedDocuments.Count == 0)
+            {
+                return Json(new { success = false, error = "No coding standards selected" });
+            }
+
+            // Set initial status and clear previous results
+            HttpContext.Session.SetString("AnalysisStatus", "Starting");
+            HttpContext.Session.Remove("AnalysisResult");
+            HttpContext.Session.Remove("AnalysisError");
+
+            // Update session with request data
+            if (!string.IsNullOrEmpty(request.RepositoryPath))
+                HttpContext.Session.SetString("RepositoryPath", request.RepositoryPath);
+            if (request.SelectedDocuments != null && request.SelectedDocuments.Count > 0)
+                HttpContext.Session.SetObject("SelectedDocuments", request.SelectedDocuments);
+            if (!string.IsNullOrEmpty(request.DocumentsFolder))
+                HttpContext.Session.SetString("DocumentsFolder", request.DocumentsFolder);
+
+            // Start background analysis
+            _ = Task.Run(async () => await RunBackgroundAnalysis(repositoryPath, selectedDocuments, apiKey, model));
+
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, error = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public IActionResult GetAnalysisStatus()
+    {
+        var status = HttpContext.Session.GetString("AnalysisStatus") ?? "NotStarted";
+        var result = HttpContext.Session.GetString("AnalysisResult");
+        var error = HttpContext.Session.GetString("AnalysisError");
+        var isComplete = status == "Complete" || status == "Error";
+
+        return Json(new { status, result, error, isComplete });
+    }
+
+    private async Task RunBackgroundAnalysis(string repositoryPath, List<string> selectedDocuments, string apiKey, string model)
+    {
+        try
+        {
+            // Update status
+            HttpContext.Session.SetString("AnalysisStatus", "Reading git changes...");
             
+            // Get git diff
+            var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
+            if (gitError)
+            {
+                HttpContext.Session.SetString("AnalysisStatus", "Error");
+                HttpContext.Session.SetString("AnalysisError", $"Git diff error: {gitDiff}");
+                return;
+            }
+
+            // Update status
+            HttpContext.Session.SetString("AnalysisStatus", "Loading documents...");
+            
+            // Load selected documents
+            var documentsFolder = HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
             var codingStandards = new List<string>();
             foreach (var docName in selectedDocuments)
             {
@@ -138,23 +194,31 @@ public class HomeController : Controller
                     codingStandards.Add(content);
             }
 
-            // Get requirements (can be enhanced later)
+            // Update status
+            HttpContext.Session.SetString("AnalysisStatus", "AI analysis...");
+            
+            // Get requirements
             string requirements = "Follow .NET best practices and coding standards";
 
             // Call AI service
             var (analysis, aiError) = await AIService.AnalyzeCodeAsync(gitDiff, codingStandards, requirements, apiKey, model);
             
-            // Store results in session
-            HttpContext.Session.SetString("AnalysisResult", analysis);
-            HttpContext.Session.SetString("AnalysisError", aiError ? "Analysis failed" : "");
-            
-            return RedirectToAction("Index");
+            if (aiError)
+            {
+                HttpContext.Session.SetString("AnalysisStatus", "Error");
+                HttpContext.Session.SetString("AnalysisError", "AI analysis failed");
+            }
+            else
+            {
+                // Store final result
+                HttpContext.Session.SetString("AnalysisResult", analysis);
+                HttpContext.Session.SetString("AnalysisStatus", "Complete");
+            }
         }
         catch (Exception ex)
         {
-            HttpContext.Session.SetString("AnalysisResult", "");
+            HttpContext.Session.SetString("AnalysisStatus", "Error");
             HttpContext.Session.SetString("AnalysisError", $"Analysis error: {ex.Message}");
-            return RedirectToAction("Index");
         }
     }
 
