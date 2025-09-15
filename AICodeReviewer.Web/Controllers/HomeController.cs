@@ -170,16 +170,136 @@ public class HomeController : Controller
             // Validate based on analysis type
             if (analysisType == "singlefile")
             {
+                _logger.LogInformation($"[RunAnalysis] Single file analysis requested with filePath: {filePath}");
+                
                 // Validate file path for single file analysis
                 if (string.IsNullOrEmpty(filePath))
                 {
+                    _logger.LogWarning($"[RunAnalysis] File path is missing for single file analysis");
                     return Json(new { success = false, error = "File path is required for single file analysis" });
                 }
 
-                // Validate file exists and is readable
+                _logger.LogInformation($"[RunAnalysis] Validating file existence: {filePath}");
+                _logger.LogInformation($"[RunAnalysis] File exists check: {System.IO.File.Exists(filePath)}");
+                _logger.LogInformation($"[RunAnalysis] Current working directory: {Environment.CurrentDirectory}");
+                _logger.LogInformation($"[RunAnalysis] Content root path: {_environment.ContentRootPath}");
+                _logger.LogInformation($"[RunAnalysis] Repository path: {repositoryPath}");
+                
+                var originalFilePath = filePath;
+                
+                // Check if it's just a filename (no path)
+                if (!filePath.Contains(Path.DirectorySeparatorChar) && !filePath.Contains(Path.AltDirectorySeparatorChar))
+                {
+                    _logger.LogWarning($"[RunAnalysis] File path appears to be just a filename: {filePath}");
+                    
+                    // Try to find the file in common locations
+                    var searchPaths = new List<string>();
+                    
+                    // Add repository path and its subdirectories
+                    if (Directory.Exists(repositoryPath))
+                    {
+                        searchPaths.Add(repositoryPath);
+                        try
+                        {
+                            // Add first level of subdirectories
+                            var subDirs = Directory.GetDirectories(repositoryPath, "*", SearchOption.TopDirectoryOnly);
+                            searchPaths.AddRange(subDirs);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning($"[RunAnalysis] Could not enumerate subdirectories: {ex.Message}");
+                        }
+                    }
+                    
+                    // Add other common paths
+                    searchPaths.Add(_environment.ContentRootPath);
+                    searchPaths.Add(Directory.GetCurrentDirectory());
+                    
+                    // Search for the file
+                    bool fileFound = false;
+                    foreach (var searchPath in searchPaths)
+                    {
+                        if (Directory.Exists(searchPath))
+                        {
+                            try
+                            {
+                                var files = Directory.GetFiles(searchPath, filePath, SearchOption.TopDirectoryOnly);
+                                if (files.Length > 0)
+                                {
+                                    filePath = files[0];
+                                    fileFound = true;
+                                    _logger.LogInformation($"[RunAnalysis] File found at: {filePath}");
+                                    break;
+                                }
+                                
+                                // Also try with common extensions if not provided
+                                if (!Path.HasExtension(filePath))
+                                {
+                                    foreach (var ext in new[] { ".cs", ".js", ".py" })
+                                    {
+                                        var filesWithExt = Directory.GetFiles(searchPath, filePath + ext, SearchOption.TopDirectoryOnly);
+                                        if (filesWithExt.Length > 0)
+                                        {
+                                            filePath = filesWithExt[0];
+                                            fileFound = true;
+                                            _logger.LogInformation($"[RunAnalysis] File found with extension at: {filePath}");
+                                            break;
+                                        }
+                                    }
+                                    if (fileFound) break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogDebug($"[RunAnalysis] Error searching in {searchPath}: {ex.Message}");
+                            }
+                        }
+                    }
+                    
+                    if (!fileFound)
+                    {
+                        _logger.LogWarning($"[RunAnalysis] File not found in search paths. Suggesting user enters full path.");
+                        var errorMsg = $"File '{originalFilePath}' not found. ";
+                        errorMsg += "Please provide the full file path (e.g., C:\\path\\to\\file.py or /path/to/file.py) or ";
+                        errorMsg += "ensure the file is in the repository directory: " + repositoryPath;
+                        return Json(new { success = false, error = errorMsg });
+                    }
+                }
+                else
+                {
+                    // User provided a path, check if it's relative and resolve it
+                    if (!Path.IsPathRooted(filePath))
+                    {
+                        _logger.LogInformation($"[RunAnalysis] Relative path detected, resolving: {filePath}");
+                        
+                        // Try resolving relative to repository path first
+                        var relativePath = Path.Combine(repositoryPath, filePath);
+                        if (System.IO.File.Exists(relativePath))
+                        {
+                            filePath = relativePath;
+                            _logger.LogInformation($"[RunAnalysis] Resolved relative path to: {filePath}");
+                        }
+                        else
+                        {
+                            // Try relative to content root
+                            var contentRelativePath = Path.Combine(_environment.ContentRootPath, filePath);
+                            if (System.IO.File.Exists(contentRelativePath))
+                            {
+                                filePath = contentRelativePath;
+                                _logger.LogInformation($"[RunAnalysis] Resolved relative to content root: {filePath}");
+                            }
+                        }
+                    }
+                }
+
+                // Final validation - check if file exists and is readable
                 if (!System.IO.File.Exists(filePath))
                 {
-                    return Json(new { success = false, error = $"File not found: {filePath}" });
+                    _logger.LogError($"[RunAnalysis] File not found after all resolution attempts: {filePath}");
+                    var finalError = $"File not found: {originalFilePath}. ";
+                    finalError += "Please verify the file path is correct and the file exists. ";
+                    finalError += "If using a relative path, ensure it's relative to the repository root: " + repositoryPath;
+                    return Json(new { success = false, error = finalError });
                 }
 
                 // Validate file extension
@@ -187,8 +307,10 @@ public class HomeController : Controller
                 var extension = Path.GetExtension(filePath).ToLower();
                 if (!allowedExtensions.Contains(extension))
                 {
-                    return Json(new { success = false, error = $"Unsupported file type. Allowed extensions: {string.Join(", ", allowedExtensions)}" });
+                    return Json(new { success = false, error = $"Unsupported file type '{extension}'. Allowed extensions: {string.Join(", ", allowedExtensions)}" });
                 }
+                
+                _logger.LogInformation($"[RunAnalysis] File validation passed for: {filePath}");
             }
             else
             {
@@ -671,6 +793,184 @@ public class HomeController : Controller
         {
             _logger.LogError(ex, $"Error validating commit {request.CommitId}");
             return Json(new { success = false, error = $"Validation error: {ex.Message}" });
+        }
+    }
+
+    [HttpPost]
+    public IActionResult BrowseDirectory([FromBody] DirectoryBrowseRequest request)
+    {
+        try
+        {
+            string currentPath;
+            
+            // If no path provided, start with drives on Windows or root on Unix
+            if (string.IsNullOrWhiteSpace(request?.CurrentPath))
+            {
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                {
+                    // On Windows, start with drive selection
+                    var drives = DriveInfo.GetDrives()
+                        .Where(d => d.IsReady)
+                        .Select(d => new DirectoryItem
+                        {
+                            Name = d.Name.TrimEnd('\\'),
+                            FullPath = d.RootDirectory.FullName,
+                            IsDirectory = true,
+                            LastModified = DateTime.Now,
+                            Size = 0
+                        }).ToList();
+
+                    return Json(new DirectoryBrowseResponse
+                    {
+                        Directories = drives,
+                        Files = new List<DirectoryItem>(),
+                        CurrentPath = "Computer",
+                        ParentPath = null,
+                        IsGitRepository = false
+                    });
+                }
+                else
+                {
+                    // On Unix systems, start with root
+                    currentPath = "/";
+                }
+            }
+            else
+            {
+                currentPath = request.CurrentPath;
+            }
+
+            // Validate the path exists
+            if (!Directory.Exists(currentPath))
+            {
+                return Json(new DirectoryBrowseResponse
+                {
+                    Directories = new List<DirectoryItem>(),
+                    Files = new List<DirectoryItem>(),
+                    CurrentPath = currentPath,
+                    ParentPath = null,
+                    IsGitRepository = false,
+                    Error = "Directory not found"
+                });
+            }
+
+            // Get parent directory
+            string? parentPath = null;
+            try
+            {
+                var parent = Directory.GetParent(currentPath);
+                parentPath = parent?.FullName;
+                
+                // Special case for root directory on Unix
+                if (Environment.OSVersion.Platform != PlatformID.Win32NT && currentPath == "/")
+                {
+                    parentPath = null;
+                }
+                
+                // Special case for drive root on Windows
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT &&
+                    (currentPath.Length == 3 && currentPath.EndsWith(":\\")))
+                {
+                    parentPath = null; // Go back to drive selection
+                }
+            }
+            catch
+            {
+                parentPath = null;
+            }
+
+            // Get directories and files
+            var directories = new List<DirectoryItem>();
+            var files = new List<DirectoryItem>();
+
+            try
+            {
+                // Get directories
+                var dirInfo = new DirectoryInfo(currentPath);
+                foreach (var dir in dirInfo.GetDirectories())
+                {
+                    try
+                    {
+                        bool isGitRepo = Directory.Exists(Path.Combine(dir.FullName, ".git"));
+                        directories.Add(new DirectoryItem
+                        {
+                            Name = dir.Name,
+                            FullPath = dir.FullName,
+                            IsDirectory = true,
+                            IsGitRepository = isGitRepo,
+                            LastModified = dir.LastWriteTime,
+                            Size = 0
+                        });
+                    }
+                    catch
+                    {
+                        // Skip directories we can't access
+                        continue;
+                    }
+                }
+
+                // Get files (only show relevant types)
+                var allowedExtensions = new[] { ".cs", ".js", ".py", ".json", ".xml", ".config", ".md", ".txt", ".yml", ".yaml" };
+                foreach (var file in dirInfo.GetFiles())
+                {
+                    try
+                    {
+                        if (allowedExtensions.Contains(file.Extension.ToLower()))
+                        {
+                            files.Add(new DirectoryItem
+                            {
+                                Name = file.Name,
+                                FullPath = file.FullName,
+                                IsDirectory = false,
+                                IsGitRepository = false,
+                                LastModified = file.LastWriteTime,
+                                Size = file.Length
+                            });
+                        }
+                    }
+                    catch
+                    {
+                        // Skip files we can't access
+                        continue;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new DirectoryBrowseResponse
+                {
+                    Directories = new List<DirectoryItem>(),
+                    Files = new List<DirectoryItem>(),
+                    CurrentPath = currentPath,
+                    ParentPath = parentPath,
+                    IsGitRepository = false,
+                    Error = $"Error accessing directory: {ex.Message}"
+                });
+            }
+
+            // Check if current directory is a git repository
+            bool isCurrentGitRepo = Directory.Exists(Path.Combine(currentPath, ".git"));
+
+            return Json(new DirectoryBrowseResponse
+            {
+                Directories = directories.OrderBy(d => d.Name).ToList(),
+                Files = files.OrderBy(f => f.Name).ToList(),
+                CurrentPath = currentPath,
+                ParentPath = parentPath,
+                IsGitRepository = isCurrentGitRepo
+            });
+        }
+        catch (Exception ex)
+        {
+            return Json(new DirectoryBrowseResponse
+            {
+                Directories = new List<DirectoryItem>(),
+                Files = new List<DirectoryItem>(),
+                CurrentPath = request?.CurrentPath ?? string.Empty,
+                ParentPath = null,
+                IsGitRepository = false,
+                Error = $"Unexpected error: {ex.Message}"
+            });
         }
     }
 

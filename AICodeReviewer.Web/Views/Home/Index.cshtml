@@ -43,119 +43,8 @@
         </div>
     }
     
-    <!-- Repository Path Section -->
-    <div class="repository-section mt-4">
-        <h5>📁 Git Repository</h5>
-        
-        <!-- Repository Path Configuration -->
-        <div class="mb-3">
-            <form asp-action="SetRepositoryPath" method="post">
-                <div class="input-group">
-                    <input type="text" class="form-control" name="repositoryPath"
-                           placeholder="Repository path"
-                           value="@ViewBag.RepositoryPath">
-                    <button class="btn btn-outline-secondary" type="submit">Set Repository</button>
-                </div>
-            </form>
-        </div>
-        
-        <!-- Analysis Type Selection -->
-        <div class="analysis-type-section mt-3">
-            <h6>🔍 Analysis Type</h6>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
-                <label class="form-check-label" for="uncommittedChanges">
-                    Uncommitted Changes
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
-                <label class="form-check-label" for="specificCommit">
-                    Specific Commit
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
-                <label class="form-check-label" for="singleFile">
-                    Single File
-                </label>
-            </div>
-            <div class="mt-2" id="commitIdContainer" style="display: none;">
-                <div class="input-group">
-                    <input type="text" class="form-control" id="commitId" name="commitId"
-                           placeholder="Enter commit ID (full or partial hash)">
-                    <button class="btn btn-outline-secondary" type="button" id="validateCommit">Validate</button>
-                </div>
-                <div id="commitValidationResult" class="form-text"></div>
-            </div>
-            <div class="mt-2" id="filePickerContainer" style="display: none;">
-                <div class="input-group">
-                    <input type="text" class="form-control" id="filePath" name="filePath"
-                           placeholder="Enter file path (.cs, .js, .py files) or drag & drop a file here"
-                           style="transition: background-color 0.3s, border-color 0.3s;">
-                    <button class="btn btn-outline-secondary" type="button" id="browseFile">Browse</button>
-                    <input type="file" id="fileInput" accept=".cs,.js,.py" style="display: none;">
-                </div>
-                <div id="fileValidationResult" class="form-text"></div>
-                <small class="text-muted">Supported file types: .cs (C#), .js (JavaScript), .py (Python)</small>
-            </div>
-        </div>
-        
-        <!-- Git Diff Display -->
-        <div id="gitDiffSection" class="git-diff-section">
-            @if (ViewBag.GitDiff != null)
-            {
-                @if (ViewBag.GitDiffError)
-                {
-                    <div class="alert alert-warning">
-                        ⚠️ @ViewBag.GitDiff
-                    </div>
-                }
-                else
-                {
-                    <div class="card">
-                        <div class="card-header bg-info text-white">
-                            <h6 class="mb-0">
-                                <button class="btn btn-link text-white" type="button" data-bs-toggle="collapse" data-bs-target="#gitDiffCollapse">
-                                    📊 Git Changes (Click to expand/collapse)
-                                </button>
-                            </h6>
-                        </div>
-                        <div class="collapse" id="gitDiffCollapse">
-                            <div class="card-body">
-                                <pre class="git-diff-text" style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em; max-height: 300px; overflow-y: auto;">@ViewBag.GitDiff</pre>
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-        
-        <!-- Commit Analysis Info (shown when specific commit is selected) -->
-        <div id="commitAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
-            <div class="d-flex align-items-center">
-                <div class="me-2">🔍</div>
-                <div>
-                    <strong>Commit Analysis Mode</strong><br>
-                    <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Single File Analysis Info (shown when single file is selected) -->
-        <div id="singleFileAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
-            <div class="d-flex align-items-center">
-                <div class="me-2">📄</div>
-                <div>
-                    <strong>Single File Analysis Mode</strong><br>
-                    <small>Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</small>
-                </div>
-            </div>
-        </div>
-    </div>
-    
     <!-- Document Management Section -->
-    <div class="document-section mt-5">
+    <div class="document-section mt-4">
         <h5>📁 Requirements Documents</h5>
         
         <!-- Folder Configuration -->
@@ -214,7 +103,7 @@
     </div>
     
     <!-- Language Selection Section -->
-    <div class="language-section mt-5">
+    <div class="language-section mt-4">
         <h5>🐍 Programming Language</h5>
         <div class="mb-3">
             <label for="languageSelect" class="form-label">Select the programming language for analysis:</label>
@@ -222,6 +111,171 @@
                 <option value="NET" selected>.NET</option>
                 <option value="Python">Python</option>
             </select>
+        </div>
+    </div>
+    
+    <!-- Repository Path Section -->
+    <div class="repository-section mt-4">
+        <h5>📁 Git Repository</h5>
+        
+        <!-- Repository Path Configuration -->
+        <div class="mb-3">
+            <form asp-action="SetRepositoryPath" method="post">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="repositoryPath"
+                           placeholder="Repository path"
+                           value="@ViewBag.RepositoryPath"
+                           id="repositoryPathInput">
+                    <button class="btn btn-outline-secondary" type="button" onclick="openDirectoryBrowser()">
+                        📁 Browse
+                    </button>
+                    <button class="btn btn-outline-primary" type="submit">Set Repository</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Directory Browser Modal -->
+        <div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">📁 Select Repository Directory</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="currentDirectoryPath" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="navigateToParent()">
+                                    ⬆️ Up
+                                </button>
+                                <button class="btn btn-outline-primary" type="button" onclick="selectCurrentDirectory()">
+                                    ✅ Select This Folder
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="directory-browser-container" style="max-height: 400px; overflow-y: auto;">
+                            <div id="directoryBrowserLoading" class="text-center p-4" style="display: none;">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading directories...</p>
+                            </div>
+                            
+                            <div id="directoryBrowserContent">
+                                <!-- Directory content will be loaded here -->
+                            </div>
+                            
+                            <div id="directoryBrowserError" class="alert alert-danger" style="display: none;">
+                                <!-- Error messages will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="selectCurrentDirectory()">Select Folder</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Analysis Type Selection -->
+        <div class="analysis-type-section mt-3">
+            <h6>🔍 Analysis Type</h6>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
+                <label class="form-check-label" for="uncommittedChanges">
+                    Uncommitted Changes
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
+                <label class="form-check-label" for="specificCommit">
+                    Specific Commit
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
+                <label class="form-check-label" for="singleFile">
+                    Single File
+                </label>
+            </div>
+            <div class="mt-2" id="commitIdContainer" style="display: none;">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="commitId" name="commitId"
+                           placeholder="Enter commit ID (full or partial hash)">
+                    <button class="btn btn-outline-secondary" type="button" id="validateCommit">Validate</button>
+                </div>
+                <div id="commitValidationResult" class="form-text"></div>
+            </div>
+            <div class="mt-2" id="filePickerContainer" style="display: none;">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="filePath" name="filePath"
+                           placeholder="Enter full file path (e.g., C:\path\to\file.py or /path/to/file.py)"
+                           style="transition: background-color 0.3s, border-color 0.3s;">
+                    <button class="btn btn-outline-secondary" type="button" id="browseFile">Browse</button>
+                    <input type="file" id="fileInput" accept=".cs,.js,.py" style="display: none;">
+                </div>
+                <div id="fileValidationResult" class="form-text"></div>
+                <small class="text-muted">
+                    <strong>Note:</strong> Due to browser security, file browsing only provides the filename.
+                    Please enter the <strong>full file path</strong> manually or use the repository-relative path.
+                    Supported types: .cs (C#), .js (JavaScript), .py (Python)
+                </small>
+            </div>
+        </div>
+        
+        <!-- Git Diff Display -->
+        <div id="gitDiffSection" class="git-diff-section">
+            @if (ViewBag.GitDiff != null)
+            {
+                @if (ViewBag.GitDiffError)
+                {
+                    <div class="alert alert-warning">
+                        ⚠️ @ViewBag.GitDiff
+                    </div>
+                }
+                else
+                {
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <button class="btn btn-link text-white" type="button" data-bs-toggle="collapse" data-bs-target="#gitDiffCollapse">
+                                    📊 Git Changes (Click to expand/collapse)
+                                </button>
+                            </h6>
+                        </div>
+                        <div class="collapse" id="gitDiffCollapse">
+                            <div class="card-body">
+                                <pre class="git-diff-text" style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em; max-height: 300px; overflow-y: auto;">@ViewBag.GitDiff</pre>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        
+        <!-- Commit Analysis Info (shown when specific commit is selected) -->
+        <div id="commitAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
+            <div class="d-flex align-items-center">
+                <div class="me-2">🔍</div>
+                <div>
+                    <strong>Commit Analysis Mode</strong><br>
+                    <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Single File Analysis Info (shown when single file is selected) -->
+        <div id="singleFileAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
+            <div class="d-flex align-items-center">
+                <div class="me-2">📄</div>
+                <div>
+                    <strong>Single File Analysis Mode</strong><br>
+                    <small>Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</small>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -636,21 +690,25 @@
         document.getElementById('fileInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
-                // Get the full path if available, otherwise use the name
-                const filePath = file.webkitRelativePath || file.name || file.fileName;
-                filePathInput.value = filePath;
+                // Browsers don't provide full path for security reasons
+                const fileNameOnly = file.name;
                 
-                // Validate the file
-                const isValid = validateFilePath(filePath);
+                // Clear the input and show a message to user
+                filePathInput.value = '';
                 
                 // Store the file object for potential future use
                 window.selectedFile = file;
                 
-                // Provide feedback about the selected file
+                // Provide feedback about the selected file and instructions
                 const validationResult = document.getElementById('fileValidationResult');
-                if (isValid) {
-                    validationResult.innerHTML = '<span class="text-success">✓ File selected: ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)</span>';
-                }
+                validationResult.innerHTML = '<span class="text-info">📁 File selected: ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)</span><br>' +
+                    '<span class="text-warning">⚠️ Please enter the full file path above (browsers don\'t provide full paths for security)</span>';
+                
+                // Focus on the file path input to encourage manual entry
+                filePathInput.focus();
+                
+                console.log('[DEBUG] File selected via browser:', fileNameOnly);
+                console.log('[DEBUG] User needs to manually enter full path');
             }
         });
 
@@ -675,12 +733,24 @@
             const files = event.dataTransfer.files;
             if (files.length > 0) {
                 const file = files[0];
-                const filePath = file.webkitRelativePath || file.name;
-                this.value = filePath;
+                const fileNameOnly = file.name;
                 
-                // Trigger the file input change event
-                document.getElementById('fileInput').files = files;
-                document.getElementById('fileInput').dispatchEvent(new Event('change'));
+                // Clear the input and show a message to user
+                this.value = '';
+                
+                // Store the file object for potential future use
+                window.selectedFile = file;
+                
+                // Provide feedback about the selected file and instructions
+                const validationResult = document.getElementById('fileValidationResult');
+                validationResult.innerHTML = '<span class="text-info">📁 File dropped: ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)</span><br>' +
+                    '<span class="text-warning">⚠️ Please enter the full file path above (drag & drop only provides filename)</span>';
+                
+                // Focus on the file path input to encourage manual entry
+                this.focus();
+                
+                console.log('[DEBUG] File dropped via drag & drop:', fileNameOnly);
+                console.log('[DEBUG] User needs to manually enter full path');
             }
         });
     });

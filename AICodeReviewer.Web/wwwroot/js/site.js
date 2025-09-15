@@ -139,14 +139,20 @@ function startAnalysis() {
     // For single file analysis, we need to provide the full path
     let fullFilePath = filePath;
     if (analysisType === 'singlefile') {
+        console.log('[DEBUG] Initial filePath from input:', filePath);
+        console.log('[DEBUG] window.selectedFile:', window.selectedFile);
+        
         if (window.selectedFile) {
             // Use the file object properties
             fullFilePath = window.selectedFile.name;
             
             // Note: For security reasons, browsers don't provide full path access
             // The server will need to handle relative paths or the user needs to manually enter the full path
-            console.log('Selected file:', window.selectedFile.name, 'Size:', window.selectedFile.size, 'Type:', window.selectedFile.type);
+            console.log('[DEBUG] Selected file:', window.selectedFile.name, 'Size:', window.selectedFile.size, 'Type:', window.selectedFile.type);
+            console.log('[DEBUG] Browser-only filename (no full path):', window.selectedFile.name);
         }
+        
+        console.log('[DEBUG] Final fullFilePath before validation:', fullFilePath);
         
         // Validate that we have a reasonable file path
         if (!fullFilePath || fullFilePath === '') {
@@ -163,6 +169,8 @@ function startAnalysis() {
             hideProgress();
             return;
         }
+        
+        console.log('[DEBUG] File validation passed, extension:', extension);
     }
 
     const formData = {
@@ -269,3 +277,247 @@ function updateProgress(status) {
     document.getElementById('progressMessage').textContent = status || 'Processing...';
     document.getElementById('status').textContent = status || 'Processing...';
 }
+
+// Directory Browser Functions
+let currentBrowsePath = '';
+
+function openDirectoryBrowser() {
+    const modal = new bootstrap.Modal(document.getElementById('directoryBrowserModal'));
+    modal.show();
+    
+    // Start browsing from current repository path or default
+    const currentPath = document.getElementById('repositoryPathInput').value || '';
+    browseDirectory(currentPath);
+}
+
+function browseDirectory(path) {
+    const loadingDiv = document.getElementById('directoryBrowserLoading');
+    const contentDiv = document.getElementById('directoryBrowserContent');
+    const errorDiv = document.getElementById('directoryBrowserError');
+    
+    // Show loading state
+    loadingDiv.style.display = 'block';
+    contentDiv.innerHTML = '';
+    errorDiv.style.display = 'none';
+    
+    // Make API call to browse directory
+    fetch('/Home/BrowseDirectory', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ currentPath: path })
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadingDiv.style.display = 'none';
+        
+        if (data.error) {
+            errorDiv.textContent = data.error;
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        // Update current path display
+        currentBrowsePath = data.currentPath;
+        document.getElementById('currentDirectoryPath').value = data.currentPath;
+        
+        // Render directory contents
+        renderDirectoryContents(data);
+    })
+    .catch(error => {
+        loadingDiv.style.display = 'none';
+        errorDiv.textContent = 'Error browsing directory: ' + error.message;
+        errorDiv.style.display = 'block';
+    });
+}
+
+function renderDirectoryContents(data) {
+    const contentDiv = document.getElementById('directoryBrowserContent');
+    let html = '';
+    
+    // Add parent directory navigation (if not at root)
+    if (data.parentPath !== null) {
+        html += `
+            <div class="directory-item" onclick="browseDirectory('${escapeHtml(data.parentPath)}')">
+                <div class="d-flex align-items-center p-2 hover-bg-light cursor-pointer">
+                    <span class="me-2">⬆️</span>
+                    <span><em>.. (Parent Directory)</em></span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Add directories
+    if (data.directories && data.directories.length > 0) {
+        html += '<div class="directories-section">';
+        data.directories.forEach(dir => {
+            const icon = dir.isGitRepository ? '📁🌿' : '📁';
+            const gitBadge = dir.isGitRepository ? '<span class="badge bg-success ms-2">Git</span>' : '';
+            
+            html += `
+                <div class="directory-item" onclick="browseDirectory('${escapeHtml(dir.fullPath)}')">
+                    <div class="d-flex align-items-center p-2 hover-bg-light cursor-pointer">
+                        <span class="me-2">${icon}</span>
+                        <span>${escapeHtml(dir.name)}${gitBadge}</span>
+                        <small class="text-muted ms-auto">${formatDate(dir.lastModified)}</small>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    // Add files
+    if (data.files && data.files.length > 0) {
+        html += '<div class="files-section mt-3">';
+        html += '<h6 class="text-muted mb-2">Files</h6>';
+        data.files.forEach(file => {
+            const icon = getFileIcon(file.name);
+            const sizeText = formatFileSize(file.size);
+            
+            html += `
+                <div class="file-item">
+                    <div class="d-flex align-items-center p-2 text-muted">
+                        <span class="me-2">${icon}</span>
+                        <span>${escapeHtml(file.name)}</span>
+                        <small class="text-muted ms-auto">${sizeText} • ${formatDate(file.lastModified)}</small>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    // Add empty state
+    if ((!data.directories || data.directories.length === 0) &&
+        (!data.files || data.files.length === 0)) {
+        html += `
+            <div class="text-center text-muted p-4">
+                <p>This directory is empty</p>
+            </div>
+        `;
+    }
+    
+    // Highlight if current directory is a git repository
+    if (data.isGitRepository) {
+        html = `
+            <div class="alert alert-success mb-3">
+                <strong>🌿 Git Repository Detected!</strong> This directory contains a .git folder.
+            </div>
+        ` + html;
+    }
+    
+    contentDiv.innerHTML = html;
+    
+    // Add some CSS for hover effects
+    const style = document.createElement('style');
+    style.textContent = `
+        .hover-bg-light:hover {
+            background-color: #f8f9fa;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .directory-item, .file-item {
+            border-bottom: 1px solid #e9ecef;
+        }
+        .directory-item:last-child, .file-item:last-child {
+            border-bottom: none;
+        }
+    `;
+    if (!document.getElementById('directory-browser-styles')) {
+        style.id = 'directory-browser-styles';
+        document.head.appendChild(style);
+    }
+}
+
+function navigateToParent() {
+    if (currentBrowsePath) {
+        browseDirectory(currentBrowsePath); // This will handle parent navigation
+    }
+}
+
+function selectCurrentDirectory() {
+    if (currentBrowsePath) {
+        document.getElementById('repositoryPathInput').value = currentBrowsePath;
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('directoryBrowserModal'));
+        modal.hide();
+        
+        console.log('Selected repository path:', currentBrowsePath);
+    }
+}
+
+function getFileIcon(filename) {
+    const ext = filename.toLowerCase().split('.').pop();
+    const iconMap = {
+        'cs': '📝',
+        'js': '📜',
+        'py': '🐍',
+        'json': '📋',
+        'xml': '📄',
+        'config': '⚙️',
+        'md': '📖',
+        'txt': '📃',
+        'yml': '🔧',
+        'yaml': '🔧'
+    };
+    return iconMap[ext] || '📄';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+        return 'Today';
+    } else if (diffDays === 1) {
+        return 'Yesterday';
+    } else if (diffDays < 7) {
+        return `${diffDays} days ago`;
+    } else {
+        return date.toLocaleDateString();
+    }
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&',
+        '<': '<',
+        '>': '>',
+        '"': '"',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Initialize directory browser on modal show
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('directoryBrowserModal');
+    if (modal) {
+        modal.addEventListener('shown.bs.modal', function() {
+            // Focus on the current path input
+            document.getElementById('currentDirectoryPath').focus();
+        });
+        
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Clean up any temporary styles
+            const style = document.getElementById('directory-browser-styles');
+            if (style) {
+                style.remove();
+            }
+        });
+    }
+});
