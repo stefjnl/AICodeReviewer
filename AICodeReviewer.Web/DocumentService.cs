@@ -48,6 +48,24 @@ public static class DocumentService
         }
     }
     
+    public static async Task<(string content, bool isError)> LoadDocumentAsync(string fileName, string folderPath)
+    {
+        var fullPath = Path.Combine(folderPath, fileName + ".md");
+        
+        try
+        {
+            if (!File.Exists(fullPath))
+                return ($"Document not found: {fileName}", true);
+                
+            var content = await File.ReadAllTextAsync(fullPath);
+            return (content, false);
+        }
+        catch (Exception ex)
+        {
+            return ($"Error reading document: {ex.Message}", true);
+        }
+    }
+    
     public static string GetDocumentDisplayName(string fileName)
     {
         // Convert filename to friendly display name

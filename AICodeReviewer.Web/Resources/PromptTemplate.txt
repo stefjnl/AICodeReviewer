@@ -1,0 +1,26 @@
+Review this {LanguageName} code diff. Provide feedback using EXACTLY this format:
+
+**Critical** [Category] - [FileName] Line [X]: [Issue description]
+Suggestion: [Specific fix]
+
+**Warning** [Category] - [FileName] Line [X]: [Issue description]  
+Suggestion: [Specific fix]
+
+**Suggestion** [Category] - [FileName] Line [X]: [Issue description]
+Suggestion: [Specific fix]
+
+**Style** [Category] - [FileName] Line [X]: [Issue description]
+Suggestion: [Specific fix]
+
+CODING STANDARDS:
+{StandardsText}
+
+REQUIREMENTS:
+{Requirements}
+
+DIFF:
+{GitDiff}
+
+Categories: Security, Performance, Error Handling, Architecture, Style
+Order: Critical issues first, then Warning, Suggestion, Style
+Include filename before line number for every issue.

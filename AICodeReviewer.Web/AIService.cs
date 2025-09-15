@@ -1,6 +1,7 @@
     using System.Text;
     using System.Text.Json;
     using AICodeReviewer.Web.Models;
+    using System.Reflection;
     
     namespace AICodeReviewer.Web;
 
@@ -125,6 +126,28 @@ public static class AIService
         }
     }
 
+    private static readonly Lazy<string> _promptTemplate = new(() =>
+    {
+        try
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            const string resourceName = "AICodeReviewer.Web.Resources.PromptTemplate.txt";
+            
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                throw new InvalidOperationException($"Embedded resource '{resourceName}' not found");
+            }
+            
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to load prompt template from embedded resource", ex);
+        }
+    });
+
     private static string BuildPrompt(string gitDiff, List<string> standards, string requirements, SupportedLanguage language)
     {
         if (!_languageTemplates.TryGetValue(language, out var template))
@@ -136,31 +159,12 @@ public static class AIService
             ? string.Join("\n", standards)
             : $"Follow general {template.LanguageName} best practices";
 
-        return $@"Review this {template.LanguageName} code diff. Provide feedback using EXACTLY this format:
-
-            **Critical** [Category] - [FileName] Line [X]: [Issue description]
-            Suggestion: [Specific fix]
-
-            **Warning** [Category] - [FileName] Line [X]: [Issue description]  
-            Suggestion: [Specific fix]
-
-            **Suggestion** [Category] - [FileName] Line [X]: [Issue description]
-            Suggestion: [Specific fix]
-
-            **Style** [Category] - [FileName] Line [X]: [Issue description]
-            Suggestion: [Specific fix]
-
-            CODING STANDARDS:
-            {standardsText}
-
-            REQUIREMENTS:
-            {requirements ?? "No requirements provided"}
-
-            DIFF:
-            {gitDiff}
-
-            Categories: Security, Performance, Error Handling, Architecture, Style
-            Order: Critical issues first, then Warning, Suggestion, Style
-            Include filename before line number for every issue.";
+        var promptTemplate = _promptTemplate.Value;
+        
+        return promptTemplate
+            .Replace("{LanguageName}", template.LanguageName)
+            .Replace("{StandardsText}", standardsText)
+            .Replace("{Requirements}", requirements ?? "No requirements provided")
+            .Replace("{GitDiff}", gitDiff);
     }
 }

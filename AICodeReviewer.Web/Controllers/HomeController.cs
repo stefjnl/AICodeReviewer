@@ -349,27 +349,43 @@ public class HomeController : Controller
                 _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Loading documents...'");
             }
             
-            // Load selected documents
+            // Load selected documents asynchronously
             _logger.LogInformation($"[Analysis {analysisId}] Loading {selectedDocuments.Count} selected documents");
-            var codingStandards = new List<string>();
             _logger.LogInformation($"[Analysis {analysisId}] Documents folder path: {documentsFolder}");
             _logger.LogInformation($"[Analysis {analysisId}] Documents folder exists: {Directory.Exists(documentsFolder)}");
             
-            foreach (var docName in selectedDocuments)
+            // Create tasks for parallel document loading
+            var documentTasks = selectedDocuments.Select(async docName =>
             {
                 _logger.LogInformation($"[Analysis {analysisId}] Loading document: {docName} from folder: {documentsFolder}");
-                var (content, docError) = DocumentService.LoadDocument(docName, documentsFolder);
+                var (content, docError) = await DocumentService.LoadDocumentAsync(docName, documentsFolder);
                 _logger.LogInformation($"[Analysis {analysisId}] Document {docName} - Error: {docError}, Content length: {content?.Length ?? 0}");
+                
                 if (!docError)
                 {
-                    codingStandards.Add(content);
                     _logger.LogInformation($"[Analysis {analysisId}] Document {docName} loaded successfully");
+                    return (content, docError, docName);
                 }
                 else
                 {
                     _logger.LogWarning($"[Analysis {analysisId}] Failed to load document {docName}: {content}");
+                    return (content, docError, docName);
+                }
+            }).ToList();
+            
+            // Wait for all documents to load in parallel
+            var documentResults = await Task.WhenAll(documentTasks);
+            
+            // Collect successful documents
+            var codingStandards = new List<string>();
+            foreach (var (content, docError, docName) in documentResults)
+            {
+                if (!docError)
+                {
+                    codingStandards.Add(content);
                 }
             }
+            
             _logger.LogInformation($"[Analysis {analysisId}] Document loading complete - loaded {codingStandards.Count} documents");
             _logger.LogInformation($"[Analysis {analysisId}] Final codingStandards count: {codingStandards.Count}");
 
