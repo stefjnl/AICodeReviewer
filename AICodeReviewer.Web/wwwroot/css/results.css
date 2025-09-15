@@ -73,7 +73,47 @@
 .feedback-meta { display: flex; gap: 0.5rem; font-size: 0.75rem; color: #6b7280; }
 .feedback-file { font-family: monospace; }
 .feedback-message { color: var(--text); line-height: 1.5; margin-bottom: 0.5rem; }
-.feedback-suggestion { background: var(--bg); border-left: 3px solid var(--primary); padding: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280; }
+
+.feedback-content {
+    margin-top: 0.75rem;
+}
+
+.feedback-message {
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.feedback-suggestion {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.suggestion-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: #0369a1;
+    font-weight: 600;
+}
+
+.suggestion-header i {
+    font-size: 1.1rem;
+}
+
+.suggestion-content {
+    color: #1e40af;
+    line-height: 1.5;
+    font-size: 0.9rem;
+    padding-left: 1.5rem;
+    border-left: 2px solid #7dd3fc;
+}
 
 .loading-message, .no-content-message { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 2rem; color: #6b7280; font-size: 0.875rem; }
 

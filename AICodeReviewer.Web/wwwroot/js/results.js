@@ -253,6 +253,7 @@ class ResultsApp {
         element.dataset.filePath = item.filePath || '';
         element.dataset.lineNumber = item.lineNumber || '';
         
+        // Enhanced HTML structure for better display
         element.innerHTML = `
             <div class="feedback-header">
                 <span class="feedback-severity severity-${item.severity.toLowerCase()}">
@@ -264,12 +265,18 @@ class ResultsApp {
                     ${item.category ? `<span class="feedback-category">${item.category}</span>` : ''}
                 </div>
             </div>
-            <div class="feedback-message">${this.escapeHtml(item.message)}</div>
-            ${item.suggestion ? `
-                <div class="feedback-suggestion">
-                    <strong>Suggestion:</strong> ${this.escapeHtml(item.suggestion)}
-                </div>
-            ` : ''}
+            <div class="feedback-content">
+                <div class="feedback-message">${this.escapeHtml(item.message)}</div>
+                ${item.suggestion ? `
+                    <div class="feedback-suggestion">
+                        <div class="suggestion-header">
+                            <i class="fas fa-lightbulb"></i>
+                            <strong>Suggestion</strong>
+                        </div>
+                        <div class="suggestion-content">${this.escapeHtml(item.suggestion)}</div>
+                    </div>
+                ` : ''}
+            </div>
         `;
 
         // Add click handler for line highlighting
