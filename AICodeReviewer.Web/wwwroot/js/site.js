@@ -112,7 +112,8 @@ function startAnalysis() {
     const formData = {
         repositoryPath: repositoryPath,
         selectedDocuments: selectedDocuments,
-        documentsFolder: '' // Will use session default
+        documentsFolder: '', // Will use session default
+        language: document.getElementById('languageSelect')?.value || '.NET'
     };
     
     // Start analysis with JSON

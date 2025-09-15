@@ -135,8 +135,12 @@ public class HomeController : Controller
             var repositoryPath = request.RepositoryPath ?? HttpContext.Session.GetString("RepositoryPath") ?? defaultRepositoryPath;
             var selectedDocuments = request.SelectedDocuments ?? HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
             var documentsFolder = request.DocumentsFolder ?? HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
+            var language = request.Language ?? HttpContext.Session.GetString("Language") ?? ".NET";
             var apiKey = _configuration["OpenRouter:ApiKey"];
             var model = _configuration["OpenRouter:Model"];
+
+            // Store language in session for consistency
+            HttpContext.Session.SetString("Language", language);
 
             // Validate required fields
             if (string.IsNullOrEmpty(apiKey))
@@ -180,7 +184,7 @@ public class HomeController : Controller
             {
                 try
                 {
-                    await RunBackgroundAnalysisWithCache(analysisId, repositoryPath, selectedDocuments, docsFolder, apiKey, model);
+                    await RunBackgroundAnalysisWithCache(analysisId, repositoryPath, selectedDocuments, docsFolder, apiKey, model, language);
                 }
                 catch (Exception ex)
                 {
@@ -228,12 +232,13 @@ public class HomeController : Controller
         await Task.CompletedTask;
     }
 
-    private async Task RunBackgroundAnalysisWithCache(string analysisId, string repositoryPath, List<string> selectedDocuments, string documentsFolder, string apiKey, string model)
+    private async Task RunBackgroundAnalysisWithCache(string analysisId, string repositoryPath, List<string> selectedDocuments, string documentsFolder, string apiKey, string model, string language)
     {
         _logger.LogInformation($"[Analysis {analysisId}] Starting background analysis");
         _logger.LogInformation($"[Analysis {analysisId}] Repository path: {repositoryPath}");
         _logger.LogInformation($"[Analysis {analysisId}] Selected documents: {string.Join(", ", selectedDocuments)}");
         _logger.LogInformation($"[Analysis {analysisId}] Documents folder: {documentsFolder}");
+        _logger.LogInformation($"[Analysis {analysisId}] Language: {language}");
         _logger.LogInformation($"[Analysis {analysisId}] API key configured: {!string.IsNullOrEmpty(apiKey)}");
         _logger.LogInformation($"[Analysis {analysisId}] Model: {model}");
 
@@ -360,7 +365,7 @@ public class HomeController : Controller
                 
                 // Call AI service with timeout
                 var (analysisResult, isError, errorMsg) = await Task.Run(async () =>
-                    await AIService.AnalyzeCodeAsync(gitDiff, codingStandards, requirements, apiKey, model),
+                    await AIService.AnalyzeCodeAsync(gitDiff, codingStandards, requirements, apiKey, model, language),
                     cts.Token);
                 
                 analysis = analysisResult;

@@ -12,7 +12,7 @@ public static class AIService
     };
 
     public static async Task<(string analysis, bool isError, string? errorMessage)> AnalyzeCodeAsync(
-        string gitDiff, List<string> codingStandards, string requirements, string apiKey, string model)
+        string gitDiff, List<string> codingStandards, string requirements, string apiKey, string model, string language)
     {
         try
         {
@@ -22,7 +22,7 @@ public static class AIService
             if (string.IsNullOrEmpty(gitDiff))
                 return ("", true, "No code changes to analyze");
 
-            var prompt = BuildPrompt(gitDiff, codingStandards, requirements);
+            var prompt = language == "Python" ? BuildPromptPython(gitDiff, codingStandards, requirements) : BuildPromptNet(gitDiff, codingStandards, requirements);
 
             var requestBody = new
             {
@@ -83,7 +83,7 @@ public static class AIService
         }
     }
 
-    private static string BuildPrompt(string gitDiff, List<string> standards, string requirements)
+    private static string BuildPromptNet(string gitDiff, List<string> standards, string requirements)
     {
         var standardsText = standards?.Any() == true
             ? string.Join("\n", standards)
@@ -124,6 +124,55 @@ public static class AIService
             - Concrete, actionable suggestions
             - Violations of the provided coding standards
             - Security, performance, and maintainability issues
+
+            AVOID:
+            - General assessments or summaries
+            - Theoretical explanations
+            - Repetitive feedback about the same pattern";
+    }
+
+    private static string BuildPromptPython(string gitDiff, List<string> standards, string requirements)
+    {
+        var standardsText = standards?.Any() == true
+            ? string.Join("\n", standards)
+            : "Follow general Python best practices";
+
+        return $@"You are a senior Python code reviewer. Analyze this code diff and provide specific, actionable feedback.
+
+            CODING STANDARDS TO ENFORCE:
+            {standardsText}
+
+            REQUIREMENTS CONTEXT:
+            {requirements ?? "No specific requirements provided"}
+
+            CODE CHANGES TO REVIEW:
+            {gitDiff}
+
+            RESPONSE FORMAT REQUIRED:
+            For each issue found, use this exact format:
+
+            **[SEVERITY]** [Category] - Line [number]: [Brief description]
+            Suggestion: [Specific actionable fix]
+
+            SEVERITY OPTIONS: Critical, Warning, Suggestion, Style
+            CATEGORY OPTIONS: Security, Performance, Error Handling, Style, Architecture
+
+            EXAMPLE RESPONSES:
+            **Warning** Performance - Line 45: Synchronous database call blocks thread
+            Suggestion: Replace .get() with async version and add await
+
+            **Style** Naming - Line 12: Variable name 'userName' doesn't follow snake_case conventions
+            Suggestion: Rename to 'user_name' using snake_case for local variables
+
+            **Critical** Security - Line 67: User input not validated before database query
+            Suggestion: Add input validation and use parameterized queries
+
+            FOCUS ON:
+            - Specific line numbers and file paths when possible
+            - Concrete, actionable suggestions
+            - Violations of the provided coding standards
+            - Security, performance, and maintainability issues
+            - Python-specific best practices (PEP 8, type hints, async/await patterns)
 
             AVOID:
             - General assessments or summaries
