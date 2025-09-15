@@ -18,9 +18,9 @@ namespace AICodeReviewer.Web.Services
                 
                 var diffContent = diff.Content;
                 
-                // Simple size check - 50KB limit
-                if (diffContent.Length > 51200) // 50KB
-                    return ($"Diff too large ({diffContent.Length} bytes > 50KB). Commit some changes first.", true);
+                // Simple size check - 100KB limit
+                if (diffContent.Length > 102400) // 100KB
+                    return ($"Diff too large ({diffContent.Length} bytes > 100KB). Commit some changes first.", true);
                 
                 // Include current branch information
                 var branchInfo = $"Branch: {repo.Head.FriendlyName}\n\n";
