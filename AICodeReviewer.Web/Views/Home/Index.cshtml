@@ -5,7 +5,7 @@
     var analysisId = Context.Session.GetString("AnalysisId");
 }
 
-<div class="text-center">
+<div class="text-center mb-32">
     <h1 class="display-4">Welcome</h1>
     
     <!-- Debug info for development -->
@@ -27,32 +27,37 @@
     
     @if (ViewBag.BranchInfo != null)
     {
-        <div class="git-status">
+        <div class="status-indicator mb-32">
             @if (ViewBag.IsError)
             {
-                <div class="alert alert-warning" role="alert">
-                    ⚠️ @ViewBag.BranchInfo
+                <div class="icon">⚠️</div>
+                <div class="content">
+                    <strong>Git Status Alert</strong>
+                    <span class="helper-text">@ViewBag.BranchInfo</span>
                 </div>
             }
             else
             {
-                <div class="alert alert-success" role="alert">
-                    🌿 Current branch: <strong>@ViewBag.BranchInfo</strong>
+                <div class="icon">🌿</div>
+                <div class="content">
+                    <strong>Current Branch</strong>
+                    <span class="helper-text">@ViewBag.BranchInfo</span>
                 </div>
             }
         </div>
     }
     
     <!-- Document Management Section -->
-    <div class="document-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-        <h5>📁 Requirements Documents</h5>
+    <div class="content-section">
+        <h2 class="section-heading">📁 Requirements Documents</h2>
         
         <!-- Folder Configuration -->
-        <div class="mb-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+        <div class="form-group">
             <form asp-action="SetDocumentsFolder" method="post">
-                <div class="input-group">
+                <label class="form-label">Documents Folder Path</label>
+                <div class="input-group-custom">
                     <input type="text" class="form-control" name="folderPath"
-                           placeholder="Documents folder path"
+                           placeholder="Enter documents folder path"
                            value="@ViewBag.DocumentsFolder">
                     <button class="btn btn-outline-secondary" type="submit">Set Folder</button>
                 </div>
@@ -63,49 +68,65 @@
         @if (ViewBag.AvailableDocuments.Count > 0)
         {
             <form asp-action="SelectDocuments" method="post">
-                <div class="mb-3">
-                    <label>Select coding standards:</label>
-                    @foreach (var doc in ViewBag.AvailableDocuments)
-                    {
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox"
-                                   name="selectedDocuments" value="@doc"
-                                   @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
-                            <label class="form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
-                        </div>
-                    }
+                <div class="form-group">
+                    <label class="form-label">Select coding standards:</label>
+                    <div class="form-check-group">
+                        @foreach (var doc in ViewBag.AvailableDocuments)
+                        {
+                            <div class="form-check-item">
+                                <input class="form-check-input" type="checkbox"
+                                       name="selectedDocuments" value="@doc"
+                                       @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
+                                <label class="form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
+                            </div>
+                        }
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Apply Selection</button>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Apply Selection</button>
+                </div>
             </form>
         }
         else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
         {
-            <div class="alert alert-info">
-                📋 No .md documents found in folder
+            <div class="alert alert-info alert-custom">
+                <div class="d-flex align-items-center">
+                    <span class="me-2">📋</span>
+                    <span>No .md documents found in the specified folder</span>
+                </div>
             </div>
         }
         
         <!-- Selected Documents Summary -->
         @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
         {
-            <div class="alert alert-success mt-3">
-                ✅ Selected: <strong>@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</strong>
+            <div class="alert alert-success alert-custom">
+                <div class="d-flex align-items-center">
+                    <span class="me-2">✅</span>
+                    <div>
+                        <strong>Selected Documents:</strong>
+                        <span class="helper-text d-block">@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</span>
+                    </div>
+                </div>
             </div>
         }
         
         <!-- Document Scan Error -->
         @if (ViewBag.DocumentScanError != null)
         {
-            <div class="alert alert-warning mt-3">
-                ⚠️ @ViewBag.DocumentScanError
+            <div class="alert alert-warning alert-custom">
+                <div class="d-flex align-items-center">
+                    <span class="me-2">⚠️</span>
+                    <span>@ViewBag.DocumentScanError</span>
+                </div>
             </div>
         }
     </div>
     
     <!-- Language Selection Section -->
-    <div class="language-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-        <h5>🐍 Programming Language</h5>
-        <div class="mb-3">
+    <div class="content-section">
+        <h2 class="section-heading">🐍 Programming Language</h2>
+        <div class="form-group">
             <label for="languageSelect" class="form-label">Select the programming language for analysis:</label>
             <select class="form-select" id="languageSelect" name="language">
                 <option value="NET" selected>.NET</option>
@@ -115,15 +136,16 @@
     </div>
     
     <!-- Repository Path Section -->
-    <div class="repository-section mt-4">
-        <h5>📁 Git Repository</h5>
+    <div class="content-section">
+        <h2 class="section-heading">📁 Git Repository</h2>
         
         <!-- Repository Path Configuration -->
-        <div class="mb-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+        <div class="form-group">
             <form asp-action="SetRepositoryPath" method="post">
-                <div class="input-group">
+                <label class="form-label">Repository Path</label>
+                <div class="input-group-custom">
                     <input type="text" class="form-control" name="repositoryPath"
-                           placeholder="Repository path"
+                           placeholder="Enter repository path"
                            value="@ViewBag.RepositoryPath"
                            id="repositoryPathInput">
                     <button class="btn btn-outline-secondary" type="button" onclick="openDirectoryBrowser()">
@@ -137,14 +159,14 @@
         <!-- Directory Browser Modal -->
         <div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">📁 Select Repository Directory</h5>
+                <div class="modal-content modal-content-enhanced">
+                    <div class="modal-header modal-header-enhanced">
+                        <h5 class="modal-title subsection-heading">📁 Select Repository Directory</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <div class="input-group">
+                    <div class="modal-body modal-body-enhanced">
+                        <div class="form-group">
+                            <div class="input-group-custom">
                                 <input type="text" class="form-control" id="currentDirectoryPath" readonly>
                                 <button class="btn btn-outline-secondary" type="button" onclick="navigateToParent()">
                                     ⬆️ Up
@@ -155,12 +177,12 @@
                             </div>
                         </div>
                         
-                        <div class="directory-browser-container" style="max-height: 400px; overflow-y: auto;">
-                            <div id="directoryBrowserLoading" class="text-center p-4" style="display: none;">
+                        <div class="file-browser-container">
+                            <div id="directoryBrowserLoading" class="loading-container" style="display: none;">
                                 <div class="spinner-border" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
-                                <p class="mt-2">Loading directories...</p>
+                                <span class="loading-text">Loading directories...</span>
                             </div>
                             
                             <div id="directoryBrowserContent">
@@ -172,7 +194,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer modal-footer-enhanced">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-primary" onclick="selectCurrentDirectory()">Select Folder</button>
                     </div>
@@ -181,65 +203,71 @@
         </div>
         
         <!-- Analysis Type Selection -->
-        <div class="analysis-type-section mt-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-            <h6>🔍 Analysis Type</h6>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
-                <label class="form-check-label" for="uncommittedChanges">
-                    Uncommitted Changes
-                </label>
+        <div class="form-group">
+            <h3 class="subsection-heading">🔍 Analysis Type</h3>
+            <div class="form-check-group">
+                <div class="form-check-item">
+                    <input class="form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
+                    <label class="form-check-label" for="uncommittedChanges">
+                        Uncommitted Changes
+                    </label>
+                </div>
+                <div class="form-check-item">
+                    <input class="form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
+                    <label class="form-check-label" for="specificCommit">
+                        Specific Commit
+                    </label>
+                </div>
+                <div class="form-check-item">
+                    <input class="form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
+                    <label class="form-check-label" for="singleFile">
+                        Single File
+                    </label>
+                </div>
             </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
-                <label class="form-check-label" for="specificCommit">
-                    Specific Commit
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
-                <label class="form-check-label" for="singleFile">
-                    Single File
-                </label>
-            </div>
-            <div class="mt-2" id="commitIdContainer" style="display: none;">
-                <div class="input-group" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+            <div class="form-group" id="commitIdContainer" style="display: none;">
+                <label class="form-label">Commit ID</label>
+                <div class="input-group-custom">
                     <input type="text" class="form-control" id="commitId" name="commitId"
                            placeholder="Enter commit ID (full or partial hash)">
                     <button class="btn btn-outline-secondary" type="button" id="validateCommit">Validate</button>
                 </div>
-                <div id="commitValidationResult" class="form-text"></div>
+                <div id="commitValidationResult" class="validation-message"></div>
             </div>
-            <div class="mt-2" id="filePickerContainer" style="display: none;">
-                <div class="input-group" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+            <div class="form-group" id="filePickerContainer" style="display: none;">
+                <label class="form-label">File Path</label>
+                <div class="input-group-custom">
                     <input type="text" class="form-control" id="filePath" name="filePath"
-                           placeholder="Enter full file path (e.g., C:\path\to\file.py or /path/to/file.py)"
-                           style="transition: background-color 0.3s, border-color 0.3s;">
+                           placeholder="Enter full file path (e.g., C:\path\to\file.py or /path/to/file.py)">
                     <button class="btn btn-outline-secondary" type="button" id="browseFile">Browse</button>
                     <input type="file" id="fileInput" accept=".cs,.js,.py" style="display: none;">
                 </div>
-                <div id="fileValidationResult" class="form-text"></div>
-                <small class="text-muted">
+                <div id="fileValidationResult" class="validation-message"></div>
+                <div class="helper-text">
                     <strong>Note:</strong> Due to browser security, file browsing only provides the filename.
                     Please enter the <strong>full file path</strong> manually or use the repository-relative path.
                     Supported types: .cs (C#), .js (JavaScript), .py (Python)
-                </small>
+                </div>
             </div>
         </div>
         
         <!-- Git Diff Display -->
-        <div id="gitDiffSection" class="git-diff-section">
+        <div id="gitDiffSection" class="form-group">
             @if (ViewBag.GitDiff != null)
             {
                 @if (ViewBag.GitDiffError)
                 {
-                    <div class="alert alert-warning">
-                        ⚠️ @ViewBag.GitDiff
+                    <div class="alert alert-warning alert-custom">
+                        <div class="d-flex align-items-center">
+                            <span class="me-2">⚠️</span>
+                            <span>@ViewBag.GitDiff</span>
+                        </div>
                     </div>
                 }
                 else
                 {
-                    <div class="card">
-                        <div class="card-header bg-info text-white">
+                    <div class="card-enhanced">
+                        <div class="card-header-enhanced bg-info text-white">
                             <h6 class="mb-0">
                                 <button class="btn btn-link text-white" type="button" data-bs-toggle="collapse" data-bs-target="#gitDiffCollapse">
                                     📊 Git Changes (Click to expand/collapse)
@@ -247,7 +275,7 @@
                             </h6>
                         </div>
                         <div class="collapse" id="gitDiffCollapse">
-                            <div class="card-body">
+                            <div class="card-body-enhanced">
                                 <pre class="git-diff-text" style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em; max-height: 300px; overflow-y: auto;">@ViewBag.GitDiff</pre>
                             </div>
                         </div>
@@ -257,53 +285,46 @@
         </div>
         
         <!-- Commit Analysis Info (shown when specific commit is selected) -->
-        <div id="commitAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
-            <div class="d-flex align-items-center">
-                <div class="me-2">🔍</div>
-                <div>
-                    <strong>Commit Analysis Mode</strong><br>
-                    <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
-                </div>
+        <div id="commitAnalysisInfo" class="status-indicator" style="display: none;">
+            <div class="icon">🔍</div>
+            <div class="content">
+                <strong>Commit Analysis Mode</strong>
+                <span class="helper-text">Enter a commit ID above and click "Validate" to analyze a specific commit.</span>
             </div>
         </div>
 
         <!-- Single File Analysis Info (shown when single file is selected) -->
-        <div id="singleFileAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
-            <div class="d-flex align-items-center">
-                <div class="me-2">📄</div>
-                <div>
-                    <strong>Single File Analysis Mode</strong><br>
-                    <small>Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</small>
-                </div>
+        <div id="singleFileAnalysisInfo" class="status-indicator" style="display: none;">
+            <div class="icon">📄</div>
+            <div class="content">
+                <strong>Single File Analysis Mode</strong>
+                <span class="helper-text">Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</span>
             </div>
         </div>
     </div>
     
     <!-- AI Analysis Section -->
-    <div class="analysis-section mt-5">
-        <h5>🤖 AI Code Analysis</h5>
+    <div class="content-section">
+        <h2 class="section-heading">🤖 AI Code Analysis</h2>
         
         <!-- Progress Container -->
-        <div id="progressContainer" style="display: none;" class="mt-4">
-            <div class="alert alert-info">
-                <div class="d-flex align-items-center">
-                    <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
-                    <span id="progressMessage">Starting analysis...</span>
+        <div id="progressContainer" style="display: none;" class="progress-section">
+            <div class="loading-container">
+                <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                <div>
+                    <div id="progressMessage" class="loading-text">Starting analysis...</div>
+                    <div class="helper-text mt-8">Status: <span id="status">Waiting...</span></div>
                 </div>
-            </div>
-            <div class="mt-3">
-                <div class="fw-bold">Status:</div>
-                <div id="status">Waiting...</div>
             </div>
         </div>
         
         <!-- Analysis Result Display -->
-        <div id="analysisResult" class="mt-4" style="display: none;">
-            <div class="card">
-                <div class="card-header bg-success text-white">
+        <div id="analysisResult" style="display: none;">
+            <div class="card-enhanced">
+                <div class="card-header-enhanced bg-success text-white">
                     <h6 class="mb-0">🔍 AI Analysis Results</h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body-enhanced">
                     <pre id="result" style="white-space: pre-wrap; font-family: monospace;"></pre>
                 </div>
             </div>
@@ -312,7 +333,7 @@
         <!-- Run Analysis Form -->
         @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
         {
-            <div id="analysisForm">
+            <div id="analysisForm" class="button-group">
                 <button type="button" class="btn btn-success btn-lg" onclick="startAnalysis()">
                     🚀 Run AI Analysis
                 </button>
@@ -320,15 +341,18 @@
         }
         else
         {
-            <div class="alert alert-info">
-                📋 Please select coding standards documents above to enable AI analysis
+            <div class="alert alert-info alert-custom">
+                <div class="d-flex align-items-center">
+                    <span class="me-2">📋</span>
+                    <span>Please select coding standards documents above to enable AI analysis</span>
+                </div>
             </div>
         }
         
         <!-- Analysis Results - Always include but conditionally show/hide -->
-        <div class="analysis-results mt-4" id="analysisResultsSection" data-analysis-id="@(string.IsNullOrEmpty(analysisId) ? "" : analysisId)" style="@((!string.IsNullOrEmpty(analysisId) || !string.IsNullOrEmpty(analysisResult) || !string.IsNullOrEmpty(analysisError)) ? "" : "display: none;")">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5>🔍 AI Analysis Results</h5>
+        <div class="results-section" id="analysisResultsSection" data-analysis-id="@(string.IsNullOrEmpty(analysisId) ? "" : analysisId)" style="@((!string.IsNullOrEmpty(analysisId) || !string.IsNullOrEmpty(analysisResult) || !string.IsNullOrEmpty(analysisError)) ? "" : "display: none;")">
+            <div class="d-flex justify-content-between align-items-center mb-24">
+                <h3 class="subsection-heading">🔍 AI Analysis Results</h3>
                 <div class="btn-group" role="group" id="analysisButtonsContainer">
                     <!-- Buttons will be injected here by JS if needed -->
                 </div>
@@ -338,41 +362,40 @@
             <div id="bottomPanelView">
                 @if (!string.IsNullOrEmpty(analysisResult))
                 {
-                    <div class="card">
-                        <div class="card-header bg-success text-white">
+                    <div class="card-enhanced">
+                        <div class="card-header-enhanced bg-success text-white">
                             <h6 class="mb-0">Analysis Results</h6>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body-enhanced">
                             <pre class="analysis-text" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
                         </div>
                     </div>
                 }
                 else
                 {
-                    <div class="alert alert-info">
-                        <div class="d-flex align-items-center">
-                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                            <span>Analysis results will appear here...</span>
-                        </div>
+                    <div class="loading-container">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span class="loading-text">Analysis results will appear here...</span>
                     </div>
                 }
             </div>
             
             <!-- Side Panel View (initially hidden) -->
             <div id="sidePanelView" style="display: none;">
-                <div class="alert alert-info">
-                    <div class="d-flex align-items-center">
-                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                        <span>Loading side-panel view...</span>
-                    </div>
+                <div class="loading-container">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span class="loading-text">Loading side-panel view...</span>
                 </div>
             </div>
         </div>
         
         @if (!string.IsNullOrEmpty(analysisError))
         {
-            <div class="alert alert-danger mt-3" id="analysisErrorSection">
-                ❌ @analysisError
+            <div class="alert alert-danger alert-custom" id="analysisErrorSection">
+                <div class="d-flex align-items-center">
+                    <span class="me-2">❌</span>
+                    <span>@analysisError</span>
+                </div>
             </div>
         }
     </div>
