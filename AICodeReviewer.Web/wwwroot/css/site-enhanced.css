@@ -337,3 +337,125 @@
     background-color: #f8f9fa;
     border-radius: 0 0 8px 8px;
 }
+
+/* Enhanced Form Controls - Custom Checkboxes */
+.custom-checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    transition: background-color 0.2s ease;
+    border-radius: 6px;
+    position: relative;
+}
+
+.custom-checkbox-container:hover {
+    background-color: #f0f7ff;
+}
+
+.custom-checkbox-input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.custom-checkbox-visual {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-right: 12px;
+    margin-top: 2px;
+}
+
+.custom-checkbox-visual.checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.custom-checkbox-visual.checked::after {
+    content: "✓";
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.custom-checkbox-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
+    line-height: 1.4;
+    flex-grow: 1;
+    user-select: none;
+    padding-top: 4px;
+}
+
+.custom-checkbox-container:focus-within .custom-checkbox-visual {
+    outline: 2px solid #258cfb;
+    outline-offset: 2px;
+}
+
+.custom-checkbox-container:focus-within {
+    background-color: #f0f7ff;
+}
+
+/* Selected state for entire row */
+.custom-checkbox-container.checked {
+    background-color: #e7f3ff;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .custom-checkbox-visual {
+        border-width: 3px;
+    }
+    
+    .custom-checkbox-visual.checked {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .custom-checkbox-container,
+    .custom-checkbox-visual {
+        transition: none;
+    }
+}
+
+/* Enhanced checkbox group container */
+.checkbox-group-enhanced {
+    margin: 16px 0;
+}
+
+.checkbox-group-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    display: block;
+}
+
+/* Ensure proper spacing in form check groups */
+.form-check-group-enhanced {
+    margin-bottom: 16px;
+}
+
+.form-check-group-enhanced .custom-checkbox-container {
+    margin-bottom: 8px;
+}
+
+.form-check-group-enhanced .custom-checkbox-container:last-child {
+    margin-bottom: 0;
+}

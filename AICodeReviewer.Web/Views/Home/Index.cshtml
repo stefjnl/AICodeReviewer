@@ -73,16 +73,19 @@
         {
             <form asp-action="SelectDocuments" method="post">
                 <div class="form-group">
-                    <label class="form-label">Select coding standards:</label>
-                    <div class="form-check-group">
+                    <label class="form-label checkbox-group-title">Select coding standards:</label>
+                    <div class="form-check-group-enhanced">
                         @foreach (var doc in ViewBag.AvailableDocuments)
                         {
-                            <div class="form-check-item">
-                                <input class="form-check-input" type="checkbox"
+                            <label class="custom-checkbox-container" for="doc_@doc">
+                                <input class="custom-checkbox-input" type="checkbox"
                                        name="selectedDocuments" value="@doc"
-                                       @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
-                                <label class="form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
-                            </div>
+                                       id="doc_@doc"
+                                       @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")
+                                       onchange="toggleCheckbox(this)">
+                                <span class="custom-checkbox-visual"></span>
+                                <span class="custom-checkbox-label">@DocumentService.GetDocumentDisplayName(doc)</span>
+                            </label>
                         }
                     </div>
                 </div>
@@ -793,6 +796,58 @@
                 
                 console.log('[DEBUG] File dropped via drag & drop:', fileNameOnly);
                 console.log('[DEBUG] User needs to manually enter full path');
+            }
+        });
+
+        // Enhanced checkbox functionality
+        function toggleCheckbox(checkbox) {
+            const container = checkbox.closest('.custom-checkbox-container');
+            const visual = container.querySelector('.custom-checkbox-visual');
+            
+            if (checkbox.checked) {
+                visual.classList.add('checked');
+                container.classList.add('checked');
+                container.setAttribute('aria-checked', 'true');
+            } else {
+                visual.classList.remove('checked');
+                container.classList.remove('checked');
+                container.setAttribute('aria-checked', 'false');
+            }
+        }
+
+        // Initialize checkboxes on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.custom-checkbox-input');
+            checkboxes.forEach(function(checkbox) {
+                toggleCheckbox(checkbox);
+            });
+        });
+
+        // Add keyboard navigation support
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('custom-checkbox-container') ||
+                e.target.closest('.custom-checkbox-container')) {
+                const container = e.target.closest('.custom-checkbox-container');
+                const checkbox = container.querySelector('.custom-checkbox-input');
+                
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    checkbox.checked = !checkbox.checked;
+                    toggleCheckbox(checkbox);
+                }
+            }
+        });
+
+        // Make containers focusable and keyboard navigable
+        document.querySelectorAll('.custom-checkbox-container').forEach(function(container) {
+            container.setAttribute('tabindex', '0');
+            container.setAttribute('role', 'checkbox');
+            
+            const checkbox = container.querySelector('.custom-checkbox-input');
+            if (checkbox.checked) {
+                container.setAttribute('aria-checked', 'true');
+            } else {
+                container.setAttribute('aria-checked', 'false');
             }
         });
     });
