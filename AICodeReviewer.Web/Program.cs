@@ -7,7 +7,14 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryTokenAttribute());
 });
 
+builder.Services.AddMemoryCache(options =>
+{
+    options.SizeLimit = 1000; // Max 1000 entries (prevents memory bloat)
+});
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole(); // For dev
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 // Add session support for document management
 builder.Services.AddSession(options =>

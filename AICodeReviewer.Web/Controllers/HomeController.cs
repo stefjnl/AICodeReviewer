@@ -5,8 +5,9 @@ using System.Text.Json;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AICodeReviewer.Web; // Add this to access DocumentService and AIService
-using AICodeReviewer.Web.Services; // Add this to access GitService
+using AICodeReviewer.Web;
+using AICodeReviewer.Web.Services;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AICodeReviewer.Web.Controllers;
 
@@ -16,14 +17,16 @@ public class HomeController : Controller
     private readonly IWebHostEnvironment _environment;
     private readonly IConfiguration _configuration;
     private readonly string _defaultDocumentsPath;
+    private readonly IMemoryCache _cache;
 
-    public HomeController(ILogger<HomeController> logger, IWebHostEnvironment environment, IConfiguration configuration)
+    public HomeController(ILogger<HomeController> logger, IWebHostEnvironment environment, IConfiguration configuration, IMemoryCache cache)
     {
         _logger = logger;
         _environment = environment;
         _configuration = configuration;
         // Documents folder is in the root of the application, not in the Web project
         _defaultDocumentsPath = Path.Combine(_environment.ContentRootPath, "..", "Documents");
+        _cache = cache;
     }
 
     public IActionResult Index()
@@ -32,20 +35,20 @@ public class HomeController : Controller
         var (branchInfo, isError) = GitHelper.DetectRepository(_environment.ContentRootPath);
         ViewBag.BranchInfo = branchInfo;
         ViewBag.IsError = isError;
-        
+
         // Repository path management for Git diff extraction
         var repositoryPath = HttpContext.Session.GetString("RepositoryPath") ?? _environment.ContentRootPath;
         ViewBag.RepositoryPath = repositoryPath;
-        
+
         // Extract Git diff if repository path is set
         var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
         ViewBag.GitDiff = gitDiff;
         ViewBag.GitDiffError = gitError;
-        
+
         // Document management
         var documentsFolder = HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
         ViewBag.DocumentsFolder = documentsFolder;
-        
+
         var (files, scanError) = DocumentService.ScanDocumentsFolder(documentsFolder);
         if (!scanError)
         {
@@ -57,10 +60,10 @@ public class HomeController : Controller
             ViewBag.AvailableDocuments = new List<string>();
             ViewBag.DocumentScanError = "Unable to scan documents folder";
         }
-        
+
         var selectedDocuments = HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
         ViewBag.SelectedDocuments = selectedDocuments;
-        
+
         return View();
     }
 
@@ -78,7 +81,7 @@ public class HomeController : Controller
             : Path.IsPathRooted(repositoryPath)
                 ? repositoryPath
                 : Path.Combine(_environment.ContentRootPath, repositoryPath);
-        
+
         HttpContext.Session.SetString("RepositoryPath", normalizedPath);
         return RedirectToAction("Index");
     }
@@ -92,7 +95,7 @@ public class HomeController : Controller
             : Path.IsPathRooted(folderPath)
                 ? folderPath
                 : Path.Combine(_environment.ContentRootPath, folderPath);
-        
+
         HttpContext.Session.SetString("DocumentsFolder", normalizedPath);
         return RedirectToAction("Index");
     }
@@ -130,23 +133,29 @@ public class HomeController : Controller
                 return Json(new { success = false, error = "No coding standards selected" });
             }
 
-            // Set initial status and clear previous results
-            HttpContext.Session.SetString("AnalysisStatus", "Starting");
-            HttpContext.Session.Remove("AnalysisResult");
-            HttpContext.Session.Remove("AnalysisError");
+            // Generate unique analysis ID
+            var analysisId = Guid.NewGuid().ToString();
 
-            // Update session with request data
-            if (!string.IsNullOrEmpty(request.RepositoryPath))
-                HttpContext.Session.SetString("RepositoryPath", request.RepositoryPath);
-            if (request.SelectedDocuments != null && request.SelectedDocuments.Count > 0)
-                HttpContext.Session.SetObject("SelectedDocuments", request.SelectedDocuments);
-            if (!string.IsNullOrEmpty(request.DocumentsFolder))
-                HttpContext.Session.SetString("DocumentsFolder", request.DocumentsFolder);
+            // Create initial analysis result
+            var analysisResult = new AnalysisResult
+            {
+                Status = "Starting",
+                CreatedAt = DateTime.UtcNow
+            };
 
-            // Start background analysis
-            _ = Task.Run(async () => await RunBackgroundAnalysis(repositoryPath, selectedDocuments, apiKey, model));
+            // Store in memory cache with expiration
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromMinutes(30)) // Reset on access
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(60)) // Max 1 hour
+                .SetSize(1); // Size = 1 unit for size-limited cache
 
-            return Json(new { success = true });
+            _cache.Set($"analysis_{analysisId}", analysisResult, cacheOptions);
+
+            // Start background analysis with captured references
+            var docsFolder = request.DocumentsFolder ?? HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
+            _ = Task.Run(async () => await RunBackgroundAnalysisWithCache(analysisId, repositoryPath, selectedDocuments, docsFolder, apiKey, model));
+
+            return Json(new { success = true, analysisId = analysisId });
         }
         catch (Exception ex)
         {
@@ -155,70 +164,218 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    public IActionResult GetAnalysisStatus()
+    public IActionResult GetAnalysisStatus(string analysisId)
     {
-        var status = HttpContext.Session.GetString("AnalysisStatus") ?? "NotStarted";
-        var result = HttpContext.Session.GetString("AnalysisResult");
-        var error = HttpContext.Session.GetString("AnalysisError");
-        var isComplete = status == "Complete" || status == "Error";
+        if (string.IsNullOrEmpty(analysisId))
+        {
+            return Json(new { status = "NotStarted", result = (string?)null, error = (string?)null, isComplete = false });
+        }
 
-        return Json(new { status, result, error, isComplete });
+        if (_cache.TryGetValue($"analysis_{analysisId}", out AnalysisResult? result))
+        {
+            _logger.LogInformation($"[Analysis {analysisId}] Serving result: Status={result.Status}, ResultLength={result.Result?.Length ?? 0}");
+            return Json(new { status = result.Status, result = result.Result, error = result.Error, isComplete = result.IsComplete });
+        }
+
+        return Json(new { status = "NotFound", result = (string?)null, error = "Analysis not found or expired", isComplete = true });
     }
 
     private async Task RunBackgroundAnalysis(string repositoryPath, List<string> selectedDocuments, string apiKey, string model)
     {
+        // This method is no longer used - replaced by RunBackgroundAnalysisWithCache
+        // Kept for backward compatibility but will not be called
+        await Task.CompletedTask;
+    }
+
+    private async Task RunBackgroundAnalysisWithCache(string analysisId, string repositoryPath, List<string> selectedDocuments, string documentsFolder, string apiKey, string model)
+    {
+        _logger.LogInformation($"[Analysis {analysisId}] Starting background analysis");
+        _logger.LogInformation($"[Analysis {analysisId}] Repository path: {repositoryPath}");
+        _logger.LogInformation($"[Analysis {analysisId}] Selected documents: {string.Join(", ", selectedDocuments)}");
+        _logger.LogInformation($"[Analysis {analysisId}] Documents folder: {documentsFolder}");
+        _logger.LogInformation($"[Analysis {analysisId}] API key configured: {!string.IsNullOrEmpty(apiKey)}");
+        _logger.LogInformation($"[Analysis {analysisId}] Model: {model}");
+
         try
         {
-            // Update status
-            HttpContext.Session.SetString("AnalysisStatus", "Reading git changes...");
-            
-            // Get git diff
-            var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
-            if (gitError)
+            // Get current result from cache
+            _logger.LogInformation($"[Analysis {analysisId}] Checking cache for existing result");
+            AnalysisResult? result;
+            try
             {
-                HttpContext.Session.SetString("AnalysisStatus", "Error");
-                HttpContext.Session.SetString("AnalysisError", $"Git diff error: {gitDiff}");
+                if (!_cache.TryGetValue($"analysis_{analysisId}", out result))
+                {
+                    _logger.LogError($"[Analysis {analysisId}] Analysis not found in cache - aborting");
+                    return; // Analysis not found in cache
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"[Analysis {analysisId}] Error accessing cache - aborting");
                 return;
             }
+            _logger.LogInformation($"[Analysis {analysisId}] Found existing result in cache");
 
-            // Update status
-            HttpContext.Session.SetString("AnalysisStatus", "Loading documents...");
+            // Update status in cache
+            result.Status = "Reading git changes...";
+            var cacheOptions1 = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromMinutes(30))
+                .SetSize(1);
+            _cache.Set($"analysis_{analysisId}", result, cacheOptions1);
+            _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Reading git changes...'");
+
+            // Get git diff
+            _logger.LogInformation($"[Analysis {analysisId}] Extracting git diff from repository");
+            var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
+            _logger.LogInformation($"[Analysis {analysisId}] Git diff extraction complete - Error: {gitError}, Diff length: {gitDiff?.Length ?? 0}");
+            
+            if (gitError)
+            {
+                _logger.LogError($"[Analysis {analysisId}] Git diff extraction failed: {gitDiff}");
+                result.Status = "Error";
+                result.Error = $"Git diff error: {gitDiff}";
+                result.CompletedAt = DateTime.UtcNow;
+                var cacheOptions2 = new MemoryCacheEntryOptions()
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(30))
+                    .SetSize(1);
+                _cache.Set($"analysis_{analysisId}", result, cacheOptions2);
+                _logger.LogInformation($"[Analysis {analysisId}] Set error status and completed");
+                return;
+            }
+            _logger.LogInformation($"[Analysis {analysisId}] Git diff extracted successfully");
+
+            // Update status in cache
+            _logger.LogInformation($"[Analysis {analysisId}] Starting document loading phase");
+            result.Status = "Loading documents...";
+            var cacheOptions3 = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromMinutes(30))
+                .SetSize(1);
+            _cache.Set($"analysis_{analysisId}", result, cacheOptions3);
+            _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Loading documents...'");
             
             // Load selected documents
-            var documentsFolder = HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
+            _logger.LogInformation($"[Analysis {analysisId}] Loading {selectedDocuments.Count} selected documents");
             var codingStandards = new List<string>();
             foreach (var docName in selectedDocuments)
             {
+                _logger.LogInformation($"[Analysis {analysisId}] Loading document: {docName} from folder: {documentsFolder}");
                 var (content, docError) = DocumentService.LoadDocument(docName, documentsFolder);
+                _logger.LogInformation($"[Analysis {analysisId}] Document {docName} - Error: {docError}, Content length: {content?.Length ?? 0}");
                 if (!docError)
+                {
                     codingStandards.Add(content);
+                    _logger.LogInformation($"[Analysis {analysisId}] Document {docName} loaded successfully");
+                }
+                else
+                {
+                    _logger.LogWarning($"[Analysis {analysisId}] Failed to load document {docName}: {content}");
+                }
             }
+            _logger.LogInformation($"[Analysis {analysisId}] Document loading complete - loaded {codingStandards.Count} documents");
 
-            // Update status
-            HttpContext.Session.SetString("AnalysisStatus", "AI analysis...");
+            // Update status in cache
+            _logger.LogInformation($"[Analysis {analysisId}] Starting AI analysis phase");
+            result.Status = "AI analysis...";
+            var cacheOptions4 = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromMinutes(30))
+                .SetSize(1);
+            _cache.Set($"analysis_{analysisId}", result, cacheOptions4);
+            _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'AI analysis...'");
             
             // Get requirements
             string requirements = "Follow .NET best practices and coding standards";
+            _logger.LogInformation($"[Analysis {analysisId}] Requirements: {requirements}");
 
-            // Call AI service
-            var (analysis, aiError) = await AIService.AnalyzeCodeAsync(gitDiff, codingStandards, requirements, apiKey, model);
+            // Call AI service with timeout protection
+            _logger.LogInformation($"[Analysis {analysisId}] Calling AI service with:");
+            _logger.LogInformation($"[Analysis {analysisId}] - Git diff length: {gitDiff?.Length ?? 0}");
+            _logger.LogInformation($"[Analysis {analysisId}] - Coding standards count: {codingStandards.Count}");
+            _logger.LogInformation($"[Analysis {analysisId}] - API key configured: {!string.IsNullOrEmpty(apiKey)}");
+            _logger.LogInformation($"[Analysis {analysisId}] - Model: {model}");
             
-            if (aiError)
+            // Add timeout protection (60 seconds)
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            
+            string analysis;
+            bool aiError;
+            string? errorMessage;
+            
+            try
             {
-                HttpContext.Session.SetString("AnalysisStatus", "Error");
-                HttpContext.Session.SetString("AnalysisError", "AI analysis failed");
+                _logger.LogInformation($"[Analysis {analysisId}] Starting AI service call with 60-second timeout");
+                
+                // Call AI service with timeout
+                var (analysisResult, isError, errorMsg) = await Task.Run(async () =>
+                    await AIService.AnalyzeCodeAsync(gitDiff, codingStandards, requirements, apiKey, model),
+                    cts.Token);
+                
+                analysis = analysisResult;
+                aiError = isError;
+                errorMessage = errorMsg;
+                
+                _logger.LogInformation($"[Analysis {analysisId}] AI service call complete - Error: {aiError}, Analysis length: {analysis?.Length ?? 0}");
+                if (aiError)
+                {
+                    _logger.LogError($"[Analysis {analysisId}] AI analysis failed with detailed error: {errorMessage}");
+                }
             }
-            else
+            catch (OperationCanceledException)
             {
-                // Store final result
-                HttpContext.Session.SetString("AnalysisResult", analysis);
-                HttpContext.Session.SetString("AnalysisStatus", "Complete");
+                _logger.LogError($"[Analysis {analysisId}] AI analysis timed out after 60 seconds");
+                analysis = "";
+                aiError = true;
+                errorMessage = "AI analysis timed out after 60 seconds";
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"[Analysis {analysisId}] Unexpected exception during AI service call");
+                analysis = "";
+                aiError = true;
+                errorMessage = $"Unexpected error calling AI service: {ex.Message}";
+            }
+
+            // Always create a NEW instance to ensure we're writing fresh data
+            var finalResult = new AnalysisResult
+            {
+                Status = aiError ? "Error" : "Complete",
+                Result = aiError ? null : analysis,
+                Error = aiError ? $"AI analysis failed: {errorMessage}" : null,
+                CompletedAt = DateTime.UtcNow,
+                CreatedAt = result.CreatedAt, // preserve original creation time
+                RequestId = result.RequestId  // preserve if you have it
+            };
+
+            _cache.Set($"analysis_{analysisId}", finalResult, new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromMinutes(30))
+                .SetSize(1));
+
+            _logger.LogInformation($"[Analysis {analysisId}] Cache updated with final result: {finalResult.Status}");
         }
         catch (Exception ex)
         {
-            HttpContext.Session.SetString("AnalysisStatus", "Error");
-            HttpContext.Session.SetString("AnalysisError", $"Analysis error: {ex.Message}");
+            _logger.LogError(ex, $"[Analysis {analysisId}] Unhandled exception in background analysis");
+            try
+            {
+                if (_cache.TryGetValue($"analysis_{analysisId}", out AnalysisResult? errorResult))
+                {
+                    errorResult.Status = "Error";
+                    errorResult.Error = $"Analysis error: {ex.Message}";
+                    errorResult.CompletedAt = DateTime.UtcNow;
+                    var cacheOptions6 = new MemoryCacheEntryOptions()
+                        .SetSlidingExpiration(TimeSpan.FromMinutes(30))
+                        .SetSize(1);
+                    _cache.Set($"analysis_{analysisId}", errorResult, cacheOptions6);
+                    _logger.LogInformation($"[Analysis {analysisId}] Set error status due to exception: {ex.Message}");
+                }
+            }
+            catch (Exception cacheEx)
+            {
+                _logger.LogError(cacheEx, $"[Analysis {analysisId}] Failed to update cache with error status");
+            }
+        }
+        finally
+        {
+            _logger.LogInformation($"[Analysis {analysisId}] Background analysis task completed");
         }
     }
 

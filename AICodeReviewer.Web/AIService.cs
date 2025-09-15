@@ -1,4 +1,4 @@
-using System.Text;
+    using System.Text;
 using System.Text.Json;
 
 namespace AICodeReviewer.Web;
@@ -8,19 +8,19 @@ public static class AIService
     private static readonly HttpClient _httpClient = new HttpClient()
     {
         BaseAddress = new Uri("https://openrouter.ai/api/v1/"),
-        Timeout = TimeSpan.FromSeconds(30)
+        Timeout = TimeSpan.FromSeconds(120)
     };
 
-    public static async Task<(string analysis, bool isError)> AnalyzeCodeAsync(
+    public static async Task<(string analysis, bool isError, string? errorMessage)> AnalyzeCodeAsync(
         string gitDiff, List<string> codingStandards, string requirements, string apiKey, string model)
     {
         try
         {
             if (string.IsNullOrEmpty(apiKey))
-                return ("OpenRouter API key not configured", true);
+                return ("", true, "OpenRouter API key not configured");
 
             if (string.IsNullOrEmpty(gitDiff))
-                return ("No code changes to analyze", true);
+                return ("", true, "No code changes to analyze");
 
             var prompt = BuildPrompt(gitDiff, codingStandards, requirements);
 
@@ -51,7 +51,7 @@ public static class AIService
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                return ($"OpenRouter API error ({response.StatusCode}): {errorContent}", true);
+                return ("", true, $"HTTP {response.StatusCode}: {errorContent}");
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -63,15 +63,23 @@ public static class AIService
                 .GetProperty("content")
                 .GetString() ?? "No analysis returned";
 
-            return (analysis, false);
+            return (analysis, false, null);
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException tce)
         {
-            return ("AI analysis timed out after 30 seconds", true);
+            return ("", true, $"Network timeout after 30 seconds: {tce.Message}");
+        }
+        catch (HttpRequestException hre)
+        {
+            return ("", true, $"Network error: {hre.Message}");
+        }
+        catch (JsonException je)
+        {
+            return ("", true, $"JSON parsing error: {je.Message}");
         }
         catch (Exception ex)
         {
-            return ($"AI Analysis failed: {ex.Message}", true);
+            return ("", true, $"Unexpected error: {ex.Message}");
         }
     }
 

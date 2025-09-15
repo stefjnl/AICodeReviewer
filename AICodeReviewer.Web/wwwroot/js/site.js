@@ -46,7 +46,7 @@ function startAnalysis() {
     })
     .then(data => {
         if (data.success) {
-            pollStatus();
+            pollStatus(data.analysisId);
         } else {
             hideProgress();
             alert('Error starting analysis: ' + (data.error || 'Unknown error'));
@@ -58,9 +58,9 @@ function startAnalysis() {
     });
 }
 
-function pollStatus() {
+function pollStatus(analysisId) {
     const interval = setInterval(() => {
-        fetch('/Home/GetAnalysisStatus')
+        fetch(`/Home/GetAnalysisStatus?analysisId=${encodeURIComponent(analysisId)}`)
             .then(response => response.json())
             .then(data => {
                 updateProgress(data.status);
@@ -69,18 +69,24 @@ function pollStatus() {
                     clearInterval(interval);
                     hideProgress();
                     
-                    if (data.error) {
-                        alert('Analysis failed: ' + data.error);
+                    // 👇 SHOW THE RESULT CARD - This is the missing piece!
+                    document.getElementById('analysisResult').style.display = 'block'; // ← ADD THIS LINE!
+
+                    // 👇 DISPLAY THE RESULT TEXT
+                    if (data.status === 'Complete') {
+                        document.getElementById('result').innerText = data.result; // ← DISPLAY IT!
                     } else {
-                        // Reload page to show results
-                        location.reload();
+                        document.getElementById('result').innerText = '❌ Error: ' + (data.error || 'Unknown error');
                     }
+                    return; // Stop polling
                 }
             })
             .catch(error => {
                 clearInterval(interval);
                 hideProgress();
-                alert('Error checking status: ' + error.message);
+                // Show error result card
+                document.getElementById('analysisResult').style.display = 'block';
+                document.getElementById('result').innerText = '❌ Error checking status: ' + error.message;
             });
     }, 1000); // Poll every second
 }
@@ -88,13 +94,16 @@ function pollStatus() {
 function showProgress() {
     document.getElementById('progressContainer').style.display = 'block';
     document.getElementById('analysisForm').style.display = 'none';
+    document.getElementById('analysisResult').style.display = 'none'; // Hide result during progress
 }
 
 function hideProgress() {
     document.getElementById('progressContainer').style.display = 'none';
     document.getElementById('analysisForm').style.display = 'block';
+    // Don't hide result here - let the pollStatus function handle showing the result
 }
 
 function updateProgress(status) {
     document.getElementById('progressMessage').textContent = status || 'Processing...';
+    document.getElementById('status').textContent = status || 'Processing...';
 }
