@@ -246,6 +246,15 @@ public class HomeController : Controller
             var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);
             _logger.LogInformation($"[Analysis {analysisId}] Git diff extraction complete - Error: {gitError}, Diff length: {gitDiff?.Length ?? 0}");
             
+            // Store git diff in cache for results display
+            if (!gitError && !string.IsNullOrEmpty(gitDiff))
+            {
+                _cache.Set($"diff_{analysisId}", gitDiff, new MemoryCacheEntryOptions()
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(30))
+                    .SetSize(1));
+                _logger.LogInformation($"[Analysis {analysisId}] Stored git diff in cache ({gitDiff.Length} bytes)");
+            }
+            
             if (gitError)
             {
                 _logger.LogError($"[Analysis {analysisId}] Git diff extraction failed: {gitDiff}");

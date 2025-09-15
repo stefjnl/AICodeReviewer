@@ -1,0 +1,175 @@
+@{
+    ViewData["Title"] = "Code Review Results";
+    var analysisId = ViewBag.AnalysisId as string ?? string.Empty;
+}
+
+<div class="results-container">
+    <!-- Header Section -->
+    <header class="results-header">
+        <div class="header-content">
+            <h1 class="results-title">
+                <i class="fas fa-code"></i> Code Review Results
+            </h1>
+            <div class="analysis-info">
+                <span class="analysis-id">Analysis: <code>@analysisId</code></span>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="newAnalysisBtn">
+                        <i class="fas fa-plus"></i> New Analysis
+                    </button>
+                    <button class="btn btn-secondary" id="exportBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Summary Section -->
+    <div class="results-summary" id="summarySection" style="display: none;">
+        <div class="summary-stats">
+            <div class="stat-item">
+                <span class="stat-label">Total Issues:</span>
+                <span class="stat-value" id="totalIssues">0</span>
+            </div>
+            <div class="stat-item critical">
+                <span class="stat-label">Critical:</span>
+                <span class="stat-value" id="criticalCount">0</span>
+            </div>
+            <div class="stat-item warning">
+                <span class="stat-label">Warnings:</span>
+                <span class="stat-value" id="warningCount">0</span>
+            </div>
+            <div class="stat-item suggestion">
+                <span class="stat-label">Suggestions:</span>
+                <span class="stat-value" id="suggestionCount">0</span>
+            </div>
+            <div class="stat-item style">
+                <span class="stat-label">Style:</span>
+                <span class="stat-value" id="styleCount">0</span>
+            </div>
+        </div>
+        <div class="summary-status" id="summaryStatus">
+            <span class="status-indicator"></span>
+            <span class="status-text">Loading analysis results...</span>
+        </div>
+    </div>
+
+    <!-- Mobile Toggle Controls -->
+    <div class="mobile-controls" id="mobileControls">
+        <button class="mobile-toggle active" data-pane="left">
+            <i class="fas fa-code"></i> Code Changes
+        </button>
+        <button class="mobile-toggle" data-pane="right">
+            <i class="fas fa-comments"></i> Feedback
+        </button>
+    </div>
+
+    <!-- Split Pane Container -->
+    <div class="split-pane-container">
+        <!-- Left Pane: Code Changes -->
+        <div class="pane left-pane active" id="leftPane">
+            <div class="pane-header">
+                <h3 class="pane-title">
+                    <i class="fas fa-code"></i> Code Changes
+                </h3>
+                <div class="pane-controls">
+                    <select class="file-selector" id="fileSelector">
+                        <option value="">Select file...</option>
+                    </select>
+                    <button class="btn-icon" id="expandLeftPane" title="Expand">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="pane-content">
+                <div class="diff-container" id="diffContainer">
+                    <div class="loading-message">
+                        <i class="fas fa-spinner fa-spin"></i> Loading code changes...
+                    </div>
+                </div>
+                <div class="no-content-message" id="noDiffMessage" style="display: none;">
+                    <i class="fas fa-info-circle"></i> No code changes to display
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Pane: AI Feedback -->
+        <div class="pane right-pane" id="rightPane">
+            <div class="pane-header">
+                <h3 class="pane-title">
+                    <i class="fas fa-comments"></i> AI Feedback
+                </h3>
+                <div class="pane-controls">
+                    <div class="filter-controls">
+                        <label class="filter-checkbox">
+                            <input type="checkbox" data-severity="Critical" checked>
+                            <span class="filter-indicator critical"></span>
+                            Critical
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" data-severity="Warning" checked>
+                            <span class="filter-indicator warning"></span>
+                            Warning
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" data-severity="Suggestion" checked>
+                            <span class="filter-indicator suggestion"></span>
+                            Suggestion
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" data-severity="Style" checked>
+                            <span class="filter-indicator style"></span>
+                            Style
+                        </label>
+                    </div>
+                    <button class="btn-icon" id="expandRightPane" title="Expand">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="pane-content">
+                <div class="feedback-container" id="feedbackContainer">
+                    <div class="loading-message">
+                        <i class="fas fa-spinner fa-spin"></i> Loading feedback...
+                    </div>
+                </div>
+                <div class="no-content-message" id="noFeedbackMessage" style="display: none;">
+                    <i class="fas fa-info-circle"></i> No feedback available
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal-overlay" id="errorModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Error</h3>
+                <button class="modal-close" id="closeErrorModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="retryBtn">Retry</button>
+                <button class="btn btn-secondary" id="returnHomeBtn">Return to Home</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/results.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script>
+        window.analysisId = '@analysisId';
+    </script>
+    <script src="~/js/results.js" asp-append-version="true"></script>
+}

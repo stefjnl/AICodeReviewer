@@ -33,6 +33,11 @@ function initializeSignalR() {
                 signalRConnection.invoke("LeaveAnalysisGroup", currentAnalysisId)
                     .catch(err => console.error("Failed to leave SignalR group:", err));
             }
+            
+            // Redirect to results page for detailed review
+            setTimeout(() => {
+                window.location.href = `/results/${currentAnalysisId}`;
+            }, 1000); // Small delay to show completion message
         }
     });
 
