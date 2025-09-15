@@ -699,6 +699,552 @@
     margin-bottom: 4px;
 }
 
+/* Enhanced Button Design & Feedback */
+.btn-enhanced {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-enhanced:focus {
+    outline: none;
+}
+
+.btn-enhanced:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn-enhanced:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Primary Button Styles */
+.btn-primary-enhanced {
+    background-color: #007bff;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+.btn-primary-enhanced:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-primary-enhanced:focus {
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.4);
+}
+
+.btn-primary-enhanced:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+/* Secondary Button Styles */
+.btn-secondary-enhanced {
+    background-color: #f8f9fa;
+    color: #495057;
+    border: 1px solid #ced4da;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-secondary-enhanced:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary-enhanced:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+.btn-secondary-enhanced:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Success Button Styles */
+.btn-success-enhanced {
+    background-color: #28a745;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+.btn-success-enhanced:hover {
+    background-color: #1e7e34;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.btn-success-enhanced:focus {
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.4);
+}
+
+/* Outline Button Styles */
+.btn-outline-enhanced {
+    background-color: transparent;
+    color: #007bff;
+    border: 1px solid #007bff;
+    box-shadow: none;
+}
+
+.btn-outline-enhanced:hover {
+    background-color: #007bff;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-outline-enhanced:focus {
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.4);
+}
+
+/* Button with Icons */
+.btn-enhanced .btn-icon {
+    font-size: 16px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Button Groups */
+.btn-group-enhanced {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-group-enhanced .btn-enhanced {
+    margin: 0;
+}
+
+/* Button Containers */
+.btn-container-enhanced {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.btn-container-enhanced.btn-container-center {
+    justify-content: center;
+}
+
+.btn-container-enhanced.btn-container-full {
+    flex-direction: column;
+}
+
+.btn-container-enhanced.btn-container-full .btn-enhanced {
+    width: 100%;
+}
+
+/* Primary Action Emphasis */
+.btn-primary-action {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary-action::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-primary-action:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Ripple Effect for Primary Actions */
+.btn-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-ripple .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: ripple-animation 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes ripple-animation {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Button Loading State */
+.btn-loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: btn-spin 0.8s linear infinite;
+    opacity: 0.8;
+}
+
+@keyframes btn-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Focus States */
+.btn-enhanced:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .btn-enhanced {
+        border-width: 2px;
+    }
+    
+    .btn-enhanced:focus {
+        outline-width: 3px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .btn-enhanced {
+        transition: none;
+    }
+    
+    .btn-enhanced:hover {
+        transform: none;
+    }
+    
+    .btn-primary-action::before {
+        transition: none;
+    }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .btn-group-enhanced,
+    .btn-container-enhanced {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-group-enhanced .btn-enhanced,
+    .btn-container-enhanced .btn-enhanced {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Button Accessibility */
+.btn-enhanced[aria-label]::before {
+    content: attr(aria-label);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 1000;
+    margin-bottom: 4px;
+}
+
+.btn-enhanced[aria-label]:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Enhanced Radio Button Visibility */
+.radio-group-enhanced {
+    margin: 16px 0;
+    padding: 0;
+    border: none;
+}
+
+.radio-group-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.radio-option-container {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    min-height: 32px;
+}
+
+.radio-option-container:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+
+.radio-option-container.selected {
+    background-color: #e7f3ff;
+    border: 1px solid #007bff;
+}
+
+.radio-option-container:focus-within {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+    background-color: #f0f7ff;
+}
+
+.radio-input-enhanced {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.radio-visual {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-right: 12px;
+    margin-top: 2px;
+    position: relative;
+}
+
+.radio-visual.checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.radio-visual.checked::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: white;
+    opacity: 1;
+}
+
+.radio-label-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
+    line-height: 1.4;
+    flex-grow: 1;
+    user-select: none;
+}
+
+.radio-description {
+    font-size: 12px;
+    color: #6c757d;
+    line-height: 1.3;
+    margin-top: 4px;
+    display: block;
+}
+
+.radio-icon {
+    font-size: 16px;
+    margin-right: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Radio button with icons */
+.radio-option-with-icon {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.radio-icon-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.radio-option-content {
+    flex: 1;
+}
+
+/* Hover effects for radio buttons */
+.radio-option-container:hover .radio-visual {
+    border-color: #007bff;
+}
+
+.radio-option-container:hover .radio-label-text {
+    color: #0056b3;
+}
+
+/* Focus states */
+.radio-option-container:focus-within .radio-visual {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+/* Selected state emphasis */
+.radio-option-container.selected .radio-visual {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.radio-option-container.selected .radio-label-text {
+    color: #0056b3;
+    font-weight: 600;
+}
+
+/* Tooltip for radio buttons */
+.radio-tooltip {
+    position: absolute;
+    background: #333;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 4px;
+}
+
+.radio-option-container:hover .radio-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .radio-visual {
+        border-width: 3px;
+    }
+    
+    .radio-option-container.selected .radio-visual {
+        border-width: 3px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .radio-option-container,
+    .radio-visual {
+        transition: none;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .radio-option-container {
+        padding: 16px 12px;
+    }
+    
+    .radio-visual {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .radio-visual.checked::after {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+/* Radio button group enhancements */
+.radio-group-horizontal {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.radio-group-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Accessibility improvements */
+.radio-option-container[tabindex] {
+    outline: none;
+}
+
+.radio-option-container[tabindex]:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
 /* High contrast mode support */
 @media (prefers-contrast: high) {
     .path-input-field {

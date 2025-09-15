@@ -74,8 +74,8 @@
                         </div>
                         <div class="path-input-drop-indicator">Drop folder here</div>
                     </div>
-                    <button type="submit" class="path-input-browse-btn btn-browse-secondary">
-                        <span class="browse-icon">📁</span>
+                    <button type="submit" class="btn-enhanced btn-secondary-enhanced" aria-label="Set documents folder">
+                        <span class="btn-icon">📁</span>
                         Set Folder
                     </button>
                 </div>
@@ -103,8 +103,11 @@
                         }
                     </div>
                 </div>
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Apply Selection</button>
+                <div class="btn-container-enhanced btn-container-center">
+                    <button type="submit" class="btn-enhanced btn-primary-enhanced btn-primary-action btn-ripple">
+                        <span class="btn-icon">✅</span>
+                        Apply Selection
+                    </button>
                 </div>
             </form>
         }
@@ -188,12 +191,12 @@
                         </div>
                         <div class="path-input-drop-indicator">Drop folder here</div>
                     </div>
-                    <button type="button" class="path-input-browse-btn btn-browse-primary" onclick="openDirectoryBrowser()">
-                        <span class="browse-icon">📁</span>
+                    <button type="button" class="btn-enhanced btn-outline-enhanced" onclick="openDirectoryBrowser()" aria-label="Browse for repository folder">
+                        <span class="btn-icon">📁</span>
                         Browse
                     </button>
-                    <button type="submit" class="path-input-browse-btn btn-browse-secondary">
-                        <span class="browse-icon">✅</span>
+                    <button type="submit" class="btn-enhanced btn-secondary-enhanced" aria-label="Set repository path">
+                        <span class="btn-icon">✅</span>
                         Set Repository
                     </button>
                 </div>
@@ -252,25 +255,53 @@
         <!-- Analysis Type Selection -->
         <div class="form-group">
             <h3 class="subsection-heading">🔍 Analysis Type</h3>
-            <div class="form-check-group">
-                <div class="form-check-item">
-                    <input class="form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
-                    <label class="form-check-label" for="uncommittedChanges">
-                        Uncommitted Changes
-                    </label>
-                </div>
-                <div class="form-check-item">
-                    <input class="form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
-                    <label class="form-check-label" for="specificCommit">
-                        Specific Commit
-                    </label>
-                </div>
-                <div class="form-check-item">
-                    <input class="form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
-                    <label class="form-check-label" for="singleFile">
-                        Single File
-                    </label>
-                </div>
+            <div class="radio-group-enhanced" role="radiogroup" aria-labelledby="analysis-type-title">
+                <div class="radio-group-title" id="analysis-type-title">Choose your analysis method:</div>
+                
+                <label class="radio-option-container selected" for="uncommittedChanges" tabindex="0" role="radio" aria-checked="true">
+                    <input class="radio-input-enhanced" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked onchange="updateRadioSelection(this)">
+                    <span class="radio-visual checked"></span>
+                    <div class="radio-option-content">
+                        <div class="radio-option-with-icon">
+                            <span class="radio-icon" aria-label="Refresh icon">🔁</span>
+                            <div>
+                                <span class="radio-label-text">Uncommitted Changes</span>
+                                <span class="radio-description">Analyze changes not yet committed to Git</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="radio-tooltip">Analyze changes not yet committed to Git</div>
+                </label>
+                
+                <label class="radio-option-container" for="specificCommit" tabindex="0" role="radio" aria-checked="false">
+                    <input class="radio-input-enhanced" type="radio" name="analysisType" id="specificCommit" value="commit" onchange="updateRadioSelection(this)">
+                    <span class="radio-visual"></span>
+                    <div class="radio-option-content">
+                        <div class="radio-option-with-icon">
+                            <span class="radio-icon" aria-label="Clock icon">⏳</span>
+                            <div>
+                                <span class="radio-label-text">Specific Commit</span>
+                                <span class="radio-description">Analyze a specific commit by its hash</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="radio-tooltip">Analyze a specific commit by its hash</div>
+                </label>
+                
+                <label class="radio-option-container" for="singleFile" tabindex="0" role="radio" aria-checked="false">
+                    <input class="radio-input-enhanced" type="radio" name="analysisType" id="singleFile" value="singlefile" onchange="updateRadioSelection(this)">
+                    <span class="radio-visual"></span>
+                    <div class="radio-option-content">
+                        <div class="radio-option-with-icon">
+                            <span class="radio-icon" aria-label="Document icon">📄</span>
+                            <div>
+                                <span class="radio-label-text">Single File</span>
+                                <span class="radio-description">Analyze a specific file individually</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="radio-tooltip">Analyze a specific file individually</div>
+                </label>
             </div>
             <div class="form-group" id="commitIdContainer" style="display: none;">
                 <label class="form-label">Commit ID</label>
@@ -1015,6 +1046,83 @@
                         updatePathDisplay(input);
                     }
                 });
+        
+                // Enhanced Button Functionality
+                function initializeEnhancedButtons() {
+                    // Add ripple effect to primary buttons
+                    document.querySelectorAll('.btn-ripple').forEach(function(button) {
+                        button.addEventListener('click', function(e) {
+                            createRipple(e, this);
+                        });
+                    });
+        
+                    // Add keyboard navigation for enhanced buttons
+                    document.querySelectorAll('.btn-enhanced').forEach(function(button) {
+                        button.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                this.click();
+                            }
+                        });
+        
+                        // Ensure buttons are focusable
+                        if (!this.hasAttribute('tabindex')) {
+                            this.setAttribute('tabindex', '0');
+                        }
+        
+                        // Add role if not present
+                        if (!this.hasAttribute('role')) {
+                            this.setAttribute('role', 'button');
+                        }
+                    });
+        
+                    // Add loading state support
+                    document.querySelectorAll('.btn-enhanced').forEach(function(button) {
+                        button.addEventListener('click', function() {
+                            if (this.type === 'submit') {
+                                // Add loading state for submit buttons
+                                setTimeout(() => {
+                                    if (!this.disabled) {
+                                        this.classList.add('btn-loading');
+                                        this.disabled = true;
+                                        
+                                        // Remove loading state after form submission
+                                        setTimeout(() => {
+                                            this.classList.remove('btn-loading');
+                                            this.disabled = false;
+                                        }, 2000);
+                                    }
+                                }, 100);
+                            }
+                        });
+                    });
+                }
+        
+                function createRipple(event, button) {
+                    const ripple = document.createElement('span');
+                    const rect = button.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = event.clientX - rect.left - size / 2;
+                    const y = event.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.classList.add('ripple');
+                    
+                    button.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                }
+        
+                // Add click animation for primary actions
+                document.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('btn-primary-action')) {
+                        createRipple(e, e.target);
+                    }
+                });
             });
         }
 
@@ -1047,6 +1155,94 @@
             if (e.target.classList.contains('path-input-browse-btn') && (e.key === 'Enter' || e.key === ' ')) {
                 e.preventDefault();
                 e.target.click();
+            }
+        });
+
+        // Enhanced Radio Button Functionality
+        function updateRadioSelection(radio) {
+            const container = radio.closest('.radio-option-container');
+            const allContainers = document.querySelectorAll('.radio-option-container');
+            
+            // Remove selected state from all containers
+            allContainers.forEach(function(container) {
+                container.classList.remove('selected');
+                container.setAttribute('aria-checked', 'false');
+                const visual = container.querySelector('.radio-visual');
+                visual.classList.remove('checked');
+            });
+            
+            // Add selected state to current container
+            container.classList.add('selected');
+            container.setAttribute('aria-checked', 'true');
+            const visual = container.querySelector('.radio-visual');
+            visual.classList.add('checked');
+            
+            // Handle the conditional display logic
+            toggleAnalysisTypeFields();
+            
+            console.log('Radio selection updated:', radio.value);
+        }
+
+        // Enhanced keyboard navigation for radio buttons
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('radio-option-container') || e.target.closest('.radio-option-container')) {
+                const container = e.target.closest('.radio-option-container');
+                const radio = container.querySelector('.radio-input-enhanced');
+                const allContainers = Array.from(document.querySelectorAll('.radio-option-container'));
+                const currentIndex = allContainers.indexOf(container);
+                
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    radio.checked = true;
+                    updateRadioSelection(radio);
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const nextIndex = (currentIndex + 1) % allContainers.length;
+                    const nextContainer = allContainers[nextIndex];
+                    const nextRadio = nextContainer.querySelector('.radio-input-enhanced');
+                    nextRadio.checked = true;
+                    updateRadioSelection(nextRadio);
+                    nextContainer.focus();
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const prevIndex = (currentIndex - 1 + allContainers.length) % allContainers.length;
+                    const prevContainer = allContainers[prevIndex];
+                    const prevRadio = prevContainer.querySelector('.radio-input-enhanced');
+                    prevRadio.checked = true;
+                    updateRadioSelection(prevRadio);
+                    prevContainer.focus();
+                }
+            }
+        });
+
+        // Make radio containers focusable and keyboard navigable
+        document.querySelectorAll('.radio-option-container').forEach(function(container) {
+            container.setAttribute('tabindex', '0');
+            container.setAttribute('role', 'radio');
+            
+            const radio = container.querySelector('.radio-input-enhanced');
+            if (radio.checked) {
+                container.setAttribute('aria-checked', 'true');
+                container.classList.add('selected');
+            } else {
+                container.setAttribute('aria-checked', 'false');
+            }
+            
+            // Click handler for entire container
+            container.addEventListener('click', function(e) {
+                if (e.target !== radio) {
+                    radio.checked = true;
+                    updateRadioSelection(radio);
+                }
+            });
+        });
+
+        // Initialize radio buttons on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the first radio button as selected (default)
+            const firstRadio = document.querySelector('.radio-input-enhanced:checked');
+            if (firstRadio) {
+                updateRadioSelection(firstRadio);
             }
         });
     });
