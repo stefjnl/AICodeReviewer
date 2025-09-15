@@ -6,4 +6,6 @@ public class RunAnalysisRequest
     public List<string>? SelectedDocuments { get; set; }
     public string? DocumentsFolder { get; set; }
     public string? Language { get; set; }
+    public string? AnalysisType { get; set; } // "uncommitted" or "commit"
+    public string? CommitId { get; set; } // Only used when AnalysisType = "commit"
 }

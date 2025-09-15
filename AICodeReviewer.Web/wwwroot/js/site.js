@@ -99,6 +99,15 @@ function startAnalysis() {
         return;
     }
     
+    // Get analysis type and validate commit ID if needed
+    const analysisType = document.querySelector('input[name="analysisType"]:checked')?.value || 'uncommitted';
+    const commitId = document.getElementById('commitId')?.value?.trim();
+    
+    if (analysisType === 'commit' && !commitId) {
+        alert('Please enter a commit ID for commit analysis');
+        return;
+    }
+    
     // Show progress immediately
     showProgress();
     
@@ -113,7 +122,9 @@ function startAnalysis() {
         repositoryPath: repositoryPath,
         selectedDocuments: selectedDocuments,
         documentsFolder: '', // Will use session default
-        language: document.getElementById('languageSelect')?.value || 'NET'
+        language: document.getElementById('languageSelect')?.value || 'NET',
+        analysisType: analysisType,
+        commitId: commitId
     };
     
     // Start analysis with JSON
