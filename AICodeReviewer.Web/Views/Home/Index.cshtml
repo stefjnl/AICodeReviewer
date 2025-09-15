@@ -74,6 +74,12 @@
                     Specific Commit
                 </label>
             </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
+                <label class="form-check-label" for="singleFile">
+                    Single File
+                </label>
+            </div>
             <div class="mt-2" id="commitIdContainer" style="display: none;">
                 <div class="input-group">
                     <input type="text" class="form-control" id="commitId" name="commitId"
@@ -81,6 +87,17 @@
                     <button class="btn btn-outline-secondary" type="button" id="validateCommit">Validate</button>
                 </div>
                 <div id="commitValidationResult" class="form-text"></div>
+            </div>
+            <div class="mt-2" id="filePickerContainer" style="display: none;">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="filePath" name="filePath"
+                           placeholder="Enter file path (.cs, .js, .py files) or drag & drop a file here"
+                           style="transition: background-color 0.3s, border-color 0.3s;">
+                    <button class="btn btn-outline-secondary" type="button" id="browseFile">Browse</button>
+                    <input type="file" id="fileInput" accept=".cs,.js,.py" style="display: none;">
+                </div>
+                <div id="fileValidationResult" class="form-text"></div>
+                <small class="text-muted">Supported file types: .cs (C#), .js (JavaScript), .py (Python)</small>
             </div>
         </div>
         
@@ -121,6 +138,17 @@
                 <div>
                     <strong>Commit Analysis Mode</strong><br>
                     <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Single File Analysis Info (shown when single file is selected) -->
+        <div id="singleFileAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
+            <div class="d-flex align-items-center">
+                <div class="me-2">📄</div>
+                <div>
+                    <strong>Single File Analysis Mode</strong><br>
+                    <small>Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</small>
                 </div>
             </div>
         </div>
@@ -466,15 +494,19 @@
     document.addEventListener('DOMContentLoaded', function() {
         const uncommittedRadio = document.getElementById('uncommittedChanges');
         const commitRadio = document.getElementById('specificCommit');
+        const singleFileRadio = document.getElementById('singleFile');
         const commitIdContainer = document.getElementById('commitIdContainer');
         const commitIdInput = document.getElementById('commitId');
+        const filePickerContainer = document.getElementById('filePickerContainer');
+        const filePathInput = document.getElementById('filePath');
         
-        function toggleCommitIdField() {
+        function toggleAnalysisTypeFields() {
             const gitDiffSection = document.getElementById('gitDiffSection');
             const commitAnalysisInfo = document.getElementById('commitAnalysisInfo');
+            const singleFileAnalysisInfo = document.getElementById('singleFileAnalysisInfo');
             
             // Initialize on first call
-            if (!gitDiffSection || !commitAnalysisInfo) {
+            if (!gitDiffSection || !commitAnalysisInfo || !singleFileAnalysisInfo) {
                 console.log('Elements not found, skipping toggle');
                 return;
             }
@@ -482,27 +514,48 @@
             if (commitRadio.checked) {
                 commitIdContainer.style.display = 'block';
                 commitIdInput.required = true;
+                filePickerContainer.style.display = 'none';
+                filePathInput.required = false;
                 
                 // Hide git diff section and show commit analysis info
-                if (gitDiffSection) gitDiffSection.style.display = 'none';
-                if (commitAnalysisInfo) commitAnalysisInfo.style.display = 'block';
+                gitDiffSection.style.display = 'none';
+                commitAnalysisInfo.style.display = 'block';
+                singleFileAnalysisInfo.style.display = 'none';
+            } else if (singleFileRadio.checked) {
+                commitIdContainer.style.display = 'none';
+                commitIdInput.required = false;
+                commitIdInput.value = '';
+                document.getElementById('commitValidationResult').innerHTML = '';
+                filePickerContainer.style.display = 'block';
+                filePathInput.required = true;
+                
+                // Hide git diff section and show single file analysis info
+                gitDiffSection.style.display = 'none';
+                commitAnalysisInfo.style.display = 'none';
+                singleFileAnalysisInfo.style.display = 'block';
             } else {
                 commitIdContainer.style.display = 'none';
                 commitIdInput.required = false;
                 commitIdInput.value = '';
                 document.getElementById('commitValidationResult').innerHTML = '';
+                filePickerContainer.style.display = 'none';
+                filePathInput.required = false;
+                filePathInput.value = '';
+                document.getElementById('fileValidationResult').innerHTML = '';
                 
-                // Show git diff section and hide commit analysis info
-                if (gitDiffSection) gitDiffSection.style.display = 'block';
-                if (commitAnalysisInfo) commitAnalysisInfo.style.display = 'none';
+                // Show git diff section and hide analysis info
+                gitDiffSection.style.display = 'block';
+                commitAnalysisInfo.style.display = 'none';
+                singleFileAnalysisInfo.style.display = 'none';
             }
         }
         
         // Initialize the UI state based on the default radio button selection
-        toggleCommitIdField();
+        toggleAnalysisTypeFields();
         
-        uncommittedRadio.addEventListener('change', toggleCommitIdField);
-        commitRadio.addEventListener('change', toggleCommitIdField);
+        uncommittedRadio.addEventListener('change', toggleAnalysisTypeFields);
+        commitRadio.addEventListener('change', toggleAnalysisTypeFields);
+        singleFileRadio.addEventListener('change', toggleAnalysisTypeFields);
         
         // Validate commit button handler
         document.getElementById('validateCommit').addEventListener('click', async function() {
@@ -540,6 +593,94 @@
                 }
             } catch (error) {
                 validationResult.innerHTML = '<span class="text-danger">✗ Validation failed: ' + error.message + '</span>';
+            }
+        });
+
+        // File validation function
+        function validateFilePath(filePath) {
+            const validationResult = document.getElementById('fileValidationResult');
+            
+            if (!filePath) {
+                validationResult.innerHTML = '<span class="text-warning">Please select or enter a file path</span>';
+                return false;
+            }
+            
+            const allowedExtensions = ['.cs', '.js', '.py'];
+            const extension = filePath.toLowerCase().substring(filePath.lastIndexOf('.'));
+            
+            if (!allowedExtensions.includes(extension)) {
+                validationResult.innerHTML = '<span class="text-danger">✗ Unsupported file type. Allowed: ' + allowedExtensions.join(', ') + '</span>';
+                return false;
+            }
+            
+            validationResult.innerHTML = '<span class="text-success">✓ File type supported</span>';
+            return true;
+        }
+
+        // File path input validation
+        filePathInput.addEventListener('input', function() {
+            const filePath = this.value.trim();
+            if (filePath) {
+                validateFilePath(filePath);
+            } else {
+                document.getElementById('fileValidationResult').innerHTML = '';
+            }
+        });
+
+        // Browse file button handler - triggers hidden file input
+        document.getElementById('browseFile').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+
+        // Handle file selection from file input
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Get the full path if available, otherwise use the name
+                const filePath = file.webkitRelativePath || file.name || file.fileName;
+                filePathInput.value = filePath;
+                
+                // Validate the file
+                const isValid = validateFilePath(filePath);
+                
+                // Store the file object for potential future use
+                window.selectedFile = file;
+                
+                // Provide feedback about the selected file
+                const validationResult = document.getElementById('fileValidationResult');
+                if (isValid) {
+                    validationResult.innerHTML = '<span class="text-success">✓ File selected: ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)</span>';
+                }
+            }
+        });
+
+        // Allow drag and drop for file selection (enhanced UX)
+        filePathInput.addEventListener('dragover', function(event) {
+            event.preventDefault();
+            this.style.backgroundColor = '#f0f0f0';
+            this.style.borderColor = '#007bff';
+        });
+
+        filePathInput.addEventListener('dragleave', function(event) {
+            event.preventDefault();
+            this.style.backgroundColor = '';
+            this.style.borderColor = '';
+        });
+
+        filePathInput.addEventListener('drop', function(event) {
+            event.preventDefault();
+            this.style.backgroundColor = '';
+            this.style.borderColor = '';
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                const filePath = file.webkitRelativePath || file.name;
+                this.value = filePath;
+                
+                // Trigger the file input change event
+                document.getElementById('fileInput').files = files;
+                document.getElementById('fileInput').dispatchEvent(new Event('change'));
             }
         });
     });

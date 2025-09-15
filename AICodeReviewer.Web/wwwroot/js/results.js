@@ -553,7 +553,32 @@ class FeedbackProcessor {
 
 // Diff Renderer
 class DiffRenderer {
+    constructor() {
+        this.currentLineNumber = 1;
+    }
+
     renderDiff(diffText) {
+        const files = {};
+        
+        // Check if this is a git diff or a single file content
+        if (this.isGitDiff(diffText)) {
+            // Process as git diff
+            return this.processGitDiff(diffText);
+        } else {
+            // Process as single file content
+            return this.processSingleFile(diffText);
+        }
+    }
+
+    isGitDiff(text) {
+        // Check for git diff indicators
+        return text.includes('diff --git') ||
+               text.includes('---') ||
+               text.includes('+++') ||
+               text.includes('@@');
+    }
+
+    processGitDiff(diffText) {
         const files = {};
         const lines = diffText.split('\n');
         let currentFile = null;
@@ -583,6 +608,26 @@ class DiffRenderer {
             files[currentFile] = fileContent;
         }
 
+        return files;
+    }
+
+    processSingleFile(fileContent) {
+        const files = {};
+        const lines = fileContent.split('\n');
+        let fileContentProcessed = [];
+        let lineNumber = 1;
+
+        // Process each line as regular code line
+        lines.forEach(line => {
+            fileContentProcessed.push({
+                type: 'unchanged',
+                content: line,
+                lineNumber: lineNumber++
+            });
+        });
+
+        // Use a generic filename for single file analysis
+        files['Analyzed File'] = fileContentProcessed;
         return files;
     }
 

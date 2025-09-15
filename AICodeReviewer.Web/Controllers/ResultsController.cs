@@ -58,8 +58,8 @@ public class ResultsController : Controller
                 return NotFound(new { error = "Analysis not found or expired" });
             }
 
-            // Retrieve git diff from cache
-            var rawDiff = _cache.Get<string>($"diff_{analysisId}") ?? string.Empty;
+            // Retrieve content from cache (could be git diff or file content)
+            var rawContent = _cache.Get<string>($"content_{analysisId}") ?? string.Empty;
 
             // Parse raw AI response into structured feedback using the service
             var feedback = _aiPromptResponseService.ParseAIResponse(result.Result ?? string.Empty);
@@ -69,7 +69,7 @@ public class ResultsController : Controller
             {
                 AnalysisId = analysisId,
                 Feedback = feedback,
-                RawDiff = rawDiff,
+                RawDiff = rawContent,
                 RawResponse = result.Result,
                 CreatedAt = result.CreatedAt,
                 IsComplete = !string.IsNullOrEmpty(result.Result) && string.IsNullOrEmpty(result.Error),
@@ -87,7 +87,7 @@ public class ResultsController : Controller
     }
 
     /// <summary>
-    /// API endpoint to retrieve raw git diff data
+    /// API endpoint to retrieve raw content data (git diff or file content)
     /// </summary>
     [HttpGet("/api/diff/{analysisId}")]
     public async Task<IActionResult> GetDiff(string analysisId)
@@ -99,20 +99,20 @@ public class ResultsController : Controller
 
         try
         {
-            var rawDiff = _cache.Get<string>($"diff_{analysisId}") ?? string.Empty;
+            var rawContent = _cache.Get<string>($"content_{analysisId}") ?? string.Empty;
             
-            if (string.IsNullOrEmpty(rawDiff))
+            if (string.IsNullOrEmpty(rawContent))
             {
-                _logger.LogWarning($"Diff for analysis {analysisId} not found in cache");
-                return NotFound(new { error = "Diff data not found" });
+                _logger.LogWarning($"Content for analysis {analysisId} not found in cache");
+                return NotFound(new { error = "Content data not found" });
             }
 
-            return Content(rawDiff, "text/plain");
+            return Content(rawContent, "text/plain");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error retrieving diff for analysis {analysisId}");
-            return StatusCode(500, new { error = "Failed to retrieve diff data" });
+            _logger.LogError(ex, $"Error retrieving content for analysis {analysisId}");
+            return StatusCode(500, new { error = "Failed to retrieve content data" });
         }
     }
 

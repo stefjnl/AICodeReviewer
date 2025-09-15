@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\PromptTemplate.txt" />
+    <EmbeddedResource Include="Resources\SingleFilePromptTemplate.txt" />
   </ItemGroup>
 
 </Project>
