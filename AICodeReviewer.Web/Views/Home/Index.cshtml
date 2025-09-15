@@ -85,9 +85,9 @@
         </div>
         
         <!-- Git Diff Display -->
-        @if (ViewBag.GitDiff != null)
-        {
-            <div class="git-diff-section">
+        <div id="gitDiffSection" class="git-diff-section">
+            @if (ViewBag.GitDiff != null)
+            {
                 @if (ViewBag.GitDiffError)
                 {
                     <div class="alert alert-warning">
@@ -111,8 +111,19 @@
                         </div>
                     </div>
                 }
+            }
+        </div>
+        
+        <!-- Commit Analysis Info (shown when specific commit is selected) -->
+        <div id="commitAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
+            <div class="d-flex align-items-center">
+                <div class="me-2">🔍</div>
+                <div>
+                    <strong>Commit Analysis Mode</strong><br>
+                    <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
+                </div>
             </div>
-        }
+        </div>
     </div>
     
     <!-- Document Management Section -->
@@ -459,16 +470,36 @@
         const commitIdInput = document.getElementById('commitId');
         
         function toggleCommitIdField() {
+            const gitDiffSection = document.getElementById('gitDiffSection');
+            const commitAnalysisInfo = document.getElementById('commitAnalysisInfo');
+            
+            // Initialize on first call
+            if (!gitDiffSection || !commitAnalysisInfo) {
+                console.log('Elements not found, skipping toggle');
+                return;
+            }
+            
             if (commitRadio.checked) {
                 commitIdContainer.style.display = 'block';
                 commitIdInput.required = true;
+                
+                // Hide git diff section and show commit analysis info
+                if (gitDiffSection) gitDiffSection.style.display = 'none';
+                if (commitAnalysisInfo) commitAnalysisInfo.style.display = 'block';
             } else {
                 commitIdContainer.style.display = 'none';
                 commitIdInput.required = false;
                 commitIdInput.value = '';
                 document.getElementById('commitValidationResult').innerHTML = '';
+                
+                // Show git diff section and hide commit analysis info
+                if (gitDiffSection) gitDiffSection.style.display = 'block';
+                if (commitAnalysisInfo) commitAnalysisInfo.style.display = 'none';
             }
         }
+        
+        // Initialize the UI state based on the default radio button selection
+        toggleCommitIdField();
         
         uncommittedRadio.addEventListener('change', toggleCommitIdField);
         commitRadio.addEventListener('change', toggleCommitIdField);
