@@ -459,3 +459,280 @@
 .form-check-group-enhanced .custom-checkbox-container:last-child {
     margin-bottom: 0;
 }
+
+/* Enhanced Path Input Controls */
+.path-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.path-input-group {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.path-input-icon {
+    position: absolute;
+    left: 12px;
+    font-size: 16px;
+    color: #666;
+    z-index: 2;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+}
+
+.path-input-field {
+    width: 100%;
+    height: 40px;
+    padding: 8px 12px 8px 40px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #1a1a1a;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.path-input-field:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+.path-input-field:hover {
+    border-color: #999;
+}
+
+.path-input-field.drag-over {
+    border-color: #007bff;
+    background-color: #f0f7ff;
+}
+
+.path-input-field.drag-over::after {
+    content: "Drop folder here";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 123, 255, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.path-input-tooltip {
+    position: absolute;
+    background: #333;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.path-input-tooltip::before {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #333;
+}
+
+.path-input-field:hover + .path-input-tooltip,
+.path-input-field:focus + .path-input-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.path-input-browse-btn {
+    margin-left: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.path-input-browse-btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.path-input-browse-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
+}
+
+.path-input-browse-btn:active {
+    transform: translateY(0);
+}
+
+.path-input-browse-btn .browse-icon {
+    font-size: 14px;
+}
+
+/* Browse button variants */
+.btn-browse-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-browse-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-browse-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-browse-secondary:hover {
+    background-color: #545b62;
+}
+
+/* Drag and drop feedback */
+.path-input-drop-zone {
+    border: 2px dashed transparent;
+    transition: all 0.2s ease;
+}
+
+.path-input-drop-zone.drag-over {
+    border-color: #007bff;
+    background-color: #f0f7ff;
+}
+
+.path-input-drop-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 123, 255, 0.1);
+    border: 2px dashed #007bff;
+    border-radius: 6px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #007bff;
+    font-weight: 500;
+    z-index: 5;
+}
+
+.path-input-drop-indicator.active {
+    display: flex;
+}
+
+/* Path truncation styles */
+.path-input-field.truncated {
+    direction: rtl;
+    text-align: left;
+}
+
+.path-input-field.truncated::placeholder {
+    direction: ltr;
+}
+
+/* Enhanced input group styling */
+.input-group-enhanced {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.input-group-enhanced .path-input-container {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+/* Accessibility improvements */
+.path-input-field[aria-label] {
+    position: relative;
+}
+
+.path-input-field[aria-label]:focus::after {
+    content: attr(aria-label);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 4px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .path-input-field {
+        border-width: 2px;
+    }
+    
+    .path-input-field:focus {
+        border-width: 3px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .path-input-field,
+    .path-input-browse-btn,
+    .path-input-tooltip {
+        transition: none;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .path-input-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .path-input-browse-btn {
+        margin-left: 0;
+        margin-top: 8px;
+        justify-content: center;
+    }
+    
+    .input-group-enhanced {
+        flex-direction: column;
+    }
+}

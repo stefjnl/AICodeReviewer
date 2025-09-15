@@ -59,11 +59,25 @@
         <div class="form-group">
             <form asp-action="SetDocumentsFolder" method="post">
                 <label class="form-label">Documents Folder Path</label>
-                <div class="input-group-custom">
-                    <input type="text" class="form-control" name="folderPath"
-                           placeholder="Enter documents folder path"
-                           value="@ViewBag.DocumentsFolder">
-                    <button class="btn btn-outline-secondary" type="submit">Set Folder</button>
+                <div class="input-group-enhanced">
+                    <div class="path-input-container path-input-drop-zone" data-input-type="documents">
+                        <div class="path-input-group">
+                            <span class="path-input-icon" aria-label="Folder icon">📁</span>
+                            <input type="text" class="path-input-field" name="folderPath"
+                                   placeholder="Enter documents folder path"
+                                   value="@ViewBag.DocumentsFolder"
+                                   data-full-path="@ViewBag.DocumentsFolder"
+                                   aria-label="Documents folder path"
+                                   data-truncate="true"
+                                   data-tooltip="Documents folder path">
+                            <div class="path-input-tooltip"></div>
+                        </div>
+                        <div class="path-input-drop-indicator">Drop folder here</div>
+                    </div>
+                    <button type="submit" class="path-input-browse-btn btn-browse-secondary">
+                        <span class="browse-icon">📁</span>
+                        Set Folder
+                    </button>
                 </div>
             </form>
         </div>
@@ -158,15 +172,30 @@
         <div class="form-group">
             <form asp-action="SetRepositoryPath" method="post">
                 <label class="form-label">Repository Path</label>
-                <div class="input-group-custom">
-                    <input type="text" class="form-control" name="repositoryPath"
-                           placeholder="Enter repository path"
-                           value="@ViewBag.RepositoryPath"
-                           id="repositoryPathInput">
-                    <button class="btn btn-outline-secondary" type="button" onclick="openDirectoryBrowser()">
-                        📁 Browse
+                <div class="input-group-enhanced">
+                    <div class="path-input-container path-input-drop-zone" data-input-type="repository">
+                        <div class="path-input-group">
+                            <span class="path-input-icon" aria-label="Repository folder icon">📁</span>
+                            <input type="text" class="path-input-field" name="repositoryPath"
+                                   placeholder="Enter repository path"
+                                   value="@ViewBag.RepositoryPath"
+                                   id="repositoryPathInput"
+                                   data-full-path="@ViewBag.RepositoryPath"
+                                   aria-label="Repository path"
+                                   data-truncate="true"
+                                   data-tooltip="Repository path">
+                            <div class="path-input-tooltip"></div>
+                        </div>
+                        <div class="path-input-drop-indicator">Drop folder here</div>
+                    </div>
+                    <button type="button" class="path-input-browse-btn btn-browse-primary" onclick="openDirectoryBrowser()">
+                        <span class="browse-icon">📁</span>
+                        Browse
                     </button>
-                    <button class="btn btn-outline-primary" type="submit">Set Repository</button>
+                    <button type="submit" class="path-input-browse-btn btn-browse-secondary">
+                        <span class="browse-icon">✅</span>
+                        Set Repository
+                    </button>
                 </div>
             </form>
         </div>
@@ -848,6 +877,176 @@
                 container.setAttribute('aria-checked', 'true');
             } else {
                 container.setAttribute('aria-checked', 'false');
+            }
+        });
+
+        // Enhanced path input functionality
+        function truncatePath(path, maxLength = 50) {
+            if (!path || path.length <= maxLength) return path;
+            
+            const parts = path.split(/[\\/]/);
+            if (parts.length <= 2) return path;
+            
+            const filename = parts[parts.length - 1];
+            const parentDir = parts[parts.length - 2];
+            const ellipsis = '...';
+            
+            const truncated = ellipsis + parentDir + '/' + filename;
+            return truncated.length <= maxLength ? truncated : ellipsis + filename;
+        }
+
+        function updatePathDisplay(input) {
+            const fullPath = input.dataset.fullPath || input.value;
+            const displayPath = truncatePath(fullPath);
+            
+            // Update the input display
+            input.value = displayPath;
+            
+            // Update tooltip with full path
+            const tooltip = input.parentElement.querySelector('.path-input-tooltip');
+            if (tooltip) {
+                tooltip.textContent = fullPath;
+            }
+            
+            // Update aria-label
+            input.setAttribute('aria-label', `Path: ${fullPath}`);
+        }
+
+        function initializePathInputs() {
+            document.querySelectorAll('.path-input-field').forEach(function(input) {
+                // Store full path
+                if (input.value && !input.dataset.fullPath) {
+                    input.dataset.fullPath = input.value;
+                }
+                
+                // Set up tooltip
+                const tooltip = input.parentElement.querySelector('.path-input-tooltip');
+                if (tooltip) {
+                    input.addEventListener('mouseenter', function() {
+                        tooltip.textContent = input.dataset.fullPath || input.value;
+                    });
+                    
+                    input.addEventListener('focus', function() {
+                        tooltip.textContent = input.dataset.fullPath || input.value;
+                    });
+                }
+                
+                // Update display
+                updatePathDisplay(input);
+                
+                // Handle click to show full path
+                input.addEventListener('click', function() {
+                    const fullPath = this.dataset.fullPath || this.value;
+                    if (fullPath && this.value !== fullPath) {
+                        this.value = fullPath;
+                        this.select();
+                    }
+                });
+                
+                // Handle blur to restore truncated view
+                input.addEventListener('blur', function() {
+                    updatePathDisplay(this);
+                });
+                
+                // Handle input changes
+                input.addEventListener('input', function() {
+                    this.dataset.fullPath = this.value;
+                    updatePathDisplay(this);
+                });
+            });
+        }
+
+        // Drag and drop functionality
+        function setupDragAndDrop() {
+            const dropZones = document.querySelectorAll('.path-input-drop-zone');
+            
+            dropZones.forEach(function(zone) {
+                const input = zone.querySelector('.path-input-field');
+                const indicator = zone.querySelector('.path-input-drop-indicator');
+                const inputType = zone.dataset.inputType;
+                
+                zone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    zone.classList.add('drag-over');
+                    if (indicator) indicator.classList.add('active');
+                });
+                
+                zone.addEventListener('dragleave', function(e) {
+                    if (!zone.contains(e.relatedTarget)) {
+                        zone.classList.remove('drag-over');
+                        if (indicator) indicator.classList.remove('active');
+                    }
+                });
+                
+                zone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    if (indicator) indicator.classList.remove('active');
+                    
+                    const items = e.dataTransfer.items;
+                    if (items && items.length > 0) {
+                        const item = items[0];
+                        if (item.kind === 'file' && item.type === '') {
+                            // This is likely a folder
+                            const entry = item.webkitGetAsEntry();
+                            if (entry && entry.isDirectory) {
+                                // For security reasons, we can't get the full path
+                                // But we can indicate a folder was dropped
+                                input.value = entry.name;
+                                input.dataset.fullPath = entry.name;
+                                updatePathDisplay(input);
+                                
+                                // Provide feedback
+                                const tooltip = input.parentElement.querySelector('.path-input-tooltip');
+                                if (tooltip) {
+                                    tooltip.textContent = `Folder dropped: ${entry.name} (full path not available for security)`;
+                                }
+                            }
+                        }
+                    }
+                    
+                    const files = e.dataTransfer.files;
+                    if (files && files.length > 0) {
+                        // Handle file drops (though we prefer folders)
+                        const file = files[0];
+                        const path = file.webkitRelativePath || file.name;
+                        input.value = path;
+                        input.dataset.fullPath = path;
+                        updatePathDisplay(input);
+                    }
+                });
+            });
+        }
+
+        // Initialize path inputs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePathInputs();
+            setupDragAndDrop();
+        });
+
+        // Make browse buttons more accessible
+        document.querySelectorAll('.path-input-browse-btn').forEach(function(btn) {
+            btn.setAttribute('aria-label', 'Browse for folder');
+            btn.setAttribute('role', 'button');
+            btn.setAttribute('tabindex', '0');
+        });
+
+        // Enhanced keyboard navigation for path inputs
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('path-input-field')) {
+                if (e.key === 'Enter') {
+                    const fullPath = e.target.dataset.fullPath || e.target.value;
+                    if (fullPath && e.target.value !== fullPath) {
+                        e.preventDefault();
+                        e.target.value = fullPath;
+                        e.target.select();
+                    }
+                }
+            }
+            
+            if (e.target.classList.contains('path-input-browse-btn') && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                e.target.click();
             }
         });
     });
