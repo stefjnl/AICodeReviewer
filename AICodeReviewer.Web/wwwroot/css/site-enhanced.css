@@ -1,6 +1,48 @@
 /* Enhanced Visual Hierarchy and Spacing System */
 /* Based on 8px base unit system */
 
+/* Micro-interactions & Visual Feedback - UI-prompt.md Requirements */
+
+/* Animation Keyframes for Micro-interactions */
+@keyframes pulse-animation {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.98); }
+    100% { transform: scale(1); }
+}
+
+@keyframes ripple-animation {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce-in {
+    0% { opacity: 0; transform: scale(0.3); }
+    50% { opacity: 1; transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin-animation {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes slide-in {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
 /* Consistent Color Palette - UI-prompt.md Requirements */
 :root {
     /* Primary Colors */
@@ -382,20 +424,28 @@
     border-radius: 0 0 8px 8px;
 }
 
-/* Enhanced Form Controls - Custom Checkboxes */
+/* Enhanced Form Controls - Custom Checkboxes with Micro-interactions */
 .custom-checkbox-container {
     display: flex;
     align-items: flex-start;
     cursor: pointer;
     padding: 8px 12px;
     margin-bottom: 4px;
-    transition: background-color 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 6px;
     position: relative;
+    transform: translateY(0);
 }
 
 .custom-checkbox-container:hover {
     background-color: #f0f7ff;
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+.custom-checkbox-container.checked {
+    background-color: #e7f3ff;
+    animation: bounce-in 0.3s ease;
 }
 
 .custom-checkbox-input {
@@ -415,15 +465,36 @@
     align-items: center;
     justify-content: center;
     background-color: white;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
     margin-right: 12px;
     margin-top: 2px;
+    position: relative;
+    overflow: hidden;
+}
+
+.custom-checkbox-visual::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(0, 123, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+}
+
+.custom-checkbox-container:hover .custom-checkbox-visual::before {
+    width: 40px;
+    height: 40px;
 }
 
 .custom-checkbox-visual.checked {
     background-color: #007bff;
     border-color: #007bff;
+    animation: bounce-in 0.3s ease;
 }
 
 .custom-checkbox-visual.checked::after {
@@ -432,6 +503,7 @@
     font-size: 14px;
     font-weight: bold;
     line-height: 1;
+    animation: fade-in 0.3s ease;
 }
 
 .custom-checkbox-label {
@@ -453,9 +525,24 @@
     background-color: #f0f7ff;
 }
 
-/* Selected state for entire row */
+/* Selected state for entire row with animation */
 .custom-checkbox-container.checked {
     background-color: #e7f3ff;
+    animation: bounce-in 0.3s ease;
+}
+
+/* Enhanced checkbox group title */
+.checkbox-group-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    display: block;
+    transition: color 0.2s ease;
+}
+
+.checkbox-group-title:hover {
+    color: var(--color-primary);
 }
 
 /* High contrast mode support */
@@ -533,35 +620,51 @@
     height: 20px;
 }
 
+/* Enhanced Form Field Micro-interactions */
 .path-input-field {
     width: 100%;
     height: 40px;
     padding: 8px 12px 8px 40px;
     font-size: 14px;
     font-weight: 400;
-    color: #1a1a1a;
-    background-color: white;
+    color: var(--color-text-dark);
+    background-color: var(--color-bg-white);
     border: 1px solid #ccc;
     border-radius: 6px;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    position: relative;
+}
+
+.path-input-field:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+    transform: translateY(-1px);
 }
 
 .path-input-field:focus {
     outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
-}
-
-.path-input-field:hover {
-    border-color: #999;
+    border-color: var(--color-focus);
+    box-shadow: 0 0 0 3px var(--color-focus-ring), 0 4px 12px rgba(0, 123, 255, 0.2);
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, var(--color-bg-white) 0%, #f8f9ff 100%);
 }
 
 .path-input-field.drag-over {
-    border-color: #007bff;
-    background-color: #f0f7ff;
+    border-color: var(--color-primary);
+    background-color: var(--color-hover-bg);
+    animation: pulse-animation 0.6s ease infinite;
+}
+
+/* Enhanced input field micro-interactions */
+.path-input-field::placeholder {
+    transition: opacity 0.2s ease;
+}
+
+.path-input-field:focus::placeholder {
+    opacity: 0.6;
 }
 
 .path-input-field.drag-over::after {
@@ -780,26 +883,70 @@
     box-shadow: none;
 }
 
-/* Primary Button Styles */
+/* Enhanced Button Micro-interactions */
+.btn-enhanced {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ripple effect container */
+.btn-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-enhanced:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Primary Button Styles with Enhanced Micro-interactions */
 .btn-primary-enhanced {
     background-color: var(--color-primary);
     color: var(--color-bg-white);
     box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+    transform: translateY(0);
 }
 
 .btn-primary-enhanced:hover {
     background-color: #0056b3;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 12px rgba(0, 123, 255, 0.3);
 }
 
 .btn-primary-enhanced:focus {
-    box-shadow: 0 0 0 2px var(--color-focus-ring);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
+    outline: none;
 }
 
 .btn-primary-enhanced:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.98);
     box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+    animation: pulse-animation 0.2s ease;
 }
 
 .btn-primary-enhanced:disabled {
@@ -810,29 +957,32 @@
     box-shadow: none;
 }
 
-/* Secondary Button Styles */
+/* Secondary Button Styles with Enhanced Micro-interactions */
 .btn-secondary-enhanced {
     background-color: var(--color-bg-light);
     color: var(--color-text-primary);
     border: 1px solid #ced4da;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transform: translateY(0);
 }
 
 .btn-secondary-enhanced:hover {
     background-color: #e9ecef;
     border-color: #adb5bd;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .btn-secondary-enhanced:focus {
     border-color: var(--color-focus);
-    box-shadow: 0 0 0 2px var(--color-focus-ring);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
+    outline: none;
 }
 
 .btn-secondary-enhanced:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.98);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    animation: pulse-animation 0.2s ease;
 }
 
 .btn-secondary-enhanced:disabled {
@@ -843,21 +993,29 @@
     box-shadow: none;
 }
 
-/* Success Button Styles */
+/* Success Button Styles with Enhanced Micro-interactions */
 .btn-success-enhanced {
     background-color: var(--color-success);
     color: var(--color-bg-white);
     box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+    transform: translateY(0);
 }
 
 .btn-success-enhanced:hover {
     background-color: #1e7e34;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
 }
 
 .btn-success-enhanced:focus {
-    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.4);
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.4);
+    outline: none;
+}
+
+.btn-success-enhanced:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+    animation: pulse-animation 0.2s ease;
 }
 
 .btn-success-enhanced:disabled {
@@ -1183,6 +1341,134 @@
     100% { transform: rotate(360deg); }
 }
 
+/* Enhanced Loading States with Micro-interactions */
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    gap: 12px;
+    animation: fade-in 0.5s ease;
+}
+
+.loading-text {
+    color: #6c757d;
+    font-size: 14px;
+    animation: slide-in 0.3s ease;
+}
+
+/* Enhanced spinner with micro-interactions */
+.spinner-border-enhanced {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    vertical-align: text-bottom;
+    border: 0.15em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin-animation 0.75s linear infinite;
+    transition: all 0.3s ease;
+}
+
+.spinner-border-enhanced:hover {
+    animation-duration: 0.5s;
+    transform: scale(1.1);
+}
+
+/* Loading button states */
+.btn-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-loading .btn-text {
+    opacity: 0.7;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin-animation 0.8s linear infinite;
+}
+
+/* Progress bar micro-interactions */
+.progress-container {
+    width: 100%;
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 16px 0;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-info));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: slide-in 1.5s ease infinite;
+}
+
+/* Status change animations */
+.status-changing {
+    animation: fade-in 0.3s ease;
+}
+
+.status-icon-rotating {
+    animation: spin-animation 1s linear infinite;
+}
+
+.status-icon-pulsing {
+    animation: pulse-animation 1.5s ease infinite;
+}
+
+/* Smooth state transitions for repository status */
+.repo-status-transition {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.repo-status-transition::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.repo-status-transition:hover::before {
+    opacity: 1;
+}
+
 /* Enhanced Focus States */
 .btn-enhanced:focus-visible {
     outline: 2px solid #007bff;
@@ -1271,7 +1557,7 @@
     display: block;
 }
 
-/* Enhanced Radio Button Selection Colors - UI-prompt.md Requirements */
+/* Enhanced Radio Button Micro-interactions */
 .radio-option-container {
     display: flex;
     align-items: flex-start;
@@ -1281,21 +1567,23 @@
     padding: 12px;
     margin-bottom: 16px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     min-height: 32px;
+    transform: translateY(0);
 }
 
 .radio-option-container:hover {
     background-color: var(--color-hover-bg);
     border-color: var(--color-hover-border);
-    transform: scale(1.02);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .radio-option-container.selected {
     background-color: var(--color-selected-bg);
     border: 1px solid var(--color-selected-border);
+    animation: bounce-in 0.4s ease;
 }
 
 .radio-option-container.selected .radio-label-text {
@@ -1311,6 +1599,44 @@
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
     background-color: #f0f7ff;
+    transform: translateY(-1px);
+}
+
+/* Enhanced radio button micro-interactions */
+.radio-option-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(0, 123, 255, 0.05) 100%);
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.radio-option-container:hover::before {
+    opacity: 1;
+}
+
+/* Subtle glow effect on hover */
+.radio-option-container::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--color-primary), var(--color-info));
+    border-radius: 10px;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+}
+
+.radio-option-container:hover::after {
+    opacity: 0.3;
 }
 
 .radio-input-enhanced {
@@ -1621,6 +1947,105 @@
     .path-input-tooltip {
         transition: none;
     }
+}
+
+/* Comprehensive Accessibility: Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    /* Disable all animations and transitions */
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    /* Specific overrides for micro-interactions */
+    .btn-enhanced:hover,
+    .btn-enhanced:focus {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    .radio-option-container:hover,
+    .custom-checkbox-container:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    .path-input-field:hover,
+    .path-input-field:focus {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Keep essential transitions for functionality but simplify */
+    .btn-enhanced:active {
+        animation: none !important;
+        transform: scale(0.98) !important;
+    }
+    
+    /* Simplify loading animations */
+    .spinner-border-enhanced,
+    .status-icon-rotating,
+    .status-icon-pulsing {
+        animation-duration: 2s !important;
+    }
+    
+    /* Disable decorative animations */
+    .btn-enhanced::before,
+    .btn-primary-action::before,
+    .radio-option-container::before,
+    .radio-option-container::after,
+    .custom-checkbox-visual::before {
+        display: none !important;
+    }
+    
+    /* Simplify focus indicators */
+    .btn-enhanced:focus,
+    .path-input-field:focus,
+    .radio-option-container:focus-within,
+    .custom-checkbox-container:focus-within .custom-checkbox-visual {
+        outline: 2px solid var(--color-focus) !important;
+        outline-offset: 2px !important;
+        box-shadow: none !important;
+    }
+    
+    /* Disable progress bar shimmer */
+    .progress-bar::after {
+        display: none !important;
+    }
+}
+
+/* Enhanced focus indicators for better accessibility */
+.btn-enhanced:focus-visible,
+.path-input-field:focus-visible,
+.radio-option-container:focus-visible,
+.custom-checkbox-container:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+/* Ensure all interactive elements have proper focus states */
+*:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: var(--color-primary);
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: top 0.3s ease;
+}
+
+.skip-link:focus {
+    top: 6px;
 }
 
 /* Mobile responsiveness */

@@ -1314,5 +1314,143 @@
                 element.innerHTML = icon + ' ' + message;
             }
         }
+        
+        // Enhanced Micro-interactions and Click Feedback
+        function addRippleEffect(button, event) {
+            const ripple = document.createElement('span');
+            const rect = button.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = event.clientX - rect.left - size / 2;
+            const y = event.clientY - rect.top - size / 2;
+            
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            ripple.classList.add('ripple');
+            
+            button.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        }
+        
+        // Add ripple effect to all buttons
+        document.querySelectorAll('.btn-enhanced').forEach(button => {
+            button.addEventListener('click', function(e) {
+                addRippleEffect(this, e);
+            });
+        });
+        
+        // Enhanced click feedback with pulse animation
+        function addPulseFeedback(element) {
+            element.style.animation = 'pulse-animation 0.2s ease';
+            setTimeout(() => {
+                element.style.animation = '';
+            }, 200);
+        }
+        
+        // Add pulse feedback to form submissions
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const submitButton = this.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    addPulseFeedback(submitButton);
+                }
+            });
+        });
+        
+        // Enhanced status transitions
+        function animateStatusChange(element, newStatus) {
+            element.classList.add('status-changing');
+            
+            setTimeout(() => {
+                element.classList.remove('status-changing');
+                element.className = element.className.replace(/repo-status-\w+/g, '');
+                element.classList.add('repo-status-' + newStatus);
+            }, 300);
+        }
+        
+        // Smooth transitions for AI analysis status
+        function updateAnalysisStatus(status) {
+            const statusElement = document.getElementById('analysisStatus');
+            if (statusElement) {
+                statusElement.classList.add('status-changing');
+                statusElement.textContent = status;
+                
+                setTimeout(() => {
+                    statusElement.classList.remove('status-changing');
+                }, 300);
+            }
+        }
+        
+        // Loading state management
+        function setLoadingState(button, isLoading) {
+            if (isLoading) {
+                button.classList.add('btn-loading');
+                button.disabled = true;
+                
+                // Add loading text
+                const originalText = button.innerHTML;
+                button.dataset.originalText = originalText;
+                button.innerHTML = '<span class="btn-text">Loading...</span>';
+            } else {
+                button.classList.remove('btn-loading');
+                button.disabled = false;
+                
+                // Restore original text
+                if (button.dataset.originalText) {
+                    button.innerHTML = button.dataset.originalText;
+                }
+            }
+        }
+        
+        // Enhanced form field interactions
+        document.querySelectorAll('.path-input-field').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('input-focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('input-focused');
+            });
+        });
+        
+        // Add smooth transitions to status indicators
+        document.querySelectorAll('.status-indicator').forEach(indicator => {
+            indicator.style.transition = 'all 0.3s ease';
+        });
+        
+        // Enhanced hover effects for interactive elements
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+            
+            section.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+        
+        // Initialize enhanced interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add loading states to buttons that trigger async operations
+            const asyncButtons = document.querySelectorAll('[data-async="true"]');
+            asyncButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    setLoadingState(this, true);
+                });
+            });
+            
+            // Add subtle animations to alerts
+            document.querySelectorAll('.alert-custom').forEach(alert => {
+                alert.style.animation = 'fade-in 0.5s ease';
+            });
+            
+            // Add entrance animations to cards
+            document.querySelectorAll('.card-enhanced').forEach((card, index) => {
+                card.style.animation = `fade-in 0.5s ease ${index * 0.1}s both`;
+            });
+        });
     });
 </script>
