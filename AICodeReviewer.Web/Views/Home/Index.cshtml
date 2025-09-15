@@ -1,9 +1,29 @@
 @{
     ViewData["Title"] = "Home Page";
+    var analysisResult = Context.Session.GetString("AnalysisResult");
+    var analysisError = Context.Session.GetString("AnalysisError");
+    var analysisId = Context.Session.GetString("AnalysisId");
 }
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
+    
+    <!-- Debug info for development -->
+    <script>
+        console.log('📊 Session Debug Info:');
+        console.log('Analysis ID: @(analysisId ?? "null")');
+        console.log('Analysis Result: @(analysisResult ?? "null")');
+        console.log('Analysis Error: @(analysisError ?? "null")');
+        
+        // Set global analysis ID for view switching
+        @if (!string.IsNullOrEmpty(analysisId))
+        {
+            <text>
+            window.currentAnalysisId = '@analysisId';
+            console.log('🆔 Set window.currentAnalysisId to:', window.currentAnalysisId);
+            </text>
+        }
+    </script>
     
     @if (ViewBag.BranchInfo != null)
     {
@@ -175,30 +195,19 @@
             </div>
         }
         
-        <!-- Analysis Results -->
-        @{
-            var analysisResult = Context.Session.GetString("AnalysisResult");
-            var analysisError = Context.Session.GetString("AnalysisError");
-            var analysisId = Context.Session.GetString("AnalysisId");
-        }
-        
-        @if (!string.IsNullOrEmpty(analysisResult) && !string.IsNullOrEmpty(analysisId))
-        {
-            <div class="analysis-results mt-4" id="analysisResultsSection">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5>🔍 AI Analysis Results</h5>
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-outline-primary" id="bottomPanelBtn" onclick="switchToBottomPanel()">
-                            📋 Bottom Panel
-                        </button>
-                        <button type="button" class="btn btn-primary" id="sidePanelBtn" onclick="switchToSidePanel()">
-                            🔀 Side Panel
-                        </button>
-                    </div>
+        <!-- Analysis Results - Always include but conditionally show/hide -->
+        <div class="analysis-results mt-4" id="analysisResultsSection" data-analysis-id="@(analysisId ?? "")" style="@((!string.IsNullOrEmpty(analysisId) || !string.IsNullOrEmpty(analysisResult) || !string.IsNullOrEmpty(analysisError)) ? "" : "display: none;")">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>🔍 AI Analysis Results</h5>
+                <div class="btn-group" role="group" id="analysisButtonsContainer">
+                    <!-- Buttons will be injected here by JS if needed -->
                 </div>
-                
-                <!-- Bottom Panel View -->
-                <div id="bottomPanelView">
+            </div>
+            
+            <!-- Bottom Panel View -->
+            <div id="bottomPanelView">
+                @if (!string.IsNullOrEmpty(analysisResult))
+                {
                     <div class="card">
                         <div class="card-header bg-success text-white">
                             <h6 class="mb-0">Analysis Results</h6>
@@ -207,23 +216,32 @@
                             <pre class="analysis-text" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Side Panel View (initially hidden) -->
-                <div id="sidePanelView" style="display: none;">
+                }
+                else
+                {
                     <div class="alert alert-info">
                         <div class="d-flex align-items-center">
                             <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                            <span>Loading side-panel view...</span>
+                            <span>Analysis results will appear here...</span>
                         </div>
+                    </div>
+                }
+            </div>
+            
+            <!-- Side Panel View (initially hidden) -->
+            <div id="sidePanelView" style="display: none;">
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span>Loading side-panel view...</span>
                     </div>
                 </div>
             </div>
-        }
+        </div>
         
         @if (!string.IsNullOrEmpty(analysisError))
         {
-            <div class="alert alert-danger mt-3">
+            <div class="alert alert-danger mt-3" id="analysisErrorSection">
                 ❌ @analysisError
             </div>
         }
@@ -325,4 +343,75 @@
             }
         }
     });
+    
+    // Function to dynamically inject the view-switching buttons
+    function injectAnalysisButtons() {
+        const container = document.getElementById('analysisButtonsContainer');
+        const analysisId = document.getElementById('analysisResultsSection')?.dataset.analysisId;
+        
+        console.log('🔄 injectAnalysisButtons called, analysisId:', analysisId);
+        
+        // If no analysis ID yet, don't inject
+        if (!analysisId) {
+            console.log('❌ No analysisId found, skipping button injection');
+            return;
+        }
+
+        // Prevent duplicate injection
+        if (container.querySelector('#bottomPanelBtn')) {
+            console.log('✅ Buttons already injected, skipping');
+            return;
+        }
+
+        console.log('🔧 Creating analysis buttons...');
+
+        // Create buttons
+        const bottomBtn = document.createElement('button');
+        bottomBtn.type = 'button';
+        bottomBtn.className = 'btn btn-outline-primary';
+        bottomBtn.id = 'bottomPanelBtn';
+        bottomBtn.onclick = switchToBottomPanel;
+        bottomBtn.textContent = '📋 Bottom Panel';
+
+        const sideBtn = document.createElement('button');
+        sideBtn.type = 'button';
+        sideBtn.className = 'btn btn-outline-primary';
+        sideBtn.id = 'sidePanelBtn';
+        sideBtn.onclick = switchToSidePanel;
+        sideBtn.textContent = '🔀 Side Panel';
+
+        // Clear container and append
+        container.innerHTML = '';
+        container.appendChild(bottomBtn);
+        container.appendChild(sideBtn);
+
+        // Initially set to bottom panel
+        switchToBottomPanel();
+
+        console.log('✅ Analysis buttons injected dynamically');
+    }
+    
+    // Only run if the section exists
+    document.addEventListener('DOMContentLoaded', function() {
+        const section = document.getElementById('analysisResultsSection');
+        if (section) {
+            console.log('✅ analysisResultsSection found, injecting buttons...');
+            injectAnalysisButtons();
+            
+            // Poll for new analysisId (in case it gets updated dynamically)
+            setInterval(() => {
+                const section = document.getElementById('analysisResultsSection');
+                const analysisId = section?.dataset.analysisId;
+                if (section && analysisId && !section.querySelector('#bottomPanelBtn')) {
+                    console.log('🔄 Polling: Found analysisId, injecting buttons...');
+                    injectAnalysisButtons();
+                }
+            }, 2000);
+        } else {
+            console.log('❌ analysisResultsSection not found on page load - analysis may not be complete yet');
+        }
+    });
+    
+    // Make it globally available
+    window.injectAnalysisButtons = injectAnalysisButtons;
 </script>

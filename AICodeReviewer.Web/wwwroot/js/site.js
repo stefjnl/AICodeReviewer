@@ -36,6 +36,7 @@ function initializeSignalR() {
             
             // Store analysis ID in session for view switching
             if (currentAnalysisId) {
+                console.log('🔄 Storing analysis ID in session:', currentAnalysisId);
                 fetch('/Home/StoreAnalysisId', {
                     method: 'POST',
                     headers: {
@@ -43,12 +44,23 @@ function initializeSignalR() {
                     },
                     body: JSON.stringify({ analysisId: currentAnalysisId })
                 }).then(() => {
-                    // Show the analysis results section with view switching buttons
-                    console.log('Analysis completed. Use the view switching buttons to choose your preferred display format.');
-                }).catch(err => console.error("Failed to store analysis ID:", err));
+                    console.log('✅ Analysis ID stored, refreshing page to show results section...');
+                    
+                    // ✅ REFRESH PAGE TO SHOW THE ANALYSIS RESULTS SECTION
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 300); // Small delay to ensure session is persisted
+                }).catch(err => {
+                    console.error("Failed to store analysis ID:", err);
+                    console.log('🔄 Falling back to page reload...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 300);
+                });
             }
             
-            // Don't automatically redirect - let user choose the view with the toggle buttons
+            // Set the global analysis ID for view switching
+            window.currentAnalysisId = currentAnalysisId;
             console.log('Analysis complete! Use the view switching buttons above to choose between Bottom Panel and Side Panel views.');
         }
     });
@@ -170,6 +182,12 @@ function pollStatus(analysisId) {
                 // Show error result card
                 document.getElementById('analysisResult').style.display = 'block';
                 document.getElementById('result').innerText = '❌ Error checking status: ' + error.message;
+                
+                // Also refresh page in case of error to show error message
+                setTimeout(() => {
+                    console.log('🔄 Refreshing page due to analysis error...');
+                    window.location.reload();
+                }, 300);
             });
     }, 1000); // Poll every second
 }

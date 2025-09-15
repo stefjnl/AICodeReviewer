@@ -65,6 +65,19 @@ public class HomeController : Controller
         var selectedDocuments = HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
         ViewBag.SelectedDocuments = selectedDocuments;
 
+        // Load analysis results from cache if available
+        var analysisId = HttpContext.Session.GetString("AnalysisId");
+        if (!string.IsNullOrEmpty(analysisId) && _cache.TryGetValue($"analysis_{analysisId}", out AnalysisResult? cachedResult))
+        {
+            // Store the result in session for the view to display
+            if (cachedResult != null)
+            {
+                HttpContext.Session.SetString("AnalysisResult", cachedResult.Result ?? "");
+                HttpContext.Session.SetString("AnalysisError", cachedResult.Error ?? "");
+                // AnalysisId is already in session
+            }
+        }
+
         return View();
     }
 
