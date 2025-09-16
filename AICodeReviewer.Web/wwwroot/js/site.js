@@ -10,9 +10,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize SignalR connection
 function initializeSignalR() {
-    signalRConnection = new signalR.HubConnectionBuilder()
-        .withUrl("/hubs/progress")
-        .build();
+    // Check if SignalR is available
+    if (typeof signalR === 'undefined') {
+        console.warn('SignalR library not loaded yet, will retry...');
+        // Retry after a short delay
+        setTimeout(initializeSignalR, 500);
+        return;
+    }
+    
+    try {
+        signalRConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/progress")
+            .build();
+    } catch (error) {
+        console.error('Failed to initialize SignalR connection:', error);
+        startPollingFallback();
+        return;
+    }
 
     signalRConnection.on("UpdateProgress", function (data) {
         document.getElementById('progressMessage').innerText = data.status;
@@ -71,6 +85,15 @@ function initializeSignalR() {
         console.error("SignalR connection failed:", err);
         // Fallback to polling if SignalR fails
         startPollingFallback();
+    });
+    
+    // Handle SignalR connection errors during runtime
+    signalRConnection.onclose(function (error) {
+        console.warn("SignalR connection closed", error);
+        if (currentAnalysisId) {
+            console.log("Switching to polling fallback due to SignalR disconnection");
+            startPollingFallback();
+        }
     });
 }
 
