@@ -131,6 +131,42 @@ public class HomeController : Controller
     }
 
     [HttpPost]
+    public IActionResult ScanDocumentsFolder([FromBody] ScanDocumentsRequest request)
+    {
+        try
+        {
+            string folderPath = request.FolderPath ?? HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
+            
+            // Validate and normalize path
+            string normalizedPath = string.IsNullOrWhiteSpace(folderPath)
+                ? _defaultDocumentsPath
+                : Path.IsPathRooted(folderPath)
+                    ? folderPath
+                    : Path.Combine(_environment.ContentRootPath, folderPath);
+
+            var (files, isError) = DocumentService.ScanDocumentsFolder(normalizedPath);
+            
+            return Json(new
+            {
+                success = !isError,
+                documents = files,
+                folderPath = normalizedPath,
+                error = isError ? "Unable to scan documents folder" : null
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error scanning documents folder");
+            return Json(new
+            {
+                success = false,
+                documents = new List<string>(),
+                error = $"Error scanning folder: {ex.Message}"
+            });
+        }
+    }
+
+    [HttpPost]
     public IActionResult SelectDocuments(string[] selectedDocuments)
     {
         var selections = selectedDocuments?.ToList() ?? new List<string>();

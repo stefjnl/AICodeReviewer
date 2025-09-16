@@ -276,9 +276,9 @@
         </div>
 
         <!-- Standards -->
-        <div class="flow-item" 
-             onclick="openStandardsSelector()" 
-             tabindex="0" 
+        <div class="flow-item"
+             onclick="openStandardsSelector()"
+             tabindex="0"
              aria-label="Upload coding standards (@(ViewBag.SelectedDocuments is List<string> selectedDocs && selectedDocs.Any() ? $"{selectedDocs.Count} documents selected" : "No documents selected"))">
             <span class="icon">📄</span>
             <span class="value">
@@ -291,6 +291,35 @@
                     else
                     {
                         <text><em>No documents selected</em></text>
+                    }
+                }
+            </span>
+            <span class="edit-icon" aria-hidden="true">✏️</span>
+        </div>
+        
+        <!-- Documents Folder -->
+        <div class="flow-item"
+             onclick="openDocumentsFolderSelector()"
+             tabindex="0"
+             aria-label="Select documents folder (current: @(ViewBag.DocumentsFolder ?? "Default"))">
+            <span class="icon">📁</span>
+            <span class="value">
+                @{
+                    var docsFolder = ViewBag.DocumentsFolder as string;
+                    if (!string.IsNullOrEmpty(docsFolder))
+                    {
+                        if (docsFolder.Length > 20)
+                        {
+                            @($"📄...{docsFolder.Substring(docsFolder.Length - 17)}")
+                        }
+                        else
+                        {
+                            @docsFolder
+                        }
+                    }
+                    else
+                    {
+                        <text><em>Default folder</em></text>
                     }
                 }
             </span>
@@ -397,13 +426,15 @@
 
         <!-- Selected Documents (Checkboxes) -->
         @{
-            var docs = ViewBag.SelectedDocuments as List<string>;
-            if (docs != null)
+            var availableDocs = ViewBag.AvailableDocuments as List<string>;
+            var selectedDocs = ViewBag.SelectedDocuments as List<string>;
+            
+            if (availableDocs != null)
             {
-                foreach (var doc in docs)
+                foreach (var doc in availableDocs)
                 {
-                    var displayName = DocumentService.GetDocumentDisplayName(doc);
-                    <input type="checkbox" name="selectedDocuments" value="@doc" checked />
+                    var isSelected = selectedDocs != null && selectedDocs.Contains(doc);
+                    <input type="checkbox" name="selectedDocuments" value="@doc" checked="@isSelected" />
                 }
             }
         }
@@ -586,21 +617,54 @@
         const checkboxes = document.querySelectorAll('input[name="selectedDocuments"]');
         const documentOptions = Array.from(checkboxes).map(cb => ({
             value: cb.value,
-            displayName: cb.value.split('/').pop() || cb.value,
+            displayName: cb.value.replace(/[-_]/g, ' '),
             isSelected: selectedDocs.includes(cb.value)
         }));
         
         if (documentOptions.length === 0) {
-            standardsList.innerHTML = '<div class="text-muted">No standards documents available</div>';
+            standardsList.innerHTML = `
+                <div class="text-center text-muted p-4">
+                    <i class="fas fa-file-alt fa-3x mb-3"></i>
+                    <h5>No coding standards available</h5>
+                    <p>Please select a documents folder containing .md files</p>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openDocumentsFolderSelector()">
+                        <i class="fas fa-folder-open me-2"></i>Select Documents Folder
+                    </button>
+                </div>
+            `;
             return;
         }
         
-        standardsList.innerHTML = documentOptions.map(doc => `
-            <label class="list-group-item">
-                <input type="checkbox" class="form-check-input me-2" value="${doc.value}" ${doc.isSelected ? 'checked' : ''}>
-                <span>${doc.displayName}</span>
+        // Show current documents folder info
+        const currentFolder = '@(ViewBag.DocumentsFolder ?? "Default")';
+        const folderInfo = `
+            <div class="alert alert-info mb-3">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <div>
+                        <strong>Documents Folder:</strong> ${currentFolder}
+                        <br>
+                        <small class="text-muted">Found ${documentOptions.length} coding standards document${documentOptions.length > 1 ? 's' : ''}</small>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="openDocumentsFolderSelector()">
+                    <i class="fas fa-folder-open me-1"></i>Change Folder
+                </button>
+            </div>
+        `;
+        
+        const documentList = documentOptions.map(doc => `
+            <label class="list-group-item d-flex align-items-center">
+                <input type="checkbox" class="form-check-input me-3" value="${doc.value}" ${doc.isSelected ? 'checked' : ''}>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">${doc.displayName}</div>
+                    <small class="text-muted">${doc.value}</small>
+                </div>
+                ${doc.isSelected ? '<span class="badge bg-primary ms-auto">Selected</span>' : ''}
             </label>
         `).join('');
+        
+        standardsList.innerHTML = folderInfo + documentList;
     }
     
     function applyStandardsSelection() {
@@ -628,6 +692,190 @@
         if (modal) {
             modal.hide();
         }
+    }
+    
+    function openDocumentsFolderSelector() {
+        // Create and show a modal for documents folder selection
+        const modal = createDocumentsFolderModal();
+        document.body.appendChild(modal);
+        
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+        
+        // Clean up modal after it's hidden
+        modal.addEventListener('hidden.bs.modal', function() {
+            modal.remove();
+        });
+    }
+    
+    function createDocumentsFolderModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'documentsFolderModal';
+        
+        const currentFolder = '@(ViewBag.DocumentsFolder ?? "")';
+        
+        modal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Select Documents Folder</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Current folder:</label>
+                            <input type="text" class="form-control" value="${currentFolder}" readonly />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Choose a new documents folder:</label>
+                            <div class="input-group">
+                                <input type="text" id="newDocumentsFolder" class="form-control" placeholder="Enter folder path or browse..." />
+                                <button class="btn btn-outline-secondary" type="button" onclick="browseForDocumentsFolder()">Browse</button>
+                            </div>
+                            <div class="form-text">Select a folder containing your coding standards documents (.md files)</div>
+                        </div>
+                        <div id="documentsFolderPreview" class="mt-3" style="display: none;">
+                            <h6>Found Documents:</h6>
+                            <div id="documentsList" class="list-group"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="applyDocumentsFolderSelection()">Apply Selection</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add event listener for folder path input
+        setTimeout(() => {
+            const folderInput = document.getElementById('newDocumentsFolder');
+            if (folderInput) {
+                folderInput.addEventListener('input', debounce(scanDocumentsFolder, 500));
+            }
+        }, 100);
+        
+        return modal;
+    }
+    
+    function browseForDocumentsFolder() {
+        // Use the same directory browser as repository selection
+        openDirectoryBrowser();
+        
+        // Override the select function to use it for documents folder
+        const originalSelectFunction = window.selectCurrentDirectory;
+        window.selectCurrentDirectory = function() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('directoryBrowserModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            const newPath = document.getElementById('currentDirectoryPath').value;
+            document.getElementById('newDocumentsFolder').value = newPath;
+            scanDocumentsFolder();
+            
+            // Restore original function
+            window.selectCurrentDirectory = originalSelectFunction;
+        };
+        
+        // Update modal title
+        setTimeout(() => {
+            const title = document.getElementById('directoryBrowserModalLabel');
+            if (title) {
+                title.textContent = 'Select Documents Folder';
+            }
+        }, 100);
+    }
+    
+    function scanDocumentsFolder() {
+        const folderPath = document.getElementById('newDocumentsFolder').value;
+        const previewDiv = document.getElementById('documentsFolderPreview');
+        const listDiv = document.getElementById('documentsList');
+        
+        if (!folderPath) {
+            previewDiv.style.display = 'none';
+            return;
+        }
+        
+        // Show loading state
+        listDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Scanning folder...</div>';
+        previewDiv.style.display = 'block';
+        
+        // Call API to scan documents folder
+        fetch('/Home/ScanDocumentsFolder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ folderPath: folderPath })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Display found documents
+                const documents = data.documents || [];
+                if (documents.length > 0) {
+                    listDiv.innerHTML = documents.map(doc =>
+                        `<div class="list-group-item">
+                            <i class="fas fa-file-alt me-2"></i>
+                            ${doc.replace(/[-_]/g, ' ')}
+                        </div>`
+                    ).join('');
+                } else {
+                    listDiv.innerHTML = '<div class="text-muted">No .md documents found in this folder</div>';
+                }
+            } else {
+                listDiv.innerHTML = `<div class="alert alert-danger">${data.error || 'Error scanning folder'}</div>`;
+            }
+        })
+        .catch(error => {
+            listDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        });
+    }
+    
+    function applyDocumentsFolderSelection() {
+        const newPath = document.getElementById('newDocumentsFolder').value;
+        if (!newPath) {
+            alert('Please enter a folder path');
+            return;
+        }
+        
+        // Submit the form to update the documents folder
+        fetch('/Home/SetDocumentsFolder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `folderPath=${encodeURIComponent(newPath)}`
+        })
+        .then(response => {
+            if (response.ok) {
+                // Close modal and reload page to show updated documents
+                const modal = bootstrap.Modal.getInstance(document.getElementById('documentsFolderModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                window.location.reload();
+            } else {
+                alert('Error updating documents folder');
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+    
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
     
     function openRepoSelector() {
