@@ -1,757 +1,803 @@
 @{
-    ViewData["Title"] = "Home Page";
-    var analysisResult = Context.Session.GetString("AnalysisResult");
-    var analysisError = Context.Session.GetString("AnalysisError");
-    var analysisId = Context.Session.GetString("AnalysisId");
+    ViewData["Title"] = "AI Code Reviewer";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    
-    <!-- Debug info for development -->
-    <script>
-        console.log('📊 Session Debug Info:');
-        console.log('Analysis ID: @(analysisId ?? "null")');
-        console.log('Analysis Result: @(analysisResult ?? "null")');
-        console.log('Analysis Error: @(analysisError ?? "null")');
-        
-        // Set global analysis ID for view switching
-        @if (!string.IsNullOrEmpty(analysisId))
-        {
-            <text>
-            window.currentAnalysisId = '@analysisId';
-            console.log('🆔 Set window.currentAnalysisId to:', window.currentAnalysisId);
-            </text>
+@section Styles {
+    <style>
+        /* === BASE STYLES === */
+        :root {
+            --bg-primary: #0f0f14;
+            --bg-card: #252536;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent: #007bff;
+            --success: #28a745;
+            --border: #3a3a4d;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            --transition: all 0.2s ease;
         }
+
+        /* Override body styles for this page */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', sans-serif;
+            padding: 32px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* === STATUS BAR === */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background-color: #1a1a26;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .status-icon {
+            font-size: 18px;
+        }
+
+        .status-text strong {
+            color: var(--text-primary);
+        }
+
+        .status-text span {
+            color: var(--text-secondary);
+        }
+
+        /* === HORIZONTAL SETUP FLOW === */
+        .setup-flow {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding: 8px 0;
+            background-color: #1a1a26;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            scroll-snap-type: x mandatory;
+        }
+
+        .flow-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background-color: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 150px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+            .flow-item:hover,
+            .flow-item:focus-within {
+                background-color: rgba(0, 123, 255, 0.1);
+                border-color: var(--accent);
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+            }
+
+            .flow-item:focus-visible {
+                outline: 2px solid var(--accent);
+                outline-offset: 2px;
+            }
+
+        .icon {
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .value {
+            font-size: 14px;
+            color: var(--text-primary);
+            word-break: break-word;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .edit-icon {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-left: auto; /* Push to right */
+        }
+
+        .btn-run {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 160px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+        }
+
+            .btn-run:hover {
+                background-color: #0056b3;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+            }
+
+            .btn-run:active {
+                transform: translateY(0);
+            }
+
+        /* === CARD === */
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            margin-bottom: 16px;
+        }
+
+        .card-body {
+            padding: 0;
+        }
+
+        /* === GIT DIFF === */
+        .git-diff-text {
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            color: #a0c8ff;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            background-color: #1a1a26;
+            margin: 0;
+        }
+
+        /* === AI ANALYSIS INFO === */
+        .ai-analysis-info {
+            background-color: rgba(23, 162, 184, 0.1);
+            border-left: 4px solid #17a2b8;
+            padding: 16px 24px;
+            margin: 24px 0;
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .info-icon {
+            color: #17a2b8;
+            font-size: 18px;
+        }
+
+        .info-content strong {
+            color: var(--text-primary);
+        }
+
+        .info-content span {
+            color: var(--text-secondary);
+        }
+
+        /* === ACCESSIBILITY & INTERACTION === */
+        /* Ensure focus indicators are visible */
+        *:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Prevent focus ring on edit icons (decorative) */
+        .edit-icon {
+            pointer-events: none;
+        }
+
+        /* Reduce motion support */
+        @@media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            .flow-item:hover,
+            .btn-run:hover {
+                transform: none !important;
+                box-shadow: none !important;
+            }
+        }
+
+        /* --- HIDDEN FORM ELEMENTS --- */
+        /* These are not visible, but required for site.js */
+        #analysisForm, #progressContainer, #analysisResult { display: none; }
+        #analysisForm input, #analysisForm select, #analysisForm label { display: none; }
+        #analysisForm input[type="checkbox"], #analysisForm input[type="radio"] { display: none; }
+        #directoryBrowserModal { display: none; } /* Will be shown by site.js */
+    </style>
+}
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script>
+        // Rename the inline startAnalysis function to avoid conflicts with site.js
+        document.addEventListener('DOMContentLoaded', function() {
+            // Store reference to the inline startAnalysis function
+            const inlineStartAnalysis = window.startAnalysis;
+            
+            // Rename it to avoid conflicts with site.js
+            window.inlineStartAnalysis = inlineStartAnalysis;
+            
+            // Remove the original to prevent conflicts
+            delete window.startAnalysis;
+        });
     </script>
-    
-    @if (ViewBag.BranchInfo != null)
-    {
-        <div class="git-status">
-            @if (ViewBag.IsError)
-            {
-                <div class="alert alert-warning" role="alert">
-                    ⚠️ @ViewBag.BranchInfo
-                </div>
-            }
-            else
-            {
-                <div class="alert alert-success" role="alert">
-                    🌿 Current branch: <strong>@ViewBag.BranchInfo</strong>
-                </div>
-            }
+}
+
+<div class="container">
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span class="status-icon">🌿</span>
+        <div class="status-text">
+            <strong>Current Branch</strong>
+            <span>@(ViewBag.BranchInfo ?? "Unknown")</span>
         </div>
+    </div>
+
+    <!-- Horizontal Setup Flow -->
+    <div class="setup-flow" role="group" aria-label="Configuration Steps">
+        <!-- Language -->
+        <div class="flow-item" 
+             onclick="openLanguageSelector()" 
+             tabindex="0" 
+             aria-label="Select programming language (current: @(ViewBag.Language ?? "Not set"))">
+            <span class="icon">⚙️</span>
+            <span class="value">@Html.Raw(ViewBag.Language ?? "<em>Select language</em>")</span>
+            <span class="edit-icon" aria-hidden="true">✏️</span>
+        </div>
+
+        <!-- Standards -->
+        <div class="flow-item" 
+             onclick="openStandardsSelector()" 
+             tabindex="0" 
+             aria-label="Upload coding standards (@(ViewBag.SelectedDocuments is List<string> selectedDocs && selectedDocs.Any() ? $"{selectedDocs.Count} documents selected" : "No documents selected"))">
+            <span class="icon">📄</span>
+            <span class="value">
+                @{
+                    var selectedDocuments = ViewBag.SelectedDocuments as List<string>;
+                    if (selectedDocuments != null && selectedDocuments.Any())
+                    {
+                        @string.Join(", ", selectedDocuments.Select(d => DocumentService.GetDocumentDisplayName(d)))
+                    }
+                    else
+                    {
+                        <text><em>No documents selected</em></text>
+                    }
+                }
+            </span>
+            <span class="edit-icon" aria-hidden="true">✏️</span>
+        </div>
+
+        <!-- Repository -->
+        <div class="flow-item" 
+             onclick="openRepoSelector()" 
+             tabindex="0" 
+             aria-label="Select project repository (current path: @(ViewBag.RepositoryPath ?? "Not set"))">
+            <span class="icon">📁</span>
+            <span class="value">
+                @{
+                    var repoPath = ViewBag.RepositoryPath as string;
+                    if (!string.IsNullOrEmpty(repoPath))
+                    {
+                        if (repoPath.Length > 20)
+                        {
+                            @($"{repoPath.Substring(0, 17)}...")
+                        }
+                        else
+                        {
+                            @repoPath
+                        }
+                    }
+                    else
+                    {
+                        <text><em>No repository selected</em></text>
+                    }
+                }
+            </span>
+            <span class="edit-icon" aria-hidden="true">✏️</span>
+        </div>
+
+        <!-- Analysis Type -->
+        <div class="flow-item" 
+             onclick="openAnalysisTypeSelector()" 
+             tabindex="0" 
+             aria-label="Choose analysis type (current: @(ViewBag.AnalysisType ?? "Not set"))">
+            <span class="icon">🔍</span>
+            <span class="value">@Html.Raw(ViewBag.AnalysisType ?? "<em>Select analysis type</em>")</span>
+            <span class="edit-icon" aria-hidden="true">✏️</span>
+        </div>
+
+        <!-- Run Analysis -->
+        <button class="btn btn-primary btn-run" 
+                onclick="startAnalysis()" 
+                tabindex="0" 
+                aria-label="Start AI code analysis">
+            🚀 Run AI Analysis
+        </button>
+    </div>
+
+    <!-- Git Diff Preview (Collapsible) -->
+    <div class="card">
+        <div class="card-header">
+            <button class="btn btn-link" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#gitDiffCollapse" 
+                    aria-expanded="false" 
+                    aria-controls="gitDiffCollapse">
+                📊 Git Changes (Click to expand/collapse)
+            </button>
+        </div>
+        <div class="card-body collapse" id="gitDiffCollapse">
+            <pre class="git-diff-text">@Html.Raw(ViewBag.GitDiff ?? "<em>No changes detected</em>")</pre>
+        </div>
+    </div>
+
+    <!-- AI Code Analysis Info -->
+    <div class="ai-analysis-info" role="status" aria-live="polite">
+        <span class="info-icon">ℹ️</span>
+        <div class="info-content">
+            <strong>AI Analysis Ready</strong>
+            <span>Select coding standards and configure your repository to begin analysis</span>
+        </div>
+    </div>
+
+    <!-- ⬇️ HIDDEN FORM FIELDS FOR site.js — VISIBLE TO JAVASCRIPT ONLY -->
+    <form id="analysisForm" style="display: none;">
+        <!-- Repository Path -->
+        <input type="text" name="repositoryPath" id="repositoryPathInput" value="@ViewBag.RepositoryPath" />
+
+        <!-- Language Selection -->
+        <select id="languageSelect" class="form-select">
+            <option value="NET" asp-selected="@(ViewBag.Language == "NET")">C# (.NET)</option>
+            <option value="JS" asp-selected="@(ViewBag.Language == "JS")">JavaScript</option>
+            <option value="PY" asp-selected="@(ViewBag.Language == "PY")">Python</option>
+        </select>
+
+
+        <!-- Analysis Type -->
+        <div id="analysisTypeGroup">
+            <input type="radio" name="analysisType" id="analysisTypeUncommitted" value="uncommitted" @(ViewBag.AnalysisType == "uncommitted" ? "checked" : "") />
+            <label for="analysisTypeUncommitted">Uncommitted Changes</label>
+
+            <input type="radio" name="analysisType" id="analysisTypeCommit" value="commit" @(ViewBag.AnalysisType == "commit" ? "checked" : "") />
+            <label for="analysisTypeCommit">Specific Commit</label>
+
+            <input type="radio" name="analysisType" id="analysisTypeSingleFile" value="singlefile" @(ViewBag.AnalysisType == "singlefile" ? "checked" : "") />
+            <label for="analysisTypeSingleFile">Single File</label>
+        </div>
+
+        <!-- Selected Documents (Checkboxes) -->
+        @{
+            var docs = ViewBag.SelectedDocuments as List<string>;
+            if (docs != null)
+            {
+                foreach (var doc in docs)
+                {
+                    var displayName = DocumentService.GetDocumentDisplayName(doc);
+                    <input type="checkbox" name="selectedDocuments" value="@doc" checked />
+                }
+            }
+        }
+
+        <!-- Optional Fields for Commit/File Analysis -->
+        <input type="text" id="commitId" name="commitId" value="" />
+        <input type="text" id="filePath" name="filePath" value="" />
+    </form>
+
+    <!-- Progress Container (for site.js) -->
+    <div id="progressContainer" style="display: none;">
+        <div id="progressMessage">Processing...</div>
+    </div>
+
+    <!-- Result Card (for site.js) -->
+    <div id="analysisResult" style="display: none;">
+        <div id="result"></div>
+    </div>
+
+    <!-- Directory Browser Modal (if used by site.js) -->
+    <div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-labelledby="directoryBrowserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="directoryBrowserModalLabel">Browse Directories</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" id="currentDirectoryPath" class="form-control" readonly />
+                    </div>
+                    <div id="directoryBrowserLoading" class="text-center py-4" style="display: none;">
+                        Loading...
+                    </div>
+                    <div id="directoryBrowserError" class="alert alert-danger d-none"></div>
+                    <div id="directoryBrowserContent"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="navigateToParent()">⬆️ Parent</button>
+                    <button type="button" class="btn btn-primary" onclick="selectCurrentDirectory()">Select Folder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function openLanguageSelector() {
+        // Create and show a modal for language selection
+        const modal = createLanguageModal();
+        document.body.appendChild(modal);
+        
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+        
+        // Clean up modal after it's hidden
+        modal.addEventListener('hidden.bs.modal', function() {
+            modal.remove();
+        });
     }
     
-    <!-- Document Management Section -->
-    <div class="document-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-        <h5>📁 Requirements Documents</h5>
-        
-        <!-- Folder Configuration -->
-        <div class="mb-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-            <form asp-action="SetDocumentsFolder" method="post">
-                <div class="input-group">
-                    <input type="text" class="form-control" name="folderPath"
-                           placeholder="Documents folder path"
-                           value="@ViewBag.DocumentsFolder">
-                    <button class="btn btn-outline-secondary" type="submit">Set Folder</button>
-                </div>
-            </form>
-        </div>
-        
-        <!-- Document Selection -->
-        @if (ViewBag.AvailableDocuments.Count > 0)
-        {
-            <form asp-action="SelectDocuments" method="post">
-                <div class="mb-3">
-                    <label>Select coding standards:</label>
-                    @foreach (var doc in ViewBag.AvailableDocuments)
-                    {
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox"
-                                   name="selectedDocuments" value="@doc"
-                                   @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
-                            <label class="form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
+    function createLanguageModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'languageSelectorModal';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Select Programming Language</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="list-group">
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selectLanguage('NET')">
+                                <i class="fab fa-microsoft"></i> C# (.NET)
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selectLanguage('JS')">
+                                <i class="fab fa-js"></i> JavaScript
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selectLanguage('PY')">
+                                <i class="fab fa-python"></i> Python
+                            </button>
                         </div>
-                    }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Apply Selection</button>
-            </form>
-        }
-        else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
-        {
-            <div class="alert alert-info">
-                📋 No .md documents found in folder
             </div>
-        }
-        
-        <!-- Selected Documents Summary -->
-        @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
-        {
-            <div class="alert alert-success mt-3">
-                ✅ Selected: <strong>@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</strong>
-            </div>
-        }
-        
-        <!-- Document Scan Error -->
-        @if (ViewBag.DocumentScanError != null)
-        {
-            <div class="alert alert-warning mt-3">
-                ⚠️ @ViewBag.DocumentScanError
-            </div>
-        }
-    </div>
+        `;
+        return modal;
+    }
     
-    <!-- Language Selection Section -->
-    <div class="language-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-        <h5>🐍 Programming Language</h5>
-        <div class="mb-3">
-            <label for="languageSelect" class="form-label">Select the programming language for analysis:</label>
-            <select class="form-select" id="languageSelect" name="language">
-                <option value="NET" selected>.NET</option>
-                <option value="Python">Python</option>
-            </select>
-        </div>
-    </div>
+    function selectLanguage(language) {
+        // Update the language select dropdown
+        const languageSelect = document.getElementById('languageSelect');
+        if (languageSelect) {
+            languageSelect.value = language;
+        }
+        
+        // Update the UI to show selected language
+        const languageElement = document.querySelector('.flow-item[onclick="openLanguageSelector()"] .value');
+        if (languageElement) {
+            const languageNames = {
+                'NET': 'C# (.NET)',
+                'JS': 'JavaScript',
+                'PY': 'Python'
+            };
+            languageElement.innerHTML = languageNames[language] || 'Select language';
+        }
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('languageSelectorModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }
     
-    <!-- Repository Path Section -->
-    <div class="repository-section mt-4">
-        <h5>📁 Git Repository</h5>
+    function openStandardsSelector() {
+        // Create and show a modal for standards selection
+        const modal = createStandardsModal();
+        document.body.appendChild(modal);
         
-        <!-- Repository Path Configuration -->
-        <div class="mb-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-            <form asp-action="SetRepositoryPath" method="post">
-                <div class="input-group">
-                    <input type="text" class="form-control" name="repositoryPath"
-                           placeholder="Repository path"
-                           value="@ViewBag.RepositoryPath"
-                           id="repositoryPathInput">
-                    <button class="btn btn-outline-secondary" type="button" onclick="openDirectoryBrowser()">
-                        📁 Browse
-                    </button>
-                    <button class="btn btn-outline-primary" type="submit">Set Repository</button>
-                </div>
-            </form>
-        </div>
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
         
-        <!-- Directory Browser Modal -->
-        <div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-hidden="true">
+        // Clean up modal after it's hidden
+        modal.addEventListener('hidden.bs.modal', function() {
+            modal.remove();
+        });
+    }
+    
+    function createStandardsModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'standardsSelectorModal';
+        
+        // Get current document selections
+        const selectedDocs = Array.from(document.querySelectorAll('input[name="selectedDocuments"]:checked'))
+            .map(cb => cb.value);
+        
+        modal.innerHTML = `
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">📁 Select Repository Directory</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <h5 class="modal-title">Select Coding Standards</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="currentDirectoryPath" readonly>
-                                <button class="btn btn-outline-secondary" type="button" onclick="navigateToParent()">
-                                    ⬆️ Up
-                                </button>
-                                <button class="btn btn-outline-primary" type="button" onclick="selectCurrentDirectory()">
-                                    ✅ Select This Folder
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="directory-browser-container" style="max-height: 400px; overflow-y: auto;">
-                            <div id="directoryBrowserLoading" class="text-center p-4" style="display: none;">
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="mt-2">Loading directories...</p>
-                            </div>
-                            
-                            <div id="directoryBrowserContent">
-                                <!-- Directory content will be loaded here -->
-                            </div>
-                            
-                            <div id="directoryBrowserError" class="alert alert-danger" style="display: none;">
-                                <!-- Error messages will appear here -->
+                            <label class="form-label">Choose coding standards documents:</label>
+                            <div id="standardsList" class="list-group">
+                                <!-- Standards will be populated here -->
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="selectCurrentDirectory()">Select Folder</button>
+                        <button type="button" class="btn btn-primary" onclick="applyStandardsSelection()">Apply Selection</button>
                     </div>
                 </div>
             </div>
-        </div>
+        `;
         
-        <!-- Analysis Type Selection -->
-        <div class="analysis-type-section mt-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-            <h6>🔍 Analysis Type</h6>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
-                <label class="form-check-label" for="uncommittedChanges">
-                    Uncommitted Changes
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
-                <label class="form-check-label" for="specificCommit">
-                    Specific Commit
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
-                <label class="form-check-label" for="singleFile">
-                    Single File
-                </label>
-            </div>
-            <div class="mt-2" id="commitIdContainer" style="display: none;">
-                <div class="input-group" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-                    <input type="text" class="form-control" id="commitId" name="commitId"
-                           placeholder="Enter commit ID (full or partial hash)">
-                    <button class="btn btn-outline-secondary" type="button" id="validateCommit">Validate</button>
-                </div>
-                <div id="commitValidationResult" class="form-text"></div>
-            </div>
-            <div class="mt-2" id="filePickerContainer" style="display: none;">
-                <div class="input-group" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-                    <input type="text" class="form-control" id="filePath" name="filePath"
-                           placeholder="Enter full file path (e.g., C:\path\to\file.py or /path/to/file.py)"
-                           style="transition: background-color 0.3s, border-color 0.3s;">
-                    <button class="btn btn-outline-secondary" type="button" id="browseFile">Browse</button>
-                    <input type="file" id="fileInput" accept=".cs,.js,.py" style="display: none;">
-                </div>
-                <div id="fileValidationResult" class="form-text"></div>
-                <small class="text-muted">
-                    <strong>Note:</strong> Due to browser security, file browsing only provides the filename.
-                    Please enter the <strong>full file path</strong> manually or use the repository-relative path.
-                    Supported types: .cs (C#), .js (JavaScript), .py (Python)
-                </small>
-            </div>
-        </div>
+        // Populate standards list
+        setTimeout(() => {
+            populateStandardsList(selectedDocs);
+        }, 100);
         
-        <!-- Git Diff Display -->
-        <div id="gitDiffSection" class="git-diff-section">
-            @if (ViewBag.GitDiff != null)
-            {
-                @if (ViewBag.GitDiffError)
-                {
-                    <div class="alert alert-warning">
-                        ⚠️ @ViewBag.GitDiff
+        return modal;
+    }
+    
+    function populateStandardsList(selectedDocs) {
+        const standardsList = document.getElementById('standardsList');
+        if (!standardsList) return;
+        
+        // Get available documents from the hidden checkboxes
+        const checkboxes = document.querySelectorAll('input[name="selectedDocuments"]');
+        const documentOptions = Array.from(checkboxes).map(cb => ({
+            value: cb.value,
+            displayName: cb.value.split('/').pop() || cb.value,
+            isSelected: selectedDocs.includes(cb.value)
+        }));
+        
+        if (documentOptions.length === 0) {
+            standardsList.innerHTML = '<div class="text-muted">No standards documents available</div>';
+            return;
+        }
+        
+        standardsList.innerHTML = documentOptions.map(doc => `
+            <label class="list-group-item">
+                <input type="checkbox" class="form-check-input me-2" value="${doc.value}" ${doc.isSelected ? 'checked' : ''}>
+                <span>${doc.displayName}</span>
+            </label>
+        `).join('');
+    }
+    
+    function applyStandardsSelection() {
+        // Get selected items from modal
+        const selectedInModal = Array.from(document.querySelectorAll('#standardsList input[type="checkbox"]:checked'))
+            .map(cb => cb.value);
+        
+        // Update hidden checkboxes
+        const hiddenCheckboxes = document.querySelectorAll('input[name="selectedDocuments"]');
+        hiddenCheckboxes.forEach(cb => {
+            cb.checked = selectedInModal.includes(cb.value);
+        });
+        
+        // Update UI to show selection count
+        const count = selectedInModal.length;
+        const standardsElement = document.querySelector('.flow-item[onclick="openStandardsSelector()"] .value');
+        if (standardsElement) {
+            standardsElement.innerHTML = count > 0
+                ? `${count} document${count > 1 ? 's' : ''} selected`
+                : '<em>No documents selected</em>';
+        }
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('standardsSelectorModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }
+    
+    function openRepoSelector() {
+        // Open directory browser modal
+        openDirectoryBrowser();
+    }
+    
+    function openAnalysisTypeSelector() {
+        // Create and show a modal for analysis type selection
+        const modal = createAnalysisTypeModal();
+        document.body.appendChild(modal);
+        
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+        
+        // Clean up modal after it's hidden
+        modal.addEventListener('hidden.bs.modal', function() {
+            modal.remove();
+        });
+    }
+    
+    function createAnalysisTypeModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'analysisTypeSelectorModal';
+        
+        // Get current selection
+        const currentSelection = document.querySelector('input[name="analysisType"]:checked')?.value || 'uncommitted';
+        
+        modal.innerHTML = `
+            <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Choose Analysis Type</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                }
-                else
-                {
-                    <div class="card">
-                        <div class="card-header bg-info text-white">
-                            <h6 class="mb-0">
-                                <button class="btn btn-link text-white" type="button" data-bs-toggle="collapse" data-bs-target="#gitDiffCollapse">
-                                    📊 Git Changes (Click to expand/collapse)
-                                </button>
-                            </h6>
+                    <div class="modal-body">
+                        <div class="list-group">
+                            <label class="list-group-item">
+                                <input type="radio" class="form-check-input me-2" name="modalAnalysisType" value="uncommitted" ${currentSelection === 'uncommitted' ? 'checked' : ''}>
+                                <div>
+                                    <strong>Uncommitted Changes</strong>
+                                    <small class="d-block text-muted">Analyze changes that haven't been committed yet</small>
+                                </div>
+                            </label>
+                            <label class="list-group-item">
+                                <input type="radio" class="form-check-input me-2" name="modalAnalysisType" value="commit" ${currentSelection === 'commit' ? 'checked' : ''}>
+                                <div>
+                                    <strong>Specific Commit</strong>
+                                    <small class="d-block text-muted">Analyze a specific commit by ID</small>
+                                </div>
+                            </label>
+                            <label class="list-group-item">
+                                <input type="radio" class="form-check-input me-2" name="modalAnalysisType" value="singlefile" ${currentSelection === 'singlefile' ? 'checked' : ''}>
+                                <div>
+                                    <strong>Single File</strong>
+                                    <small class="d-block text-muted">Analyze a specific file</small>
+                                </div>
+                            </label>
                         </div>
-                        <div class="collapse" id="gitDiffCollapse">
-                            <div class="card-body">
-                                <pre class="git-diff-text" style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em; max-height: 300px; overflow-y: auto;">@ViewBag.GitDiff</pre>
+                        
+                        <!-- Optional fields that show based on selection -->
+                        <div id="modalOptionalFields" class="mt-3" style="display: none;">
+                            <div class="mb-3">
+                                <label for="modalCommitId" class="form-label">Commit ID:</label>
+                                <input type="text" class="form-control" id="modalCommitId" placeholder="Enter commit hash">
+                            </div>
+                            <div class="mb-3">
+                                <label for="modalFilePath" class="form-label">File Path:</label>
+                                <input type="text" class="form-control" id="modalFilePath" placeholder="Enter file path">
                             </div>
                         </div>
                     </div>
-                }
-            }
-        </div>
-        
-        <!-- Commit Analysis Info (shown when specific commit is selected) -->
-        <div id="commitAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
-            <div class="d-flex align-items-center">
-                <div class="me-2">🔍</div>
-                <div>
-                    <strong>Commit Analysis Mode</strong><br>
-                    <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Single File Analysis Info (shown when single file is selected) -->
-        <div id="singleFileAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
-            <div class="d-flex align-items-center">
-                <div class="me-2">📄</div>
-                <div>
-                    <strong>Single File Analysis Mode</strong><br>
-                    <small>Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</small>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- AI Analysis Section -->
-    <div class="analysis-section mt-5">
-        <h5>🤖 AI Code Analysis</h5>
-        
-        <!-- Progress Container -->
-        <div id="progressContainer" style="display: none;" class="mt-4">
-            <div class="alert alert-info">
-                <div class="d-flex align-items-center">
-                    <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
-                    <span id="progressMessage">Starting analysis...</span>
-                </div>
-            </div>
-            <div class="mt-3">
-                <div class="fw-bold">Status:</div>
-                <div id="status">Waiting...</div>
-            </div>
-        </div>
-        
-        <!-- Analysis Result Display -->
-        <div id="analysisResult" class="mt-4" style="display: none;">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h6 class="mb-0">🔍 AI Analysis Results</h6>
-                </div>
-                <div class="card-body">
-                    <pre id="result" style="white-space: pre-wrap; font-family: monospace;"></pre>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Run Analysis Form -->
-        @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
-        {
-            <div id="analysisForm">
-                <button type="button" class="btn btn-success btn-lg" onclick="startAnalysis()">
-                    🚀 Run AI Analysis
-                </button>
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-info">
-                📋 Please select coding standards documents above to enable AI analysis
-            </div>
-        }
-        
-        <!-- Analysis Results - Always include but conditionally show/hide -->
-        <div class="analysis-results mt-4" id="analysisResultsSection" data-analysis-id="@(string.IsNullOrEmpty(analysisId) ? "" : analysisId)" style="@((!string.IsNullOrEmpty(analysisId) || !string.IsNullOrEmpty(analysisResult) || !string.IsNullOrEmpty(analysisError)) ? "" : "display: none;")">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5>🔍 AI Analysis Results</h5>
-                <div class="btn-group" role="group" id="analysisButtonsContainer">
-                    <!-- Buttons will be injected here by JS if needed -->
-                </div>
-            </div>
-            
-            <!-- Bottom Panel View -->
-            <div id="bottomPanelView">
-                @if (!string.IsNullOrEmpty(analysisResult))
-                {
-                    <div class="card">
-                        <div class="card-header bg-success text-white">
-                            <h6 class="mb-0">Analysis Results</h6>
-                        </div>
-                        <div class="card-body">
-                            <pre class="analysis-text" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="alert alert-info">
-                        <div class="d-flex align-items-center">
-                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                            <span>Analysis results will appear here...</span>
-                        </div>
-                    </div>
-                }
-            </div>
-            
-            <!-- Side Panel View (initially hidden) -->
-            <div id="sidePanelView" style="display: none;">
-                <div class="alert alert-info">
-                    <div class="d-flex align-items-center">
-                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                        <span>Loading side-panel view...</span>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="applyAnalysisTypeSelection()">Apply Selection</button>
                     </div>
                 </div>
             </div>
-        </div>
+        `;
         
-        @if (!string.IsNullOrEmpty(analysisError))
-        {
-            <div class="alert alert-danger mt-3" id="analysisErrorSection">
-                ❌ @analysisError
-            </div>
-        }
-    </div>
-
-</div>
-
-<!-- SignalR Client Library -->
-<script src="https://unpkg.com/@@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
-
-<script>
-    // View switching functions - use the global currentAnalysisId from site.js
-    function switchToBottomPanel() {
-        const bottomPanelView = document.getElementById('bottomPanelView');
-        const sidePanelView = document.getElementById('sidePanelView');
-        const bottomPanelBtn = document.getElementById('bottomPanelBtn');
-        const sidePanelBtn = document.getElementById('sidePanelBtn');
+        // Add event listeners for radio buttons
+        setTimeout(() => {
+            const radioButtons = modal.querySelectorAll('input[name="modalAnalysisType"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', handleModalAnalysisTypeChange);
+            });
+            handleModalAnalysisTypeChange(); // Initial call
+        }, 100);
         
-        if (bottomPanelView) bottomPanelView.style.display = 'block';
-        if (sidePanelView) sidePanelView.style.display = 'none';
-        
-        // Update button states
-        if (bottomPanelBtn) {
-            bottomPanelBtn.classList.remove('btn-outline-primary');
-            bottomPanelBtn.classList.add('btn-primary');
-        }
-        if (sidePanelBtn) {
-            sidePanelBtn.classList.remove('btn-primary');
-            sidePanelBtn.classList.add('btn-outline-primary');
-        }
-        
-        console.log('Switched to bottom panel view');
+        return modal;
     }
     
-    function switchToSidePanel() {
-        const bottomPanelView = document.getElementById('bottomPanelView');
-        const sidePanelView = document.getElementById('sidePanelView');
-        const bottomPanelBtn = document.getElementById('bottomPanelBtn');
-        const sidePanelBtn = document.getElementById('sidePanelBtn');
+    function handleModalAnalysisTypeChange() {
+        const selectedType = document.querySelector('input[name="modalAnalysisType"]:checked')?.value;
+        const optionalFields = document.getElementById('modalOptionalFields');
+        const commitIdInput = document.getElementById('modalCommitId');
+        const filePathInput = document.getElementById('modalFilePath');
         
-        if (bottomPanelView) bottomPanelView.style.display = 'none';
-        if (sidePanelView) sidePanelView.style.display = 'block';
-        
-        // Update button states
-        if (sidePanelBtn) {
-            sidePanelBtn.classList.remove('btn-outline-primary');
-            sidePanelBtn.classList.add('btn-primary');
-        }
-        if (bottomPanelBtn) {
-            bottomPanelBtn.classList.remove('btn-primary');
-            bottomPanelBtn.classList.add('btn-outline-primary');
-        }
-        
-        // Load side panel view
-        loadSidePanelView();
-        
-        console.log('Switched to side panel view');
-    }
-    
-    function loadSidePanelView() {
-        // Use the global currentAnalysisId from site.js
-        if (!window.currentAnalysisId) {
-            const sidePanelView = document.getElementById('sidePanelView');
-            if (sidePanelView) {
-                sidePanelView.innerHTML = '<div class="alert alert-warning">No analysis ID available for side-panel view</div>';
+        if (selectedType === 'commit' || selectedType === 'singlefile') {
+            optionalFields.style.display = 'block';
+            if (selectedType === 'commit') {
+                commitIdInput.disabled = false;
+                filePathInput.disabled = true;
+                commitIdInput.placeholder = 'Enter commit hash (e.g., abc123)';
+                filePathInput.value = '';
+            } else if (selectedType === 'singlefile') {
+                commitIdInput.disabled = true;
+                filePathInput.disabled = false;
+                commitIdInput.value = '';
+                filePathInput.placeholder = 'Enter file path (e.g., src/app.js)';
             }
-            return;
-        }
-        
-        // Show loading state
-        const sidePanelView = document.getElementById('sidePanelView');
-        if (sidePanelView) {
-            sidePanelView.innerHTML =
-                '<div class="alert alert-info">' +
-                '<div class="d-flex align-items-center">' +
-                '<div class="spinner-border spinner-border-sm me-2" role="status"></div>' +
-                '<span>Loading side-panel view...</span>' +
-                '</div>' +
-                '</div>';
-        }
-        
-        // Redirect to results page with the analysis ID
-        window.location.href = `/results/${window.currentAnalysisId}`;
-    }
-    
-    // Initialize view based on current state
-    document.addEventListener('DOMContentLoaded', function() {
-        // Only initialize if the view switching elements exist
-        const analysisResultsSection = document.getElementById('analysisResultsSection');
-        if (analysisResultsSection) {
-            // Set initial state to bottom panel view
-            switchToBottomPanel();
-            
-            // Hide the old analysis result section if it exists
-            const oldResult = document.querySelector('.analysis-results pre');
-            if (oldResult && oldResult.parentElement.parentElement.classList.contains('card')) {
-                oldResult.parentElement.parentElement.parentElement.style.display = 'none';
-            }
-        }
-    });
-    
-    // Function to dynamically inject the view-switching buttons
-    function injectAnalysisButtons() {
-        const container = document.getElementById('analysisButtonsContainer');
-        const analysisId = document.getElementById('analysisResultsSection')?.dataset.analysisId;
-        
-        console.log('🔄 injectAnalysisButtons called, analysisId:', analysisId);
-        
-        // If no analysis ID yet, don't inject (check for null, undefined, or empty string)
-        if (!analysisId || analysisId === '') {
-            console.log('❌ No analysisId found, skipping button injection');
-            return;
-        }
-
-        // Prevent duplicate injection
-        if (container.querySelector('#bottomPanelBtn')) {
-            console.log('✅ Buttons already injected, skipping');
-            return;
-        }
-
-        console.log('🔧 Creating analysis buttons...');
-
-        // Create buttons
-        const bottomBtn = document.createElement('button');
-        bottomBtn.type = 'button';
-        bottomBtn.className = 'btn btn-outline-primary';
-        bottomBtn.id = 'bottomPanelBtn';
-        bottomBtn.onclick = switchToBottomPanel;
-        bottomBtn.textContent = '📋 Bottom Panel';
-
-        const sideBtn = document.createElement('button');
-        sideBtn.type = 'button';
-        sideBtn.className = 'btn btn-outline-primary';
-        sideBtn.id = 'sidePanelBtn';
-        sideBtn.onclick = switchToSidePanel;
-        sideBtn.textContent = '🔀 Side Panel';
-
-        // Clear container and append
-        container.innerHTML = '';
-        container.appendChild(bottomBtn);
-        container.appendChild(sideBtn);
-
-        // Initially set to bottom panel
-        switchToBottomPanel();
-
-        console.log('✅ Analysis buttons injected dynamically');
-    }
-    
-    // Only run if the section exists
-    document.addEventListener('DOMContentLoaded', function() {
-        const section = document.getElementById('analysisResultsSection');
-        if (section) {
-            console.log('✅ analysisResultsSection found, injecting buttons...');
-            injectAnalysisButtons();
-            
-            // Poll for new analysisId (in case it gets updated dynamically)
-            setInterval(() => {
-                const section = document.getElementById('analysisResultsSection');
-                const analysisId = section?.dataset.analysisId;
-                if (section && analysisId && analysisId !== '' && !section.querySelector('#bottomPanelBtn')) {
-                    console.log('🔄 Polling: Found valid analysisId, injecting buttons...');
-                    injectAnalysisButtons();
-                }
-            }, 2000);
         } else {
-            console.log('ℹ️ analysisResultsSection hidden - no analysis data available yet');
+            optionalFields.style.display = 'none';
+            commitIdInput.disabled = true;
+            filePathInput.disabled = true;
+            commitIdInput.value = '';
+            filePathInput.value = '';
         }
-    });
+    }
     
-    // Make it globally available
-    window.injectAnalysisButtons = injectAnalysisButtons;
+    function applyAnalysisTypeSelection() {
+        const selectedType = document.querySelector('input[name="modalAnalysisType"]:checked')?.value || 'uncommitted';
+        const commitId = document.getElementById('modalCommitId')?.value || '';
+        const filePath = document.getElementById('modalFilePath')?.value || '';
+        
+        // Update hidden radio buttons
+        const hiddenRadios = document.querySelectorAll('input[name="analysisType"]');
+        hiddenRadios.forEach(radio => {
+            radio.checked = radio.value === selectedType;
+        });
+        
+        // Update optional fields
+        const hiddenCommitId = document.getElementById('commitId');
+        const hiddenFilePath = document.getElementById('filePath');
+        if (hiddenCommitId) hiddenCommitId.value = commitId;
+        if (hiddenFilePath) hiddenFilePath.value = filePath;
+        
+        // Update UI to show selection
+        const typeNames = {
+            'uncommitted': 'Uncommitted Changes',
+            'commit': 'Specific Commit',
+            'singlefile': 'Single File'
+        };
+        
+        const analysisTypeElement = document.querySelector('.flow-item[onclick="openAnalysisTypeSelector()"] .value');
+        if (analysisTypeElement) {
+            let displayText = typeNames[selectedType] || 'Select analysis type';
+            if (selectedType === 'commit' && commitId) {
+                displayText += ` (${commitId.substring(0, 7)})`;
+            } else if (selectedType === 'singlefile' && filePath) {
+                displayText += ` (${filePath.split('/').pop()})`;
+            }
+            analysisTypeElement.innerHTML = displayText;
+        }
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('analysisTypeSelectorModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }
     
-    // Radio button change handler for analysis type
-    document.addEventListener('DOMContentLoaded', function() {
-        const uncommittedRadio = document.getElementById('uncommittedChanges');
-        const commitRadio = document.getElementById('specificCommit');
-        const singleFileRadio = document.getElementById('singleFile');
-        const commitIdContainer = document.getElementById('commitIdContainer');
-        const commitIdInput = document.getElementById('commitId');
-        const filePickerContainer = document.getElementById('filePickerContainer');
-        const filePathInput = document.getElementById('filePath');
-        
-        function toggleAnalysisTypeFields() {
-            const gitDiffSection = document.getElementById('gitDiffSection');
-            const commitAnalysisInfo = document.getElementById('commitAnalysisInfo');
-            const singleFileAnalysisInfo = document.getElementById('singleFileAnalysisInfo');
-            
-            // Initialize on first call
-            if (!gitDiffSection || !commitAnalysisInfo || !singleFileAnalysisInfo) {
-                console.log('Elements not found, skipping toggle');
-                return;
-            }
-            
-            if (commitRadio.checked) {
-                commitIdContainer.style.display = 'block';
-                commitIdInput.required = true;
-                filePickerContainer.style.display = 'none';
-                filePathInput.required = false;
-                
-                // Hide git diff section and show commit analysis info
-                gitDiffSection.style.display = 'none';
-                commitAnalysisInfo.style.display = 'block';
-                singleFileAnalysisInfo.style.display = 'none';
-            } else if (singleFileRadio.checked) {
-                commitIdContainer.style.display = 'none';
-                commitIdInput.required = false;
-                commitIdInput.value = '';
-                document.getElementById('commitValidationResult').innerHTML = '';
-                filePickerContainer.style.display = 'block';
-                filePathInput.required = true;
-                
-                // Hide git diff section and show single file analysis info
-                gitDiffSection.style.display = 'none';
-                commitAnalysisInfo.style.display = 'none';
-                singleFileAnalysisInfo.style.display = 'block';
-            } else {
-                commitIdContainer.style.display = 'none';
-                commitIdInput.required = false;
-                commitIdInput.value = '';
-                document.getElementById('commitValidationResult').innerHTML = '';
-                filePickerContainer.style.display = 'none';
-                filePathInput.required = false;
-                filePathInput.value = '';
-                document.getElementById('fileValidationResult').innerHTML = '';
-                
-                // Show git diff section and hide analysis info
-                gitDiffSection.style.display = 'block';
-                commitAnalysisInfo.style.display = 'none';
-                singleFileAnalysisInfo.style.display = 'none';
-            }
+    function startAnalysis() {
+        // Call the site.js startAnalysis function
+        if (typeof window.startAnalysis === 'function') {
+            window.startAnalysis();
+        } else {
+            console.error('startAnalysis function from site.js not found');
+            alert('Analysis function not available. Please refresh the page.');
         }
-        
-        // Initialize the UI state based on the default radio button selection
-        toggleAnalysisTypeFields();
-        
-        uncommittedRadio.addEventListener('change', toggleAnalysisTypeFields);
-        commitRadio.addEventListener('change', toggleAnalysisTypeFields);
-        singleFileRadio.addEventListener('change', toggleAnalysisTypeFields);
-        
-        // Validate commit button handler
-        document.getElementById('validateCommit').addEventListener('click', async function() {
-            const commitId = commitIdInput.value.trim();
-            const validationResult = document.getElementById('commitValidationResult');
-            const repositoryPath = '@Html.Raw(ViewBag.RepositoryPath)';
-            
-            console.log('Validating commit:', commitId);
-            console.log('Repository path:', repositoryPath);
-            
-            if (!commitId) {
-                validationResult.innerHTML = '<span class="text-warning">Please enter a commit ID</span>';
-                return;
-            }
-            
-            validationResult.innerHTML = '<span class="text-info">Validating...</span>';
-            
-            try {
-                const response = await fetch('/Home/ValidateCommit', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        commitId: commitId,
-                        repositoryPath: repositoryPath
-                    })
-                });
-                
-                const result = await response.json();
-                if (result.success) {
-                    validationResult.innerHTML = '<span class="text-success">✓ Valid commit: ' + result.message + '</span>';
-                } else {
-                    validationResult.innerHTML = '<span class="text-danger">✗ ' + result.error + '</span>';
-                }
-            } catch (error) {
-                validationResult.innerHTML = '<span class="text-danger">✗ Validation failed: ' + error.message + '</span>';
-            }
-        });
-
-        // File validation function
-        function validateFilePath(filePath) {
-            const validationResult = document.getElementById('fileValidationResult');
-            
-            if (!filePath) {
-                validationResult.innerHTML = '<span class="text-warning">Please select or enter a file path</span>';
-                return false;
-            }
-            
-            const allowedExtensions = ['.cs', '.js', '.py'];
-            const extension = filePath.toLowerCase().substring(filePath.lastIndexOf('.'));
-            
-            if (!allowedExtensions.includes(extension)) {
-                validationResult.innerHTML = '<span class="text-danger">✗ Unsupported file type. Allowed: ' + allowedExtensions.join(', ') + '</span>';
-                return false;
-            }
-            
-            validationResult.innerHTML = '<span class="text-success">✓ File type supported</span>';
-            return true;
-        }
-
-        // File path input validation
-        filePathInput.addEventListener('input', function() {
-            const filePath = this.value.trim();
-            if (filePath) {
-                validateFilePath(filePath);
-            } else {
-                document.getElementById('fileValidationResult').innerHTML = '';
-            }
-        });
-
-        // Browse file button handler - triggers hidden file input
-        document.getElementById('browseFile').addEventListener('click', function() {
-            document.getElementById('fileInput').click();
-        });
-
-        // Handle file selection from file input
-        document.getElementById('fileInput').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                // Browsers don't provide full path for security reasons
-                const fileNameOnly = file.name;
-                
-                // Clear the input and show a message to user
-                filePathInput.value = '';
-                
-                // Store the file object for potential future use
-                window.selectedFile = file;
-                
-                // Provide feedback about the selected file and instructions
-                const validationResult = document.getElementById('fileValidationResult');
-                validationResult.innerHTML = '<span class="text-info">📁 File selected: ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)</span><br>' +
-                    '<span class="text-warning">⚠️ Please enter the full file path above (browsers don\'t provide full paths for security)</span>';
-                
-                // Focus on the file path input to encourage manual entry
-                filePathInput.focus();
-                
-                console.log('[DEBUG] File selected via browser:', fileNameOnly);
-                console.log('[DEBUG] User needs to manually enter full path');
-            }
-        });
-
-        // Allow drag and drop for file selection (enhanced UX)
-        filePathInput.addEventListener('dragover', function(event) {
-            event.preventDefault();
-            this.style.backgroundColor = '#f0f0f0';
-            this.style.borderColor = '#007bff';
-        });
-
-        filePathInput.addEventListener('dragleave', function(event) {
-            event.preventDefault();
-            this.style.backgroundColor = '';
-            this.style.borderColor = '';
-        });
-
-        filePathInput.addEventListener('drop', function(event) {
-            event.preventDefault();
-            this.style.backgroundColor = '';
-            this.style.borderColor = '';
-            
-            const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                const fileNameOnly = file.name;
-                
-                // Clear the input and show a message to user
-                this.value = '';
-                
-                // Store the file object for potential future use
-                window.selectedFile = file;
-                
-                // Provide feedback about the selected file and instructions
-                const validationResult = document.getElementById('fileValidationResult');
-                validationResult.innerHTML = '<span class="text-info">📁 File dropped: ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)</span><br>' +
-                    '<span class="text-warning">⚠️ Please enter the full file path above (drag & drop only provides filename)</span>';
-                
-                // Focus on the file path input to encourage manual entry
-                this.focus();
-                
-                console.log('[DEBUG] File dropped via drag & drop:', fileNameOnly);
-                console.log('[DEBUG] User needs to manually enter full path');
-            }
-        });
-    });
+    }
 </script>
