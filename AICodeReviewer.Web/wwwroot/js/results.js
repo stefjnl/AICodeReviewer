@@ -41,6 +41,7 @@ class ResultsApp {
             this.hideLoadingState();
             
         } catch (error) {
+            console.error('ResultsApp initialization error:', error);
             this.showError(`Failed to load analysis results: ${error.message}`);
         }
     }
@@ -101,16 +102,11 @@ class ResultsApp {
 
     async loadAnalysisData() {
         try {
-            console.log('Loading analysis data for ID:', this.analysisId);
-            
             // Load analysis results and diff in parallel
             const [resultsResponse, diffResponse] = await Promise.all([
                 fetch(`/api/results/${this.analysisId}`),
                 fetch(`/api/diff/${this.analysisId}`)
             ]);
-
-            console.log('Results response status:', resultsResponse.status);
-            console.log('Diff response status:', diffResponse.status);
 
             if (!resultsResponse.ok) {
                 throw new Error(`Results API error: ${resultsResponse.status}`);
@@ -118,9 +114,6 @@ class ResultsApp {
 
             this.analysisResults = await resultsResponse.json();
             this.diffContent = await diffResponse.text();
-
-            console.log('Analysis results loaded:', this.analysisResults);
-            console.log('Diff content length:', this.diffContent.length);
 
             // Process diff content
             this.files = this.diffRenderer.renderDiff(this.diffContent);
@@ -132,9 +125,14 @@ class ResultsApp {
     }
 
     renderUI() {
-        this.renderSummary();
-        this.renderDiff();
-        this.renderFeedback();
+        try {
+            this.renderSummary();
+            this.renderDiff();
+            this.renderFeedback();
+        } catch (error) {
+            console.error('Error during UI rendering:', error);
+            throw error;
+        }
     }
 
     renderSummary() {
@@ -217,13 +215,9 @@ class ResultsApp {
         const noFeedbackMessage = document.getElementById('noFeedbackMessage');
         const feedback = this.analysisResults?.feedback || [];
 
-        console.log('Rendering feedback:', feedback.length, 'items');
-        console.log('Analysis results:', this.analysisResults);
-
         container.innerHTML = '';
 
         if (feedback.length === 0) {
-            console.log('No feedback items found');
             container.style.display = 'none';
             noFeedbackMessage.style.display = 'flex';
             return;
@@ -234,7 +228,6 @@ class ResultsApp {
         feedbackList.className = 'feedback-list';
 
         feedback.forEach((item, index) => {
-            console.log('Creating feedback element', index, item);
             const feedbackElement = this.createFeedbackElement(item);
             feedbackList.appendChild(feedbackElement);
         });
@@ -242,8 +235,6 @@ class ResultsApp {
         container.appendChild(feedbackList);
         container.style.display = 'block';
         noFeedbackMessage.style.display = 'none';
-        
-        console.log('Feedback rendering complete');
     }
 
     createFeedbackElement(item) {
@@ -332,22 +323,16 @@ class ResultsApp {
     }
 
     applyFilters() {
-        console.log('Applying filters...');
         const checkboxes = document.querySelectorAll('.filter-checkbox input');
-        console.log('Found checkboxes:', checkboxes.length);
         
         const checkedSeverities = Array.from(checkboxes)
             .filter(cb => cb.checked)
             .map(cb => cb.dataset.severity);
-        
-        console.log('Checked severities:', checkedSeverities);
 
         const feedbackItems = document.querySelectorAll('.feedback-item');
-        console.log('Found feedback items:', feedbackItems.length);
         
         feedbackItems.forEach(item => {
             const severity = item.dataset.severity;
-            console.log('Processing item:', severity, 'checked:', checkedSeverities.includes(severity));
             
             if (checkedSeverities.includes(severity)) {
                 item.classList.remove('hidden');
@@ -355,8 +340,6 @@ class ResultsApp {
                 item.classList.add('hidden');
             }
         });
-        
-        console.log('Filter application complete');
     }
 
     exportResults() {
@@ -723,12 +706,12 @@ class ResponsiveHandler {
         const rightPane = document.getElementById('rightPane');
         
         if (isMobile) {
-            mobileControls.style.display = 'flex';
+            if (mobileControls) mobileControls.style.display = 'flex';
             this.showPane(this.currentPane);
         } else {
-            mobileControls.style.display = 'none';
-            leftPane.classList.add('active');
-            rightPane.classList.add('active');
+            if (mobileControls) mobileControls.style.display = 'none';
+            if (leftPane) leftPane.classList.add('active');
+            if (rightPane) rightPane.classList.add('active');
         }
     }
 
@@ -749,16 +732,20 @@ class ResponsiveHandler {
         const rightPane = document.getElementById('rightPane');
         
         if (targetPane === 'left') {
-            leftPane.classList.add('active');
-            rightPane.classList.remove('active');
+            if (leftPane) leftPane.classList.add('active');
+            if (rightPane) rightPane.classList.remove('active');
         } else {
-            rightPane.classList.add('active');
-            leftPane.classList.remove('active');
+            if (rightPane) rightPane.classList.add('active');
+            if (leftPane) leftPane.classList.remove('active');
         }
     }
 }
 
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    new ResultsApp();
+    // Ensure responsive handler runs first to set up proper pane states
+    const responsiveHandler = new ResponsiveHandler();
+    
+    // Then initialize the main app
+    const app = new ResultsApp();
 });

@@ -11,21 +11,37 @@ namespace AICodeReviewer.Web.Services
             {
                 using var repo = new Repository(repositoryPath);
 
-                // Get staged changes only (HEAD vs Index)
+                // Get unstaged changes (working directory vs Index)
+                var statusOptions = new StatusOptions
+                {
+                    IncludeUnaltered = false,
+                    RecurseUntrackedDirs = true,
+                    Show = StatusShowOption.IndexAndWorkDir
+                };
+
+                var status = repo.RetrieveStatus(statusOptions);
+                
+                // Check if there are any changes
+                if (!status.IsDirty)
+                {
+                    return ($"Branch: {repo.Head.FriendlyName}\n\nNo uncommitted changes detected.", false);
+                }
+
+                // Compare working directory against index (unstaged changes)
                 var diff = repo.Diff.Compare<Patch>(
                     repo.Head.Tip?.Tree,
-                    DiffTargets.Index);
+                    DiffTargets.WorkingDirectory);
 
                 var diffContent = diff.Content;
 
-                // Rest of your existing code...
+                // Size check - 100KB limit
                 if (diffContent.Length > 102400)
                     return ($"Diff too large ({diffContent.Length} bytes > 100KB). Commit some changes first.", true);
 
                 var branchInfo = $"Branch: {repo.Head.FriendlyName}\n\n";
 
                 return string.IsNullOrEmpty(diffContent)
-                    ? (branchInfo + "No staged changes detected.", false)
+                    ? (branchInfo + "No uncommitted changes detected.", false)
                     : (branchInfo + diffContent, false);
             }
             catch (RepositoryNotFoundException)
