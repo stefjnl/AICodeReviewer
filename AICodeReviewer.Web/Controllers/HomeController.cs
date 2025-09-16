@@ -17,8 +17,15 @@ public class HomeController : Controller
     private readonly string _defaultDocumentsPath;
     private readonly IMemoryCache _cache;
     private readonly IHubContext<ProgressHub> _hubContext;
+    private readonly IPathValidationService _pathValidationService;
+    private readonly IAnalysisOrchestrationService _analysisOrchestrationService;
+    private readonly ISignalRNotificationService _signalRNotificationService;
+    private readonly IDirectoryBrowserService _directoryBrowserService;
 
-    public HomeController(ILogger<HomeController> logger, IWebHostEnvironment environment, IConfiguration configuration, IMemoryCache cache, IHubContext<ProgressHub> hubContext)
+    public HomeController(ILogger<HomeController> logger, IWebHostEnvironment environment,
+        IConfiguration configuration, IMemoryCache cache, IHubContext<ProgressHub> hubContext,
+        IPathValidationService pathValidationService, IAnalysisOrchestrationService analysisOrchestrationService,
+        ISignalRNotificationService signalRNotificationService, IDirectoryBrowserService directoryBrowserService)
     {
         _logger = logger;
         _environment = environment;
@@ -27,6 +34,10 @@ public class HomeController : Controller
         _defaultDocumentsPath = Path.Combine(_environment.ContentRootPath, "..", "Documents");
         _cache = cache;
         _hubContext = hubContext;
+        _pathValidationService = pathValidationService;
+        _analysisOrchestrationService = analysisOrchestrationService;
+        _signalRNotificationService = signalRNotificationService;
+        _directoryBrowserService = directoryBrowserService;
     }
 
     public IActionResult Index()
@@ -130,10 +141,16 @@ public class HomeController : Controller
 
     [HttpPost]
     [IgnoreAntiforgeryToken]
-    public IActionResult RunAnalysis([FromBody] RunAnalysisRequest request)
+    public async Task<IActionResult> RunAnalysis([FromBody] RunAnalysisRequest request)
     {
         try
         {
+            // Null check for request parameter
+            if (request == null)
+            {
+                return BadRequest("Invalid request");
+            }
+
             // Use request data or fall back to session data
             // Default to parent directory (AICodeReviewer) instead of AICodeReviewer.Web
             var defaultRepositoryPath = Path.Combine(_environment.ContentRootPath, "..");
@@ -179,137 +196,24 @@ public class HomeController : Controller
                     return Json(new { success = false, error = "File path is required for single file analysis" });
                 }
 
-                _logger.LogInformation($"[RunAnalysis] Validating file existence: {filePath}");
-                _logger.LogInformation($"[RunAnalysis] File exists check: {System.IO.File.Exists(filePath)}");
-                _logger.LogInformation($"[RunAnalysis] Current working directory: {Environment.CurrentDirectory}");
-                _logger.LogInformation($"[RunAnalysis] Content root path: {_environment.ContentRootPath}");
-                _logger.LogInformation($"[RunAnalysis] Repository path: {repositoryPath}");
+                // Use PathValidationService to resolve and validate file path
+                var (resolvedPath, validationError) = _pathValidationService.ResolveAndValidateFilePath(
+                    filePath, repositoryPath, _environment.ContentRootPath);
                 
-                var originalFilePath = filePath;
-                
-                // Check if it's just a filename (no path)
-                if (!filePath.Contains(Path.DirectorySeparatorChar) && !filePath.Contains(Path.AltDirectorySeparatorChar))
+                if (!string.IsNullOrEmpty(validationError))
                 {
-                    _logger.LogWarning($"[RunAnalysis] File path appears to be just a filename: {filePath}");
-                    
-                    // Try to find the file in common locations
-                    var searchPaths = new List<string>();
-                    
-                    // Add repository path and its subdirectories
-                    if (Directory.Exists(repositoryPath))
-                    {
-                        searchPaths.Add(repositoryPath);
-                        try
-                        {
-                            // Add first level of subdirectories
-                            var subDirs = Directory.GetDirectories(repositoryPath, "*", SearchOption.TopDirectoryOnly);
-                            searchPaths.AddRange(subDirs);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogWarning($"[RunAnalysis] Could not enumerate subdirectories: {ex.Message}");
-                        }
-                    }
-                    
-                    // Add other common paths
-                    searchPaths.Add(_environment.ContentRootPath);
-                    searchPaths.Add(Directory.GetCurrentDirectory());
-                    
-                    // Search for the file
-                    bool fileFound = false;
-                    foreach (var searchPath in searchPaths)
-                    {
-                        if (Directory.Exists(searchPath))
-                        {
-                            try
-                            {
-                                var files = Directory.GetFiles(searchPath, filePath, SearchOption.TopDirectoryOnly);
-                                if (files.Length > 0)
-                                {
-                                    filePath = files[0];
-                                    fileFound = true;
-                                    _logger.LogInformation($"[RunAnalysis] File found at: {filePath}");
-                                    break;
-                                }
-                                
-                                // Also try with common extensions if not provided
-                                if (!Path.HasExtension(filePath))
-                                {
-                                    foreach (var ext in new[] { ".cs", ".js", ".py" })
-                                    {
-                                        var filesWithExt = Directory.GetFiles(searchPath, filePath + ext, SearchOption.TopDirectoryOnly);
-                                        if (filesWithExt.Length > 0)
-                                        {
-                                            filePath = filesWithExt[0];
-                                            fileFound = true;
-                                            _logger.LogInformation($"[RunAnalysis] File found with extension at: {filePath}");
-                                            break;
-                                        }
-                                    }
-                                    if (fileFound) break;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogDebug($"[RunAnalysis] Error searching in {searchPath}: {ex.Message}");
-                            }
-                        }
-                    }
-                    
-                    if (!fileFound)
-                    {
-                        _logger.LogWarning($"[RunAnalysis] File not found in search paths. Suggesting user enters full path.");
-                        var errorMsg = $"File '{originalFilePath}' not found. ";
-                        errorMsg += "Please provide the full file path (e.g., C:\\path\\to\\file.py or /path/to/file.py) or ";
-                        errorMsg += "ensure the file is in the repository directory: " + repositoryPath;
-                        return Json(new { success = false, error = errorMsg });
-                    }
-                }
-                else
-                {
-                    // User provided a path, check if it's relative and resolve it
-                    if (!Path.IsPathRooted(filePath))
-                    {
-                        _logger.LogInformation($"[RunAnalysis] Relative path detected, resolving: {filePath}");
-                        
-                        // Try resolving relative to repository path first
-                        var relativePath = Path.Combine(repositoryPath, filePath);
-                        if (System.IO.File.Exists(relativePath))
-                        {
-                            filePath = relativePath;
-                            _logger.LogInformation($"[RunAnalysis] Resolved relative path to: {filePath}");
-                        }
-                        else
-                        {
-                            // Try relative to content root
-                            var contentRelativePath = Path.Combine(_environment.ContentRootPath, filePath);
-                            if (System.IO.File.Exists(contentRelativePath))
-                            {
-                                filePath = contentRelativePath;
-                                _logger.LogInformation($"[RunAnalysis] Resolved relative to content root: {filePath}");
-                            }
-                        }
-                    }
-                }
-
-                // Final validation - check if file exists and is readable
-                if (!System.IO.File.Exists(filePath))
-                {
-                    _logger.LogError($"[RunAnalysis] File not found after all resolution attempts: {filePath}");
-                    var finalError = $"File not found: {originalFilePath}. ";
-                    finalError += "Please verify the file path is correct and the file exists. ";
-                    finalError += "If using a relative path, ensure it's relative to the repository root: " + repositoryPath;
-                    return Json(new { success = false, error = finalError });
+                    return Json(new { success = false, error = validationError });
                 }
 
                 // Validate file extension
                 var allowedExtensions = new[] { ".cs", ".js", ".py" };
-                var extension = Path.GetExtension(filePath).ToLower();
-                if (!allowedExtensions.Contains(extension))
+                if (!_pathValidationService.IsValidFileExtension(resolvedPath, allowedExtensions))
                 {
+                    var extension = Path.GetExtension(resolvedPath).ToLower();
                     return Json(new { success = false, error = $"Unsupported file type '{extension}'. Allowed extensions: {string.Join(", ", allowedExtensions)}" });
                 }
                 
+                filePath = resolvedPath; // Use the resolved path
                 _logger.LogInformation($"[RunAnalysis] File validation passed for: {filePath}");
             }
             else
@@ -331,44 +235,11 @@ public class HomeController : Controller
                 }
             }
 
-            // Generate unique analysis ID
-            var analysisId = Guid.NewGuid().ToString();
-
-            // Create initial analysis result
-            var analysisResult = new AnalysisResult
-            {
-                Status = "Starting",
-                CreatedAt = DateTime.UtcNow
-            };
-
-            // Store in memory cache with expiration
-            var cacheOptions = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(30)) // Reset on access
-                .SetAbsoluteExpiration(TimeSpan.FromMinutes(60)) // Max 1 hour
-                .SetSize(1); // Size = 1 unit for size-limited cache
-
-            _cache.Set($"analysis_{analysisId}", analysisResult, cacheOptions);
-
-            // Start background analysis with captured references
+            // Use AnalysisOrchestrationService to start the analysis
             var docsFolder = request.DocumentsFolder ?? HttpContext.Session.GetString("DocumentsFolder") ?? _defaultDocumentsPath;
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await RunBackgroundAnalysisWithCache(analysisId, repositoryPath, selectedDocuments, docsFolder, apiKey, model, language, analysisType, commitId, filePath);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Background analysis failed for analysis {AnalysisId}", analysisId);
-                    await BroadcastError(analysisId, $"Background analysis error: {ex.Message}");
-                }
-            }).ContinueWith(t =>
-            {
-                if (t.IsFaulted && t.Exception != null)
-                {
-                    _logger.LogError(t.Exception, "Unobserved exception in background task for analysis {AnalysisId}", analysisId);
-                }
-            }, TaskContinuationOptions.OnlyOnFaulted);
+            var analysisId = await _analysisOrchestrationService.StartAnalysisAsync(
+                repositoryPath, selectedDocuments, docsFolder, apiKey, model, language,
+                analysisType, commitId, filePath);
 
             return Json(new { success = true, analysisId = analysisId });
         }
@@ -379,14 +250,15 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    public IActionResult GetAnalysisStatus(string analysisId)
+    public async Task<IActionResult> GetAnalysisStatus(string analysisId)
     {
         if (string.IsNullOrEmpty(analysisId))
         {
             return Json(new { status = "NotStarted", result = (string?)null, error = (string?)null, isComplete = false });
         }
 
-        if (_cache.TryGetValue($"analysis_{analysisId}", out AnalysisResult? result))
+        var result = await _analysisOrchestrationService.GetAnalysisStatusAsync(analysisId);
+        if (result != null)
         {
             _logger.LogInformation($"[Analysis {analysisId}] Serving result: Status={result.Status}, ResultLength={result.Result?.Length ?? 0}");
             var progressDto = new ProgressDto(result.Status, result.Result, result.Error, result.IsComplete);
@@ -396,331 +268,8 @@ public class HomeController : Controller
         return Json(new { status = "NotFound", result = (string?)null, error = "Analysis not found or expired", isComplete = true });
     }
 
-    private async Task RunBackgroundAnalysis(string repositoryPath, List<string> selectedDocuments, string apiKey, string model)
-    {
-        // This method is no longer used - replaced by RunBackgroundAnalysisWithCache
-        // Kept for backward compatibility but will not be called
-        await Task.CompletedTask;
-    }
 
-    private async Task RunBackgroundAnalysisWithCache(string analysisId, string repositoryPath, List<string> selectedDocuments, string documentsFolder, string apiKey, string model, string language, string analysisType = "uncommitted", string? commitId = null, string? filePath = null)
-    {
-        _logger.LogInformation($"[Analysis {analysisId}] Starting background analysis");
-        _logger.LogInformation($"[Analysis {analysisId}] Repository path: {repositoryPath}");
-        _logger.LogInformation($"[Analysis {analysisId}] Selected documents: {string.Join(", ", selectedDocuments)}");
-        _logger.LogInformation($"[Analysis {analysisId}] Documents folder: {documentsFolder}");
-        _logger.LogInformation($"[Analysis {analysisId}] Language: {language}");
-        _logger.LogInformation($"[Analysis {analysisId}] API key configured: {!string.IsNullOrEmpty(apiKey)}");
-        _logger.LogInformation($"[Analysis {analysisId}] Model: {model}");
 
-        try
-        {
-            // Get current result from cache
-            _logger.LogInformation($"[Analysis {analysisId}] Checking cache for existing result");
-            AnalysisResult? result;
-            try
-            {
-                if (!_cache.TryGetValue($"analysis_{analysisId}", out result))
-                {
-                    _logger.LogError($"[Analysis {analysisId}] Analysis not found in cache - aborting");
-                    return; // Analysis not found in cache
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"[Analysis {analysisId}] Error accessing cache - aborting");
-                return;
-            }
-            _logger.LogInformation($"[Analysis {analysisId}] Found existing result in cache");
-
-            // Update status via SignalR
-            if (result != null)
-            {
-                result.Status = "Reading git changes...";
-                await BroadcastProgress(analysisId, "Reading git changes...");
-                _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Reading git changes...'");
-            }
-
-            // Get content based on analysis type
-            _logger.LogInformation($"[Analysis {analysisId}] Analysis type: {analysisType}");
-            string content;
-            bool contentError;
-            bool isFileContent = false;
-            
-            if (analysisType == "singlefile" && !string.IsNullOrEmpty(filePath))
-            {
-                _logger.LogInformation($"[Analysis {analysisId}] Reading single file: {filePath}");
-                try
-                {
-                    content = await System.IO.File.ReadAllTextAsync(filePath);
-                    contentError = false;
-                    isFileContent = true;
-                    _logger.LogInformation($"[Analysis {analysisId}] File read successfully, length: {content.Length}");
-                }
-                catch (Exception ex)
-                {
-                    content = $"Error reading file: {ex.Message}";
-                    contentError = true;
-                    _logger.LogError(ex, $"[Analysis {analysisId}] Failed to read file: {filePath}");
-                }
-            }
-            else if (analysisType == "commit" && !string.IsNullOrEmpty(commitId))
-            {
-                _logger.LogInformation($"[Analysis {analysisId}] Extracting commit diff for commit: {commitId}");
-                (content, contentError) = GitService.GetCommitDiff(repositoryPath, commitId);
-            }
-            else
-            {
-                _logger.LogInformation($"[Analysis {analysisId}] Extracting uncommitted changes");
-                (content, contentError) = GitService.ExtractDiff(repositoryPath);
-            }
-            
-            _logger.LogInformation($"[Analysis {analysisId}] Content extraction complete - Error: {contentError}, Content length: {content?.Length ?? 0}");
-            
-            // Store content in cache for results display
-            if (!contentError && !string.IsNullOrEmpty(content))
-            {
-                _cache.Set($"content_{analysisId}", content, new MemoryCacheEntryOptions()
-                    .SetSlidingExpiration(TimeSpan.FromMinutes(30))
-                    .SetSize(1));
-                _logger.LogInformation($"[Analysis {analysisId}] Stored content in cache ({content.Length} bytes)");
-            }
-            
-            if (contentError)
-            {
-                _logger.LogError($"[Analysis {analysisId}] Content extraction failed: {content}");
-                if (result != null)
-                {
-                    result.Status = "Error";
-                    result.Error = isFileContent ? $"File reading error: {content}" : $"Git diff error: {content}";
-                    result.CompletedAt = DateTime.UtcNow;
-                    
-                    var cacheOptions2 = new MemoryCacheEntryOptions()
-                        .SetSlidingExpiration(TimeSpan.FromMinutes(30))
-                        .SetSize(1);
-                    _cache.Set($"analysis_{analysisId}", result, cacheOptions2);
-                    _logger.LogInformation($"[Analysis {analysisId}] Set error status and completed");
-                }
-                return;
-            }
-            _logger.LogInformation($"[Analysis {analysisId}] Content extracted successfully");
-
-            // Update status via SignalR
-            _logger.LogInformation($"[Analysis {analysisId}] Starting document loading phase");
-            if (result != null)
-            {
-                result.Status = "Loading documents...";
-                await BroadcastProgress(analysisId, "Loading documents...");
-                _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Loading documents...'");
-            }
-            
-            // Load selected documents asynchronously
-            _logger.LogInformation($"[Analysis {analysisId}] Loading {selectedDocuments.Count} selected documents");
-            _logger.LogInformation($"[Analysis {analysisId}] Documents folder path: {documentsFolder}");
-            _logger.LogInformation($"[Analysis {analysisId}] Documents folder exists: {Directory.Exists(documentsFolder)}");
-            
-            // Create tasks for parallel document loading
-            var documentTasks = selectedDocuments.Select(async docName =>
-            {
-                _logger.LogInformation($"[Analysis {analysisId}] Loading document: {docName} from folder: {documentsFolder}");
-                var (content, docError) = await DocumentService.LoadDocumentAsync(docName, documentsFolder);
-                _logger.LogInformation($"[Analysis {analysisId}] Document {docName} - Error: {docError}, Content length: {content?.Length ?? 0}");
-                
-                if (!docError)
-                {
-                    _logger.LogInformation($"[Analysis {analysisId}] Document {docName} loaded successfully");
-                    return (content, docError, docName);
-                }
-                else
-                {
-                    _logger.LogWarning($"[Analysis {analysisId}] Failed to load document {docName}: {content}");
-                    return (content, docError, docName);
-                }
-            }).ToList();
-            
-            // Wait for all documents to load in parallel
-            var documentResults = await Task.WhenAll(documentTasks);
-            
-            // Collect successful documents
-            var codingStandards = new List<string>();
-            foreach (var (docContent, docError, docName) in documentResults)
-            {
-                if (!docError)
-                {
-                    codingStandards.Add(docContent);
-                }
-            }
-            
-            _logger.LogInformation($"[Analysis {analysisId}] Document loading complete - loaded {codingStandards.Count} documents");
-            _logger.LogInformation($"[Analysis {analysisId}] Final codingStandards count: {codingStandards.Count}");
-
-            // Update status via SignalR
-            _logger.LogInformation($"[Analysis {analysisId}] Starting AI analysis phase");
-            if (result != null)
-            {
-                result.Status = "AI analysis...";
-                await BroadcastProgress(analysisId, "AI analysis...");
-                _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'AI analysis...'");
-            }
-            
-            // Get requirements
-            string requirements = "Follow .NET best practices and coding standards";
-            _logger.LogInformation($"[Analysis {analysisId}] Requirements: {requirements}");
-
-            // Call AI service with timeout protection
-            _logger.LogInformation($"[Analysis {analysisId}] Calling AI service with:");
-            _logger.LogInformation($"[Analysis {analysisId}] - Content length: {content?.Length ?? 0}");
-            _logger.LogInformation($"[Analysis {analysisId}] - Coding standards count: {codingStandards.Count}");
-            _logger.LogInformation($"[Analysis {analysisId}] - API key configured: {!string.IsNullOrEmpty(apiKey)}");
-            _logger.LogInformation($"[Analysis {analysisId}] - Model: {model}");
-            _logger.LogInformation($"[Analysis {analysisId}] - Analysis type: {(isFileContent ? "Single File" : "Git Diff")}");
-            
-            // Add timeout protection (60 seconds)
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-            
-            string analysis;
-            bool aiError;
-            string? errorMessage;
-            
-            try
-            {
-                _logger.LogInformation($"[Analysis {analysisId}] Starting AI service call with 60-second timeout");
-                
-                // Call AI service with timeout
-                var (analysisResult, isError, errorMsg) = await Task.Run(async () =>
-                    await AIService.AnalyzeCodeAsync(content, codingStandards, requirements, apiKey, model, language, isFileContent),
-                    cts.Token);
-                
-                analysis = analysisResult;
-                aiError = isError;
-                errorMessage = errorMsg;
-                
-                _logger.LogInformation($"[Analysis {analysisId}] AI service call complete - Error: {aiError}, Analysis length: {analysis?.Length ?? 0}");
-                if (aiError)
-                {
-                    _logger.LogError($"[Analysis {analysisId}] AI analysis failed with detailed error: {errorMessage}");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogError($"[Analysis {analysisId}] AI analysis timed out after 60 seconds");
-                analysis = "";
-                aiError = true;
-                errorMessage = "AI analysis timed out after 60 seconds";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"[Analysis {analysisId}] Unexpected exception during AI service call");
-                analysis = "";
-                aiError = true;
-                errorMessage = $"Unexpected error calling AI service: {ex.Message}";
-            }
-
-            // Always create a NEW instance to ensure we're writing fresh data
-            var finalResult = new AnalysisResult
-            {
-                Status = aiError ? "Error" : "Complete",
-                Result = aiError ? null : analysis,
-                Error = aiError ? $"AI analysis failed: {errorMessage}" : null,
-                CompletedAt = DateTime.UtcNow,
-                CreatedAt = result.CreatedAt, // preserve original creation time
-                RequestId = result.RequestId  // preserve if you have it
-            };
-
-            // Broadcast completion via SignalR
-            if (aiError)
-            {
-                await BroadcastError(analysisId, $"AI analysis failed: {errorMessage}");
-            }
-            else
-            {
-                await BroadcastComplete(analysisId, analysis);
-            }
-
-            // Still update cache for fallback
-            _cache.Set($"analysis_{analysisId}", finalResult, new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(30))
-                .SetSize(1));
-
-            _logger.LogInformation($"[Analysis {analysisId}] Cache updated with final result: {finalResult.Status}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"[Analysis {analysisId}] Unhandled exception in background analysis");
-            try
-            {
-                if (_cache.TryGetValue($"analysis_{analysisId}", out AnalysisResult? errorResult))
-                {
-                    var finalErrorResult = new AnalysisResult {
-                        Status = "Error",
-                        Error = $"Analysis error: {ex.Message}",
-                        CompletedAt = DateTime.UtcNow
-                    };
-                    _cache.Set($"analysis_{analysisId}", finalErrorResult, new MemoryCacheEntryOptions().SetSize(1));
-                    await BroadcastError(analysisId, $"Analysis error: {ex.Message}");
-                    _logger.LogInformation($"[Analysis {analysisId}] Set error status due to exception: {ex.Message}");
-                }
-            }
-            catch (Exception cacheEx)
-            {
-                _logger.LogError(cacheEx, $"[Analysis {analysisId}] Failed to update cache with error status");
-            }
-        }
-        finally
-        {
-            _logger.LogInformation($"[Analysis {analysisId}] Background analysis task completed");
-        }
-    }
-
-    private async Task BroadcastProgress(string analysisId, string status)
-    {
-        try
-        {
-            var progressDto = new ProgressDto(status, null, null, false);
-            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
-            
-            // Keep cache for fallback - create AnalysisResult from ProgressDto
-            var cacheResult = new AnalysisResult
-            {
-                Status = progressDto.Status,
-                Result = progressDto.Result,
-                Error = progressDto.Error,
-                CreatedAt = DateTime.UtcNow
-            };
-            _cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "SignalR broadcast failed for analysis {AnalysisId}", analysisId);
-        }
-    }
-
-    private async Task BroadcastComplete(string analysisId, string result)
-    {
-        try
-        {
-            var progressDto = new ProgressDto("Analysis complete", result, null, true);
-            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
-            
-            // Store analysis ID in session for view switching
-            HttpContext.Session.SetString("AnalysisId", analysisId);
-            
-            // Cache as AnalysisResult - create AnalysisResult from ProgressDto
-            var cacheResult = new AnalysisResult
-            {
-                Status = progressDto.Status,
-                Result = progressDto.Result,
-                Error = progressDto.Error,
-                CreatedAt = DateTime.UtcNow,
-                CompletedAt = DateTime.UtcNow
-            };
-            _cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "SignalR broadcast failed for analysis {AnalysisId}", analysisId);
-        }
-    }
 
     [HttpPost]
     public IActionResult StoreAnalysisId([FromBody] StoreAnalysisIdRequest request)
@@ -734,29 +283,6 @@ public class HomeController : Controller
         return Json(new { success = true });
     }
 
-    private async Task BroadcastError(string analysisId, string error)
-    {
-        try
-        {
-            var progressDto = new ProgressDto("Analysis failed", null, error, true);
-            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
-            
-            // Cache as AnalysisResult - create AnalysisResult from ProgressDto
-            var cacheResult = new AnalysisResult
-            {
-                Status = progressDto.Status,
-                Result = progressDto.Result,
-                Error = progressDto.Error,
-                CreatedAt = DateTime.UtcNow,
-                CompletedAt = DateTime.UtcNow
-            };
-            _cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "SignalR broadcast failed for analysis {AnalysisId}", analysisId);
-        }
-    }
 
     [HttpPost]
     public IActionResult ValidateCommit([FromBody] ValidateCommitRequest request)
@@ -797,168 +323,12 @@ public class HomeController : Controller
     }
 
     [HttpPost]
-    public IActionResult BrowseDirectory([FromBody] DirectoryBrowseRequest request)
+    public async Task<IActionResult> BrowseDirectory([FromBody] DirectoryBrowseRequest request)
     {
         try
         {
-            string currentPath;
-            
-            // If no path provided, start with drives on Windows or root on Unix
-            if (string.IsNullOrWhiteSpace(request?.CurrentPath))
-            {
-                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-                {
-                    // On Windows, start with drive selection
-                    var drives = DriveInfo.GetDrives()
-                        .Where(d => d.IsReady)
-                        .Select(d => new DirectoryItem
-                        {
-                            Name = d.Name.TrimEnd('\\'),
-                            FullPath = d.RootDirectory.FullName,
-                            IsDirectory = true,
-                            LastModified = DateTime.Now,
-                            Size = 0
-                        }).ToList();
-
-                    return Json(new DirectoryBrowseResponse
-                    {
-                        Directories = drives,
-                        Files = new List<DirectoryItem>(),
-                        CurrentPath = "Computer",
-                        ParentPath = null,
-                        IsGitRepository = false
-                    });
-                }
-                else
-                {
-                    // On Unix systems, start with root
-                    currentPath = "/";
-                }
-            }
-            else
-            {
-                currentPath = request.CurrentPath;
-            }
-
-            // Validate the path exists
-            if (!Directory.Exists(currentPath))
-            {
-                return Json(new DirectoryBrowseResponse
-                {
-                    Directories = new List<DirectoryItem>(),
-                    Files = new List<DirectoryItem>(),
-                    CurrentPath = currentPath,
-                    ParentPath = null,
-                    IsGitRepository = false,
-                    Error = "Directory not found"
-                });
-            }
-
-            // Get parent directory
-            string? parentPath = null;
-            try
-            {
-                var parent = Directory.GetParent(currentPath);
-                parentPath = parent?.FullName;
-                
-                // Special case for root directory on Unix
-                if (Environment.OSVersion.Platform != PlatformID.Win32NT && currentPath == "/")
-                {
-                    parentPath = null;
-                }
-                
-                // Special case for drive root on Windows
-                if (Environment.OSVersion.Platform == PlatformID.Win32NT &&
-                    (currentPath.Length == 3 && currentPath.EndsWith(":\\")))
-                {
-                    parentPath = null; // Go back to drive selection
-                }
-            }
-            catch
-            {
-                parentPath = null;
-            }
-
-            // Get directories and files
-            var directories = new List<DirectoryItem>();
-            var files = new List<DirectoryItem>();
-
-            try
-            {
-                // Get directories
-                var dirInfo = new DirectoryInfo(currentPath);
-                foreach (var dir in dirInfo.GetDirectories())
-                {
-                    try
-                    {
-                        bool isGitRepo = Directory.Exists(Path.Combine(dir.FullName, ".git"));
-                        directories.Add(new DirectoryItem
-                        {
-                            Name = dir.Name,
-                            FullPath = dir.FullName,
-                            IsDirectory = true,
-                            IsGitRepository = isGitRepo,
-                            LastModified = dir.LastWriteTime,
-                            Size = 0
-                        });
-                    }
-                    catch
-                    {
-                        // Skip directories we can't access
-                        continue;
-                    }
-                }
-
-                // Get files (only show relevant types)
-                var allowedExtensions = new[] { ".cs", ".js", ".py", ".json", ".xml", ".config", ".md", ".txt", ".yml", ".yaml" };
-                foreach (var file in dirInfo.GetFiles())
-                {
-                    try
-                    {
-                        if (allowedExtensions.Contains(file.Extension.ToLower()))
-                        {
-                            files.Add(new DirectoryItem
-                            {
-                                Name = file.Name,
-                                FullPath = file.FullName,
-                                IsDirectory = false,
-                                IsGitRepository = false,
-                                LastModified = file.LastWriteTime,
-                                Size = file.Length
-                            });
-                        }
-                    }
-                    catch
-                    {
-                        // Skip files we can't access
-                        continue;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new DirectoryBrowseResponse
-                {
-                    Directories = new List<DirectoryItem>(),
-                    Files = new List<DirectoryItem>(),
-                    CurrentPath = currentPath,
-                    ParentPath = parentPath,
-                    IsGitRepository = false,
-                    Error = $"Error accessing directory: {ex.Message}"
-                });
-            }
-
-            // Check if current directory is a git repository
-            bool isCurrentGitRepo = Directory.Exists(Path.Combine(currentPath, ".git"));
-
-            return Json(new DirectoryBrowseResponse
-            {
-                Directories = directories.OrderBy(d => d.Name).ToList(),
-                Files = files.OrderBy(f => f.Name).ToList(),
-                CurrentPath = currentPath,
-                ParentPath = parentPath,
-                IsGitRepository = isCurrentGitRepo
-            });
+            var response = await _directoryBrowserService.BrowseDirectoryAsync(request?.CurrentPath);
+            return Json(response);
         }
         catch (Exception ex)
         {

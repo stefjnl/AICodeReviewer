@@ -18,6 +18,12 @@ builder.Services.AddMemoryCache(options =>
 // Register custom services
 builder.Services.AddScoped<ParseResponseService>();
 
+// Register new services for HomeController refactoring
+builder.Services.AddScoped<IPathValidationService, PathValidationService>();
+builder.Services.AddScoped<IAnalysisOrchestrationService, AnalysisOrchestrationService>();
+builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
+builder.Services.AddScoped<IDirectoryBrowserService, DirectoryBrowserService>();
+
 // In service registration section
 builder.Services.AddSignalR();
 
