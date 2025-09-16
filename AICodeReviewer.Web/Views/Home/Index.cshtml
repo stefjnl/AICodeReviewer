@@ -211,17 +211,33 @@
                     document.addEventListener('DOMContentLoaded', function() {
                         const languageSelect = document.getElementById('languageSelect');
                         
-                        // Auto-validate step 2 on page load since language is pre-selected
-                        setTimeout(function() {
+                        // Auto-validate step 2 when workflow reaches it (language has default value)
+                        function autoValidateStep2() {
                             if (window.workflowAPI && window.horizontalWorkflow) {
                                 const currentStep = window.horizontalWorkflow.getCurrentStep();
-                                // Auto-validate if we're at step 2 or have passed it
-                                if (currentStep >= 2) {
-                                    console.log('[Index] Auto-validating step 2 on page load');
-                                    window.workflowAPI.validateAndAdvanceStep(2);
+                                // Auto-validate if we're at step 2 and it has valid default
+                                if (currentStep === 2) {
+                                    console.log('[Index] Auto-validating step 2 - checking default language');
+                                    // Step 2 should be valid by default since .NET is pre-selected
+                                    const isValid = window.workflowAPI.isStepValid(2);
+                                    if (isValid) {
+                                        console.log('[Index] Step 2 auto-validation successful, advancing');
+                                        window.workflowAPI.validateAndAdvanceStep(2);
+                                    }
                                 }
                             }
-                        }, 1000);
+                        }
+                        
+                        // Listen for workflow step changes to auto-validate when reaching step 2
+                        window.addEventListener('workflowStepChanged', function(event) {
+                            if (event.detail.currentStep === 2) {
+                                console.log('[Index] Reached step 2, triggering auto-validation');
+                                autoValidateStep2();
+                            }
+                        });
+                        
+                        // Also try on page load in case workflow is already at step 2
+                        setTimeout(autoValidateStep2, 500);
                         
                         if (languageSelect) {
                             languageSelect.addEventListener('change', function() {
@@ -417,17 +433,33 @@
                         const commitIdInput = document.getElementById('commitId');
                         const filePathInput = document.getElementById('filePath');
                         
-                        // Auto-validate step 4 on page load since "uncommitted" is pre-selected as default
-                        setTimeout(function() {
+                        // Auto-validate step 4 when workflow reaches it (analysis type has default value)
+                        function autoValidateStep4() {
                             if (window.workflowAPI && window.horizontalWorkflow) {
                                 const currentStep = window.horizontalWorkflow.getCurrentStep();
-                                // Auto-validate if we're at step 4 or have passed it
-                                if (currentStep >= 4) {
-                                    console.log('[Index] Auto-validating step 4 on page load');
-                                    window.workflowAPI.validateAndAdvanceStep(4);
+                                // Auto-validate if we're at step 4 and it has valid default
+                                if (currentStep === 4) {
+                                    console.log('[Index] Auto-validating step 4 - checking default analysis type');
+                                    // Step 4 should be valid by default since "uncommitted" is pre-selected
+                                    const isValid = window.workflowAPI.isStepValid(4);
+                                    if (isValid) {
+                                        console.log('[Index] Step 4 auto-validation successful, advancing');
+                                        window.workflowAPI.validateAndAdvanceStep(4);
+                                    }
                                 }
                             }
-                        }, 1000);
+                        }
+                        
+                        // Listen for workflow step changes to auto-validate when reaching step 4
+                        window.addEventListener('workflowStepChanged', function(event) {
+                            if (event.detail.currentStep === 4) {
+                                console.log('[Index] Reached step 4, triggering auto-validation');
+                                autoValidateStep4();
+                            }
+                        });
+                        
+                        // Also try on page load in case workflow is already at step 4
+                        setTimeout(autoValidateStep4, 500);
                         
                         // Validate when analysis type changes
                         analysisTypeRadios.forEach(radio => {
