@@ -60,24 +60,42 @@
         </div>
         
         <!-- Document Selection -->
-        @if (ViewBag.AvailableDocuments.Count > 0)
-        {
-            <form asp-action="SelectDocuments" method="post">
-                <div class="mb-3">
-                    <label>Select coding standards:</label>
-                    @foreach (var doc in ViewBag.AvailableDocuments)
-                    {
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox"
-                                   name="selectedDocuments" value="@doc"
-                                   @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
-                            <label class="form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
-                        </div>
-                    }
-                </div>
-                <button type="submit" class="btn btn-primary">Apply Selection</button>
-            </form>
-        }
+        <div class="flow-item" onclick="toggleStandardsSelector()" tabindex="0">
+            <span class="icon">📄</span>
+            <span class="value" id="standardsValue">
+                @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
+                {
+                    @($"Selected: {string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))}")
+                }
+                else
+                {
+                    <em>No documents selected</em>
+                }
+            </span>
+            <span class="edit-icon">✏️</span>
+        </div>
+
+        <!-- Hidden form that appears on click -->
+        <div id="standardsDropdown" style="display: none;">
+            @if (ViewBag.AvailableDocuments.Count > 0)
+            {
+                <form asp-action="SelectDocuments" method="post">
+                    <div class="mb-3">
+                        <label>Select coding standards:</label>
+                        @foreach (var doc in ViewBag.AvailableDocuments)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       name="selectedDocuments" value="@doc"
+                                       @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
+                                <label class="form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
+                            </div>
+                        }
+                    </div>
+                    <button type="submit" class="btn btn-primary">Apply Selection</button>
+                </form>
+            }
+        </div>
         else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
         {
             <div class="alert alert-info">
@@ -102,7 +120,7 @@
         }
     </div>
     
-    <!-- Language Selection Section -->
+@*     <!-- Language Selection Section -->
     <div class="language-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
         <h5>🐍 Programming Language</h5>
         <div class="mb-3">
@@ -112,6 +130,20 @@
                 <option value="Python">Python</option>
             </select>
         </div>
+    </div> *@
+
+    <div class="flow-item" onclick="toggleLanguageSelector()" tabindex="0">
+        <span class="icon">⚙️</span>
+        <span class="value" id="languageValue">C# (.NET)</span>
+        <span class="edit-icon">✏️</span>
+    </div>
+
+    <!-- Hidden dropdown that appears on click -->
+    <div id="languageDropdown" style="display: none;">
+        <select class="form-select" id="languageSelect" name="language">
+            <option value="NET" selected>.NET</option>
+            <option value="Python">Python</option>
+        </select>
     </div>
     
     <!-- Repository Path Section -->
@@ -754,4 +786,22 @@
             }
         });
     });
+
+
+        function toggleLanguageSelector() {
+        const dropdown = document.getElementById('languageDropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Update display when selection changes
+    document.getElementById('languageSelect').addEventListener('change', function() {
+        document.getElementById('languageValue').textContent =
+            this.value === 'NET' ? 'C# (.NET)' : 'Python';
+        document.getElementById('languageDropdown').style.display = 'none';
+    });
+
+        function toggleStandardsSelector() {
+        const dropdown = document.getElementById('standardsDropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
 </script>
