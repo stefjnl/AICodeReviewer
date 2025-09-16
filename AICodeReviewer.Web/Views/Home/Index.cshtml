@@ -44,87 +44,90 @@
     }
     
     <!-- Workflow Container -->
+    <!-- Workflow Container -->
     <div class="workflow-container">
-        
+
         <!-- Document Management Section -->
         <div class="workflow-section">
             <h5>📁 Requirements Documents</h5>
-        
-        <!-- Folder Configuration -->
-        <div class="mb-3">
-            <form asp-action="SetDocumentsFolder" method="post">
-                <div class="workflow-input-group">
-                    <input type="text" class="workflow-form-control" name="folderPath"
-                           placeholder="Documents folder path"
-                           value="@ViewBag.DocumentsFolder">
-                    <button class="workflow-btn workflow-btn-secondary" type="submit">Set Folder</button>
+
+            <!-- Folder Configuration -->
+            <div class="mb-3">
+                <form asp-action="SetDocumentsFolder" method="post">
+                    <div class="workflow-input-group">
+                        <input type="text" class="workflow-form-control" name="folderPath"
+                               placeholder="Documents folder path"
+                               value="@ViewBag.DocumentsFolder">
+                        <button class="workflow-btn workflow-btn-secondary" type="submit">Set Folder</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Document Selection -->
+            <div class="flow-item" onclick="toggleStandardsSelector()" tabindex="0">
+                <span class="icon">📄</span>
+                <span class="value" id="standardsValue">
+                    @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
+                    {
+                        @($"Selected: {string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))}")
+                    }
+                    else
+                    {
+                        <em>No documents selected</em>
+                    }
+                </span>
+                <span class="edit-icon">✏️</span>
+            </div>
+
+            <!-- Hidden form that appears on click -->
+            <div id="standardsDropdown" class="workflow-dropdown" style="display: none;">
+                @if (ViewBag.AvailableDocuments.Count > 0)
+                {
+                    <form asp-action="SelectDocuments" method="post">
+                        <div class="mb-3">
+                            <label>Select coding standards:</label>
+                            @foreach (var doc in ViewBag.AvailableDocuments)
+                            {
+                                <div class="workflow-form-check">
+                                    <input class="workflow-form-check-input" type="checkbox"
+                                           name="selectedDocuments" value="@doc"
+                                           @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
+                                    <label class="workflow-form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
+                                </div>
+                            }
+                        </div>
+                        <button type="submit" class="workflow-btn workflow-btn-primary">Apply Selection</button>
+                    </form>
+                }
+                else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
+                {
+                    <div class="workflow-alert workflow-alert-info">
+                        📋 No .md documents found in folder
+                    </div>
+                }
+            </div>
+
+            <!-- Selected Documents Summary -->
+            @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
+            {
+                <div class="workflow-alert workflow-alert-success mt-3">
+                    ✅ Selected: <strong>@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</strong>
                 </div>
-            </form>
-        </div>
-        
-        <!-- Document Selection -->
-        <div class="flow-item" onclick="toggleStandardsSelector()" tabindex="0">
-            <span class="icon">📄</span>
-            <span class="value" id="standardsValue">
-                @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
-                {
-                    @($"Selected: {string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))}")
-                }
-                else
-                {
-                    <em>No documents selected</em>
-                }
-            </span>
-            <span class="edit-icon">✏️</span>
+            }
+
+            <!-- Document Scan Error -->
+            @if (ViewBag.DocumentScanError != null)
+            {
+                <div class="workflow-alert workflow-alert-warning mt-3">
+                    ⚠️ @ViewBag.DocumentScanError
+                </div>
+            }
         </div>
 
-        <!-- Hidden form that appears on click -->
-        <div id="standardsDropdown" class="workflow-dropdown" style="display: none;">
-            @if (ViewBag.AvailableDocuments.Count > 0)
-            {
-                <form asp-action="SelectDocuments" method="post">
-                    <div class="mb-3">
-                        <label>Select coding standards:</label>
-                        @foreach (var doc in ViewBag.AvailableDocuments)
-                        {
-                            <div class="workflow-form-check">
-                                <input class="workflow-form-check-input" type="checkbox"
-                                       name="selectedDocuments" value="@doc"
-                                       @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
-                                <label class="workflow-form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
-                            </div>
-                        }
-                    </div>
-                    <button type="submit" class="workflow-btn workflow-btn-primary">Apply Selection</button>
-                </form>
-            }
-            else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
-            {
-                <div class="workflow-alert workflow-alert-info">
-                    📋 No .md documents found in folder
-                </div>
-            }
-        </div>
-        
-        <!-- Selected Documents Summary -->
-        @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
-        {
-            <div class="workflow-alert workflow-alert-success mt-3">
-                ✅ Selected: <strong>@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</strong>
-            </div>
-        }
-        
-        <!-- Document Scan Error -->
-        @if (ViewBag.DocumentScanError != null)
-        {
-            <div class="workflow-alert workflow-alert-warning mt-3">
-                ⚠️ @ViewBag.DocumentScanError
-            </div>
-        }
         <!-- Language Selection Section -->
         <div class="workflow-section">
             <h5>⚙️ Programming Language</h5>
-            
+
             <div class="flow-item" onclick="toggleLanguageSelector()" tabindex="0">
                 <span class="icon">⚙️</span>
                 <span class="value" id="languageValue">C# (.NET)</span>
@@ -139,73 +142,74 @@
                 </select>
             </div>
         </div>
-        
+
         <!-- Repository Path Section -->
         <div class="workflow-section">
             <h5>📁 Git Repository</h5>
-        
-        <!-- Repository Path Configuration -->
-        <div class="mb-3">
-            <form asp-action="SetRepositoryPath" method="post">
-                <div class="workflow-input-group">
-                    <input type="text" class="workflow-form-control" name="repositoryPath"
-                           placeholder="Repository path"
-                           value="@ViewBag.RepositoryPath"
-                           id="repositoryPathInput">
-                    <button class="workflow-btn workflow-btn-secondary" type="button" onclick="openDirectoryBrowser()">
-                        📁 Browse
-                    </button>
-                    <button class="workflow-btn workflow-btn-primary" type="submit">Set Repository</button>
-                </div>
-            </form>
-        </div>
-        
-        <!-- Directory Browser Modal -->
-        <div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="workflow-modal-content">
-                    <div class="workflow-modal-header">
-                        <h5 class="workflow-modal-title">📁 Select Repository Directory</h5>
-                        <button type="button" class="workflow-btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+            <!-- Repository Path Configuration -->
+            <div class="mb-3">
+                <form asp-action="SetRepositoryPath" method="post">
+                    <div class="workflow-input-group">
+                        <input type="text" class="workflow-form-control" name="repositoryPath"
+                               placeholder="Repository path"
+                               value="@ViewBag.RepositoryPath"
+                               id="repositoryPathInput">
+                        <button class="workflow-btn workflow-btn-secondary" type="button" onclick="openDirectoryBrowser()">
+                            📁 Browse
+                        </button>
+                        <button class="workflow-btn workflow-btn-primary" type="submit">Set Repository</button>
                     </div>
-                    <div class="workflow-modal-body">
-                        <div class="mb-3">
-                            <div class="workflow-input-group">
-                                <input type="text" class="workflow-form-control" id="currentDirectoryPath" readonly>
-                                <button class="workflow-btn workflow-btn-secondary" type="button" onclick="navigateToParent()">
-                                    ⬆️ Up
-                                </button>
-                                <button class="workflow-btn workflow-btn-primary" type="button" onclick="selectCurrentDirectory()">
-                                    ✅ Select This Folder
-                                </button>
-                            </div>
+                </form>
+            </div>
+
+            <!-- Directory Browser Modal -->
+            <div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="workflow-modal-content">
+                        <div class="workflow-modal-header">
+                            <h5 class="workflow-modal-title">📁 Select Repository Directory</h5>
+                            <button type="button" class="workflow-btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        
-                        <div class="directory-browser-container" style="max-height: 400px; overflow-y: auto;">
-                            <div id="directoryBrowserLoading" class="text-center p-4" style="display: none;">
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
+                        <div class="workflow-modal-body">
+                            <div class="mb-3">
+                                <div class="workflow-input-group">
+                                    <input type="text" class="workflow-form-control" id="currentDirectoryPath" readonly>
+                                    <button class="workflow-btn workflow-btn-secondary" type="button" onclick="navigateToParent()">
+                                        ⬆️ Up
+                                    </button>
+                                    <button class="workflow-btn workflow-btn-primary" type="button" onclick="selectCurrentDirectory()">
+                                        ✅ Select This Folder
+                                    </button>
                                 </div>
-                                <p class="mt-2">Loading directories...</p>
                             </div>
-                            
-                            <div id="directoryBrowserContent">
-                                <!-- Directory content will be loaded here -->
-                            </div>
-                            
-                            <div id="directoryBrowserError" class="workflow-alert workflow-alert-danger" style="display: none;">
-                                <!-- Error messages will appear here -->
+
+                            <div class="directory-browser-container" style="max-height: 400px; overflow-y: auto;">
+                                <div id="directoryBrowserLoading" class="text-center p-4" style="display: none;">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Loading directories...</p>
+                                </div>
+
+                                <div id="directoryBrowserContent">
+                                    <!-- Directory content will be loaded here -->
+                                </div>
+
+                                <div id="directoryBrowserError" class="workflow-alert workflow-alert-danger" style="display: none;">
+                                    <!-- Error messages will appear here -->
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="workflow-modal-footer">
-                        <button type="button" class="workflow-btn workflow-btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="workflow-btn workflow-btn-primary" onclick="selectCurrentDirectory()">Select Folder</button>
+                        <div class="workflow-modal-footer">
+                            <button type="button" class="workflow-btn workflow-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="workflow-btn workflow-btn-primary" onclick="selectCurrentDirectory()">Select Folder</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Analysis Type Selection -->
         <div class="workflow-section">
             <h5>🔍 Analysis Type</h5>
@@ -251,160 +255,158 @@
                 </small>
             </div>
         </div>
-        
-        <!-- Git Diff Display -->
-        <div id="gitDiffSection" class="git-diff-section">
-            @if (ViewBag.GitDiff != null)
-            {
-                @if (ViewBag.GitDiffError)
-                {
-                    <div class="workflow-alert workflow-alert-warning">
-                        ⚠️ @ViewBag.GitDiff
-                    </div>
-                }
-                else
-                {
-                    <div class="workflow-card">
-                        <div class="workflow-card-header">
-                            <h6 class="mb-0">
-                                <button class="workflow-btn workflow-btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#gitDiffCollapse">
-                                    📊 Git Changes (Click to expand/collapse)
-                                </button>
-                            </h6>
-                        </div>
-                        <div class="collapse" id="gitDiffCollapse">
-                            <div class="workflow-card-body">
-                                <pre class="git-diff-text workflow-pre" style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em; max-height: 300px; overflow-y: auto;">@ViewBag.GitDiff</pre>
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-        
-        <!-- Commit Analysis Info (shown when specific commit is selected) -->
-        <div id="commitAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
-            <div class="d-flex align-items-center">
-                <div class="me-2">🔍</div>
-                <div>
-                    <strong>Commit Analysis Mode</strong><br>
-                    <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
-                </div>
-            </div>
-        </div>
 
-        <!-- Single File Analysis Info (shown when single file is selected) -->
-        <div id="singleFileAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
-            <div class="d-flex align-items-center">
-                <div class="me-2">📄</div>
-                <div>
-                    <strong>Single File Analysis Mode</strong><br>
-                    <small>Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</small>
-                </div>
-            </div>
-        </div>
-        </div>
-        
         <!-- AI Analysis Section -->
         <div class="workflow-section workflow-analysis">
             <h5>🤖 AI Code Analysis</h5>
-        
-        <!-- Progress Container -->
-        <div id="progressContainer" style="display: none;" class="mt-4">
-            <div class="workflow-alert workflow-alert-info">
-                <div class="d-flex align-items-center">
-                    <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
-                    <span id="progressMessage">Starting analysis...</span>
+
+            <!-- Progress Container -->
+            <div id="progressContainer" style="display: none;" class="mt-4">
+                <div class="workflow-alert workflow-alert-info">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                        <span id="progressMessage">Starting analysis...</span>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="fw-bold">Status:</div>
+                    <div id="status">Waiting...</div>
                 </div>
             </div>
-            <div class="mt-3">
-                <div class="fw-bold">Status:</div>
-                <div id="status">Waiting...</div>
+
+            <!-- Analysis Result Display -->
+            <div id="analysisResult" class="mt-4" style="display: none;">
+                <div class="workflow-card">
+                    <div class="workflow-card-header workflow-card-header-success">
+                        <h6 class="mb-0">🔍 AI Analysis Results</h6>
+                    </div>
+                    <div class="workflow-card-body">
+                        <pre id="result" class="workflow-pre" style="white-space: pre-wrap; font-family: monospace;"></pre>
+                    </div>
+                </div>
             </div>
+
+            <!-- Run Analysis Form -->
+            @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
+            {
+                <div id="analysisForm">
+                    <button type="button" class="workflow-btn workflow-btn-success btn-lg" onclick="startAnalysis()">
+                        🚀 Run AI Analysis
+                    </button>
+                </div>
+            }
+            else
+            {
+                <div class="workflow-alert workflow-alert-info">
+                    📋 Please select coding standards documents above to enable AI analysis
+                </div>
+            }
         </div>
-        
-        <!-- Analysis Result Display -->
-        <div id="analysisResult" class="mt-4" style="display: none;">
-            <div class="workflow-card">
-                <div class="workflow-card-header workflow-card-header-success">
-                    <h6 class="mb-0">🔍 AI Analysis Results</h6>
-                </div>
-                <div class="workflow-card-body">
-                    <pre id="result" class="workflow-pre" style="white-space: pre-wrap; font-family: monospace;"></pre>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Run Analysis Form -->
-        @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
+
+    </div>
+
+    <!-- Git Diff Display (Outside workflow-container) -->
+    <div id="gitDiffSection" class="git-diff-section">
+        @if (ViewBag.GitDiff != null)
         {
-            <div id="analysisForm">
-                <button type="button" class="workflow-btn workflow-btn-success btn-lg" onclick="startAnalysis()">
-                    🚀 Run AI Analysis
-                </button>
-            </div>
-        }
-        else
-        {
-            <div class="workflow-alert workflow-alert-info">
-                📋 Please select coding standards documents above to enable AI analysis
-            </div>
-        }
-        
-        <!-- Analysis Results - Always include but conditionally show/hide -->
-        <div class="analysis-results mt-4" id="analysisResultsSection" data-analysis-id="@(string.IsNullOrEmpty(analysisId) ? "" : analysisId)" style="@((!string.IsNullOrEmpty(analysisId) || !string.IsNullOrEmpty(analysisResult) || !string.IsNullOrEmpty(analysisError)) ? "" : "display: none;")">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5>🔍 AI Analysis Results</h5>
-                <div class="btn-group" role="group" id="analysisButtonsContainer">
-                    <!-- Buttons will be injected here by JS if needed -->
+            @if (ViewBag.GitDiffError)
+            {
+                <div class="workflow-alert workflow-alert-warning">
+                    ⚠️ @ViewBag.GitDiff
                 </div>
-            </div>
-            
-            <!-- Bottom Panel View -->
-            <div id="bottomPanelView">
-                @if (!string.IsNullOrEmpty(analysisResult))
-                {
-                    <div class="workflow-card">
-                        <div class="workflow-card-header workflow-card-header-success">
-                            <h6 class="mb-0">Analysis Results</h6>
-                        </div>
+            }
+            else
+            {
+                <div class="workflow-card">
+                    <div class="workflow-card-header">
+                        <h6 class="mb-0">
+                            <button class="workflow-btn workflow-btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#gitDiffCollapse">
+                                📊 Git Changes (Click to expand/collapse)
+                            </button>
+                        </h6>
+                    </div>
+                    <div class="collapse" id="gitDiffCollapse">
                         <div class="workflow-card-body">
-                            <pre class="analysis-text workflow-pre" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
+                            <pre class="git-diff-text workflow-pre" style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em; max-height: 300px; overflow-y: auto;">@ViewBag.GitDiff</pre>
                         </div>
                     </div>
-                }
-                else
-                {
-                    <div class="workflow-alert workflow-alert-info">
-                        <div class="d-flex align-items-center">
-                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                            <span>Analysis results will appear here...</span>
-                        </div>
-                    </div>
-                }
+                </div>
+            }
+        }
+    </div>
+
+    <!-- Commit Analysis Info (shown when specific commit is selected) -->
+    <div id="commitAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
+        <div class="d-flex align-items-center">
+            <div class="me-2">🔍</div>
+            <div>
+                <strong>Commit Analysis Mode</strong><br>
+                <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
             </div>
-            
-            <!-- Side Panel View (initially hidden) -->
-            <div id="sidePanelView" style="display: none;">
+        </div>
+    </div>
+
+    <!-- Single File Analysis Info (shown when single file is selected) -->
+    <div id="singleFileAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
+        <div class="d-flex align-items-center">
+            <div class="me-2">📄</div>
+            <div>
+                <strong>Single File Analysis Mode</strong><br>
+                <small>Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Results - Always include but conditionally show/hide -->
+    <div class="analysis-results mt-4" id="analysisResultsSection" data-analysis-id="@(string.IsNullOrEmpty(analysisId) ? "" : analysisId)" style="@((!string.IsNullOrEmpty(analysisId) || !string.IsNullOrEmpty(analysisResult) || !string.IsNullOrEmpty(analysisError)) ? "" : "display: none;")">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5>🔍 AI Analysis Results</h5>
+            <div class="btn-group" role="group" id="analysisButtonsContainer">
+                <!-- Buttons will be injected here by JS if needed -->
+            </div>
+        </div>
+
+        <!-- Bottom Panel View -->
+        <div id="bottomPanelView">
+            @if (!string.IsNullOrEmpty(analysisResult))
+            {
+                <div class="workflow-card">
+                    <div class="workflow-card-header workflow-card-header-success">
+                        <h6 class="mb-0">Analysis Results</h6>
+                    </div>
+                    <div class="workflow-card-body">
+                        <pre class="analysis-text workflow-pre" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
+                    </div>
+                </div>
+            }
+            else
+            {
                 <div class="workflow-alert workflow-alert-info">
                     <div class="d-flex align-items-center">
                         <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                        <span>Loading side-panel view...</span>
+                        <span>Analysis results will appear here...</span>
                     </div>
+                </div>
+            }
+        </div>
+
+        <!-- Side Panel View (initially hidden) -->
+        <div id="sidePanelView" style="display: none;">
+            <div class="workflow-alert workflow-alert-info">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span>Loading side-panel view...</span>
                 </div>
             </div>
         </div>
-        
-        @if (!string.IsNullOrEmpty(analysisError))
-        {
-            <div class="workflow-alert workflow-alert-danger mt-3" id="analysisErrorSection">
-                ❌ @analysisError
-            </div>
-        }
-            </div>
-        </div>
-    
     </div>
+
+@if (!string.IsNullOrEmpty(analysisError))
+{
+        <div class="workflow-alert workflow-alert-danger mt-3" id="analysisErrorSection">
+            ❌ @analysisError
+        </div>
+}
 
 <!-- SignalR Client Library -->
 <script src="https://unpkg.com/@@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
