@@ -213,9 +213,13 @@
                         
                         // Auto-validate step 2 on page load since language is pre-selected
                         setTimeout(function() {
-                            if (window.workflowAPI && window.horizontalWorkflow && window.horizontalWorkflow.getCurrentStep() >= 2) {
-                                console.log('[Index] Auto-validating step 2 on page load');
-                                window.workflowAPI.validateAndAdvanceStep(2);
+                            if (window.workflowAPI && window.horizontalWorkflow) {
+                                const currentStep = window.horizontalWorkflow.getCurrentStep();
+                                // Auto-validate if we're at step 2 or have passed it
+                                if (currentStep >= 2) {
+                                    console.log('[Index] Auto-validating step 2 on page load');
+                                    window.workflowAPI.validateAndAdvanceStep(2);
+                                }
                             }
                         }, 1000);
                         
@@ -413,6 +417,18 @@
                         const commitIdInput = document.getElementById('commitId');
                         const filePathInput = document.getElementById('filePath');
                         
+                        // Auto-validate step 4 on page load since "uncommitted" is pre-selected as default
+                        setTimeout(function() {
+                            if (window.workflowAPI && window.horizontalWorkflow) {
+                                const currentStep = window.horizontalWorkflow.getCurrentStep();
+                                // Auto-validate if we're at step 4 or have passed it
+                                if (currentStep >= 4) {
+                                    console.log('[Index] Auto-validating step 4 on page load');
+                                    window.workflowAPI.validateAndAdvanceStep(4);
+                                }
+                            }
+                        }, 1000);
+                        
                         // Validate when analysis type changes
                         analysisTypeRadios.forEach(radio => {
                             radio.addEventListener('change', function() {
@@ -540,6 +556,28 @@
                 <button type="button" class="btn workflow-btn-secondary" id="newAnalysisBtn" onclick="resetAnalysisUI()" style="display: none;">
                     <i class="fas fa-plus"></i> New Analysis
                 </button>
+            </div>
+        </div>
+
+        <!-- Progress Message Display (for SignalR updates) -->
+        <div id="progressContainer" style="display: none;">
+            <div class="workflow-alert workflow-alert-info mb-3">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span id="progressMessage">Starting analysis...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Result Display (for SignalR results) -->
+        <div id="analysisResult" style="display: none;">
+            <div class="workflow-card mb-3">
+                <div class="workflow-card-header workflow-card-header-success">
+                    <h6 class="mb-0">Analysis Results</h6>
+                </div>
+                <div class="workflow-card-body">
+                    <pre id="result" class="analysis-text workflow-pre" style="white-space: pre-wrap; font-family: monospace;"></pre>
+                </div>
             </div>
         </div>
 
@@ -1067,6 +1105,32 @@
                     dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
                 }
             };
+            
+            // Listen for workflow step changes to auto-validate steps with default values
+            window.addEventListener('workflowStepChanged', function(event) {
+                const currentStep = event.detail.currentStep;
+                console.log('[Index] Workflow step changed to:', currentStep);
+                
+                // Auto-validate step 2 when user reaches it (language has default value)
+                if (currentStep === 2) {
+                    setTimeout(function() {
+                        if (window.workflowAPI) {
+                            console.log('[Index] Auto-validating step 2 after reaching it');
+                            window.workflowAPI.validateAndAdvanceStep(2);
+                        }
+                    }, 500);
+                }
+                
+                // Auto-validate step 4 when user reaches it (analysis type has default value)
+                if (currentStep === 4) {
+                    setTimeout(function() {
+                        if (window.workflowAPI) {
+                            console.log('[Index] Auto-validating step 4 after reaching it');
+                            window.workflowAPI.validateAndAdvanceStep(4);
+                        }
+                    }, 500);
+                }
+            });
         }
     });
 
@@ -1090,6 +1154,24 @@
                 if (analysisResultsSection) {
                     analysisResultsSection.style.display = 'block';
                     analysisResultsSection.classList.remove('hidden-analysis');
+                }
+                
+                // Show progress container for SignalR updates
+                const progressContainer = document.getElementById('progressContainer');
+                if (progressContainer) {
+                    progressContainer.style.display = 'block';
+                }
+                
+                // Hide bottom panel view during progress
+                const bottomPanelView = document.getElementById('bottomPanelView');
+                if (bottomPanelView) {
+                    bottomPanelView.style.display = 'none';
+                }
+                
+                // Hide analysis result display initially
+                const analysisResult = document.getElementById('analysisResult');
+                if (analysisResult) {
+                    analysisResult.style.display = 'none';
                 }
                 
                 // Update progress message
