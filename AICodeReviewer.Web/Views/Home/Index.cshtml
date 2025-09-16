@@ -297,35 +297,6 @@
             <span class="edit-icon" aria-hidden="true">✏️</span>
         </div>
         
-        <!-- Documents Folder -->
-        <div class="flow-item"
-             onclick="openDocumentsFolderSelector()"
-             tabindex="0"
-             aria-label="Select documents folder (current: @(ViewBag.DocumentsFolder ?? "Default"))">
-            <span class="icon">📁</span>
-            <span class="value">
-                @{
-                    var docsFolder = ViewBag.DocumentsFolder as string;
-                    if (!string.IsNullOrEmpty(docsFolder))
-                    {
-                        if (docsFolder.Length > 20)
-                        {
-                            @($"📄...{docsFolder.Substring(docsFolder.Length - 17)}")
-                        }
-                        else
-                        {
-                            @docsFolder
-                        }
-                    }
-                    else
-                    {
-                        <text><em>Default folder</em></text>
-                    }
-                }
-            </span>
-            <span class="edit-icon" aria-hidden="true">✏️</span>
-        </div>
-
         <!-- Repository -->
         <div class="flow-item" 
              onclick="openRepoSelector()" 

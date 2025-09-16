@@ -48,14 +48,43 @@ public class HomeController : Controller
         ViewBag.IsError = isError;
 
         // Repository path management for Git diff extraction
-        // Default to parent directory (AICodeReviewer) instead of AICodeReviewer.Web
+        // Default to root directory (AICodeReviewer) instead of AICodeReviewer.Web
         var defaultRepositoryPath = Path.Combine(_environment.ContentRootPath, "..");
-        var repositoryPath = HttpContext.Session.GetString("RepositoryPath") ?? defaultRepositoryPath;
+        
+        // If no session path is set, use the default (root) directory
+        var sessionPath = HttpContext.Session.GetString("RepositoryPath");
+        var repositoryPath = sessionPath ?? defaultRepositoryPath;
+        
+        // Ensure the path is set in session for consistency
+        if (string.IsNullOrEmpty(sessionPath))
+        {
+            HttpContext.Session.SetString("RepositoryPath", repositoryPath);
+        }
+        
         ViewBag.RepositoryPath = repositoryPath;
         
         _logger.LogInformation($"Index method - Default path: {defaultRepositoryPath}");
-        _logger.LogInformation($"Index method - Session path: {HttpContext.Session.GetString("RepositoryPath")}");
+        _logger.LogInformation($"Index method - Session path: {sessionPath}");
         _logger.LogInformation($"Index method - Final path: {repositoryPath}");
+        
+        // Also log if this is a valid git repository and get branch info
+        string currentBranchInfo = "Unknown";
+        try
+        {
+            using (var repo = new Repository(repositoryPath))
+            {
+                _logger.LogInformation($"Index method - Git repository detected at: {repositoryPath}");
+                _logger.LogInformation($"Index method - Current branch: {repo.Head.FriendlyName}");
+                currentBranchInfo = repo.Head.FriendlyName;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Index method - Not a valid git repository at: {repositoryPath}, Error: {ex.Message}");
+            currentBranchInfo = "Not a git repository";
+        }
+        
+        ViewBag.BranchInfo = currentBranchInfo;
 
         // Extract Git diff if repository path is set
         var (gitDiff, gitError) = GitService.ExtractDiff(repositoryPath);

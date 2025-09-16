@@ -305,15 +305,18 @@ function updateProgress(status) {
 let currentBrowsePath = '';
 
 function openDirectoryBrowser() {
+    console.log('Opening directory browser');
     const modal = new bootstrap.Modal(document.getElementById('directoryBrowserModal'));
     modal.show();
     
     // Start browsing from current repository path or default
     const currentPath = document.getElementById('repositoryPathInput').value || '';
+    console.log('Starting browse from path:', currentPath);
     browseDirectory(currentPath);
 }
 
 function browseDirectory(path) {
+    console.log('Browsing directory:', path);
     const loadingDiv = document.getElementById('directoryBrowserLoading');
     const contentDiv = document.getElementById('directoryBrowserContent');
     const errorDiv = document.getElementById('directoryBrowserError');
@@ -324,6 +327,7 @@ function browseDirectory(path) {
     errorDiv.style.display = 'none';
     
     // Make API call to browse directory
+    console.log('Calling API with path:', path);
     fetch('/Home/BrowseDirectory', {
         method: 'POST',
         headers: {
@@ -333,9 +337,11 @@ function browseDirectory(path) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Directory browse API response:', data);
         loadingDiv.style.display = 'none';
         
         if (data.error) {
+            console.error('API error:', data.error);
             errorDiv.textContent = data.error;
             errorDiv.style.display = 'block';
             return;
@@ -344,6 +350,7 @@ function browseDirectory(path) {
         // Update current path display
         currentBrowsePath = data.currentPath;
         document.getElementById('currentDirectoryPath').value = data.currentPath;
+        console.log('Updated current path to:', currentBrowsePath);
         
         // Render directory contents
         renderDirectoryContents(data);
@@ -356,11 +363,13 @@ function browseDirectory(path) {
 }
 
 function renderDirectoryContents(data) {
+    console.log('Rendering directory contents:', data);
     const contentDiv = document.getElementById('directoryBrowserContent');
     let html = '';
     
     // Add parent directory navigation (if not at root)
     if (data.parentPath !== null) {
+        console.log('Adding parent navigation for:', data.parentPath);
         html += `
             <div class="directory-item" onclick="browseDirectory('${escapeHtml(data.parentPath)}')">
                 <div class="d-flex align-items-center p-2 hover-bg-light cursor-pointer">
@@ -374,10 +383,12 @@ function renderDirectoryContents(data) {
     // Add directories
     if (data.directories && data.directories.length > 0) {
         html += '<div class="directories-section">';
+        console.log('Rendering directories:', data.directories.length);
         data.directories.forEach(dir => {
             const icon = dir.isGitRepository ? '📁🌿' : '📁';
             const gitBadge = dir.isGitRepository ? '<span class="badge bg-success ms-2">Git</span>' : '';
             
+            console.log('Rendering directory:', dir.name, 'at path:', dir.fullPath);
             html += `
                 <div class="directory-item" onclick="browseDirectory('${escapeHtml(dir.fullPath)}')">
                     <div class="d-flex align-items-center p-2 hover-bg-light cursor-pointer">
@@ -448,28 +459,43 @@ function renderDirectoryContents(data) {
         .directory-item:last-child, .file-item:last-child {
             border-bottom: none;
         }
+        .directory-item:hover {
+            background-color: #e9ecef !important;
+        }
     `;
     if (!document.getElementById('directory-browser-styles')) {
         style.id = 'directory-browser-styles';
         document.head.appendChild(style);
     }
+    
+    contentDiv.innerHTML = html;
+    console.log('Directory contents rendered, total HTML length:', html.length);
 }
 
 function navigateToParent() {
-    if (currentBrowsePath) {
-        browseDirectory(currentBrowsePath); // This will handle parent navigation
+    console.log('Navigating to parent directory');
+    const currentPath = document.getElementById('currentDirectoryPath').value;
+    console.log('Current path for parent navigation:', currentPath);
+    if (currentPath) {
+        // The API will handle parent navigation when we browse the current path
+        browseDirectory(currentPath);
     }
 }
 
 function selectCurrentDirectory() {
+    console.log('Selecting current directory:', currentBrowsePath);
     if (currentBrowsePath) {
         document.getElementById('repositoryPathInput').value = currentBrowsePath;
         
         // Close the modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('directoryBrowserModal'));
-        modal.hide();
+        if (modal) {
+            modal.hide();
+        }
         
         console.log('Selected repository path:', currentBrowsePath);
+    } else {
+        console.warn('No current browse path available for selection');
     }
 }
 
