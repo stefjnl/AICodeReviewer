@@ -414,4 +414,23 @@ public class HomeController : Controller
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
+
+    [HttpPost]
+    public IActionResult ClearAnalysisResults()
+    {
+        try
+        {
+            // Clear analysis-related session data
+            HttpContext.Session.Remove("AnalysisId");
+            HttpContext.Session.Remove("AnalysisResult");
+            HttpContext.Session.Remove("AnalysisError");
+            
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error clearing analysis results from session");
+            return Json(new { success = false, error = ex.Message });
+        }
+    }
 }

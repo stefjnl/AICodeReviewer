@@ -1019,4 +1019,46 @@
             alert('Analysis function not available. Please refresh the page.');
         }
     }
+    
+    function clearAnalysisResults() {
+        // Clear session data by calling the server
+        fetch('/Home/ClearAnalysisResults', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the UI to show the placeholder
+                const contentDiv = document.getElementById('analysisResultsContent');
+                if (contentDiv) {
+                    contentDiv.innerHTML = `
+                        <div class="alert alert-info">
+                            <div class="d-flex align-items-center">
+                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                <span>Analysis results will appear here after running an analysis...</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Clear the analysis ID from the section
+                const section = document.getElementById('analysisResultsSection');
+                if (section) {
+                    section.dataset.analysisId = '';
+                }
+                
+                // Clear buttons container
+                const buttonsContainer = document.getElementById('analysisButtonsContainer');
+                if (buttonsContainer) {
+                    buttonsContainer.innerHTML = '';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error clearing analysis results:', error);
+        });
+    }
 </script>
