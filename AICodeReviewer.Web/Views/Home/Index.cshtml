@@ -537,6 +537,9 @@
             <h5>🔍 AI Analysis Results</h5>
             <div class="btn-group" role="group" id="analysisButtonsContainer">
                 <!-- Buttons will be injected here by JS if needed -->
+                <button type="button" class="btn workflow-btn-secondary" id="newAnalysisBtn" onclick="resetAnalysisUI()" style="display: none;">
+                    <i class="fas fa-plus"></i> New Analysis
+                </button>
             </div>
         </div>
 
@@ -1103,7 +1106,9 @@
                     console.error('[Index] startAnalysis function not found');
                     alert('Analysis function not available. Please check the console for errors.');
                     // Reset UI on error
-                    resetAnalysisUI();
+                    if (typeof resetAnalysisUI === 'function') {
+                        resetAnalysisUI();
+                    }
                 }
             } else {
                 console.warn('[Index] Workflow not complete, current step:', window.horizontalWorkflow?.getCurrentStep());
@@ -1112,7 +1117,9 @@
         } catch (error) {
             console.error('[Index] Error in startAnalysisFromWorkflow:', error);
             alert('Error starting analysis: ' + error.message);
-            resetAnalysisUI();
+            if (typeof resetAnalysisUI === 'function') {
+                resetAnalysisUI();
+            }
         }
     }
     

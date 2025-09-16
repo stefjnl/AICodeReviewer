@@ -92,6 +92,12 @@ function initializeSignalR() {
                         injectAnalysisButtons();
                     }
                     
+                    // Show the "New Analysis" button
+                    const newAnalysisBtn = document.getElementById('newAnalysisBtn');
+                    if (newAnalysisBtn) {
+                        newAnalysisBtn.style.display = 'inline-block';
+                    }
+                    
                     // For workflow mode, show results in current page
                     if (document.querySelector('.workflow-horizontal-container')) {
                         console.log('[SignalR] Workflow mode detected, showing results in current page');
@@ -129,6 +135,31 @@ function initializeSignalR() {
             }
             
             console.log('[SignalR] Analysis complete! Analysis ID:', currentAnalysisId);
+        } else {
+            // For intermediate progress updates, ensure workflow container stays visible
+            if (document.querySelector('.workflow-horizontal-container')) {
+                console.log('[SignalR] Intermediate progress update in workflow mode - keeping workflow visible');
+                
+                // Only update progress message, don't hide/show containers
+                const analysisResultsSection = document.getElementById('analysisResultsSection');
+                if (analysisResultsSection) {
+                    analysisResultsSection.style.display = 'block';
+                    analysisResultsSection.classList.remove('hidden-analysis');
+                }
+                
+                // Make sure progress message is visible
+                const progressMessage = document.getElementById('progressMessage');
+                if (progressMessage) {
+                    progressMessage.style.display = 'block';
+                    progressMessage.textContent = data.status;
+                }
+                
+                // Keep workflow container visible during progress
+                const workflowContainer = document.querySelector('.workflow-horizontal-container');
+                if (workflowContainer) {
+                    workflowContainer.style.display = 'flex';
+                }
+            }
         }
     });
 
@@ -378,29 +409,28 @@ function showProgress() {
         analysisForm.style.display = 'none';
         analysisResult.style.display = 'none';
     } else {
-        // Workflow layout - hide workflow and show progress/results
+        // Workflow layout - show progress without hiding workflow
         console.log('[Progress] Using workflow layout');
         
-        // Hide the workflow container
-        const workflowContainer = document.querySelector('.workflow-horizontal-container');
-        if (workflowContainer) {
-            workflowContainer.style.display = 'none';
-            console.log('[Progress] Hidden workflow container');
-        }
-        
-        // Show the analysis results section (which includes progress)
+        // CRITICAL: First, ensure the analysis results section is visible
+        // This is the main issue - the section might be hidden with hidden-analysis class
         const analysisResultsSection = document.getElementById('analysisResultsSection');
         if (analysisResultsSection) {
+            // Force display and remove hidden class with high specificity
             analysisResultsSection.style.display = 'block';
             analysisResultsSection.classList.remove('hidden-analysis');
-            console.log('[Progress] Shown analysis results section');
+            analysisResultsSection.style.visibility = 'visible';
+            analysisResultsSection.style.opacity = '1';
+            console.log('[Progress] Analysis results section made visible');
         }
         
         // Show progress within the results section
         const progressMessage = document.getElementById('progressMessage');
         if (progressMessage) {
             progressMessage.style.display = 'block';
-            console.log('[Progress] Shown progress message');
+            progressMessage.style.visibility = 'visible';
+            progressMessage.style.opacity = '1';
+            console.log('[Progress] Progress message made visible');
         }
         
         // Hide any existing result content during progress
@@ -408,6 +438,13 @@ function showProgress() {
         if (bottomPanelView) {
             bottomPanelView.style.display = 'none';
             console.log('[Progress] Hidden bottom panel view during progress');
+        }
+        
+        // IMPORTANT: Do NOT hide the workflow container during progress updates
+        // The workflow should remain visible while analysis is running
+        const workflowContainer = document.querySelector('.workflow-horizontal-container');
+        if (workflowContainer) {
+            console.log('[Progress] Keeping workflow container visible during progress');
         }
     }
 }
@@ -425,15 +462,8 @@ function hideProgress() {
         progressContainer.style.display = 'none';
         analysisForm.style.display = 'block';
     } else {
-        // Workflow layout - show workflow and hide progress
+        // Workflow layout - hide progress but keep analysis results visible
         console.log('[Progress] Using workflow layout hide');
-        
-        // Show the workflow container again
-        const workflowContainer = document.querySelector('.workflow-horizontal-container');
-        if (workflowContainer) {
-            workflowContainer.style.display = 'flex';
-            console.log('[Progress] Shown workflow container');
-        }
         
         // Hide progress within the results section
         const progressMessage = document.getElementById('progressMessage');
@@ -448,6 +478,11 @@ function hideProgress() {
             bottomPanelView.style.display = 'block';
             console.log('[Progress] Shown bottom panel view');
         }
+        
+        // IMPORTANT: Do NOT show the workflow container again - it should stay hidden
+        // The analysis results should remain visible in their dedicated section
+        // Only show workflow if we're going back to start a new analysis
+        console.log('[Progress] Keeping workflow container hidden - analysis results are displayed');
     }
 }
 
@@ -686,6 +721,51 @@ function escapeHtml(text) {
         "'": '&#039;'
     };
     return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Function to reset UI for new analysis
+function resetAnalysisUI() {
+    console.log('[resetAnalysisUI] Resetting analysis UI');
+    
+    // Hide analysis results section
+    const analysisResultsSection = document.getElementById('analysisResultsSection');
+    if (analysisResultsSection) {
+        analysisResultsSection.style.display = 'none';
+        analysisResultsSection.classList.add('hidden-analysis');
+    }
+    
+    // Show workflow container again
+    const workflowContainer = document.querySelector('.workflow-horizontal-container');
+    if (workflowContainer) {
+        workflowContainer.style.display = 'flex';
+    }
+    
+    // Reset progress message
+    const progressMessage = document.getElementById('progressMessage');
+    if (progressMessage) {
+        progressMessage.style.display = 'none';
+        progressMessage.textContent = '';
+    }
+    
+    // Hide bottom panel view
+    const bottomPanelView = document.getElementById('bottomPanelView');
+    if (bottomPanelView) {
+        bottomPanelView.style.display = 'none';
+    }
+    
+    // Hide "New Analysis" button
+    const newAnalysisBtn = document.getElementById('newAnalysisBtn');
+    if (newAnalysisBtn) {
+        newAnalysisBtn.style.display = 'none';
+    }
+    
+    // Clear current analysis ID
+    currentAnalysisId = null;
+    if (typeof window !== 'undefined') {
+        window.currentAnalysisId = null;
+    }
+    
+    console.log('[resetAnalysisUI] Analysis UI reset complete');
 }
 
 // Initialize directory browser on modal show
