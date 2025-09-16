@@ -15,28 +15,66 @@ function initializeSignalR() {
         .build();
 
     signalRConnection.on("UpdateProgress", function (data) {
-        document.getElementById('progressMessage').innerText = data.status;
+        console.log('[SignalR] UpdateProgress received:', data);
         
+        // Update progress message
+        const progressMessage = document.getElementById('progressMessage');
+        if (progressMessage) {
+            progressMessage.innerText = data.status;
+            console.log('[SignalR] Updated progress message:', data.status);
+        }
+        
+        // Handle result display
         if (data.result) {
-            document.getElementById('result').innerText = data.result;
-            document.getElementById('analysisResult').style.display = 'block';
+            const resultElement = document.getElementById('result');
+            if (resultElement) {
+                resultElement.innerText = data.result;
+            }
+            
+            // Show analysis result section if hidden
+            const analysisResultElement = document.getElementById('analysisResult');
+            if (analysisResultElement) {
+                analysisResultElement.style.display = 'block';
+            }
+            
+            console.log('[SignalR] Result displayed, length:', data.result.length);
         }
         
+        // Handle error display
         if (data.error) {
-            document.getElementById('result').innerText = '❌ Error: ' + (data.error || 'Unknown error');
-            document.getElementById('analysisResult').style.display = 'block';
+            const resultElement = document.getElementById('result');
+            if (resultElement) {
+                resultElement.innerText = '❌ Error: ' + (data.error || 'Unknown error');
+            }
+            
+            // Show analysis result section if hidden
+            const analysisResultElement = document.getElementById('analysisResult');
+            if (analysisResultElement) {
+                analysisResultElement.style.display = 'block';
+            }
+            
+            console.log('[SignalR] Error displayed:', data.error);
         }
         
+        // Handle completion
         if (data.isComplete) {
-            hideProgress();
+            console.log('[SignalR] Analysis complete, hiding progress');
+            
+            try {
+                hideProgress();
+            } catch (error) {
+                console.log('[SignalR] Error hiding progress:', error);
+            }
+            
+            // Leave SignalR group
             if (currentAnalysisId && signalRConnection) {
                 signalRConnection.invoke("LeaveAnalysisGroup", currentAnalysisId)
-                    .catch(err => console.error("Failed to leave SignalR group:", err));
+                    .catch(err => console.error("[SignalR] Failed to leave analysis group:", err));
             }
             
             // Store analysis ID in session for view switching
             if (currentAnalysisId) {
-                console.log('🔄 Storing analysis ID in session:', currentAnalysisId);
+                console.log('[SignalR] Storing analysis ID in session:', currentAnalysisId);
                 fetch('/Home/StoreAnalysisId', {
                     method: 'POST',
                     headers: {
@@ -44,24 +82,53 @@ function initializeSignalR() {
                     },
                     body: JSON.stringify({ analysisId: currentAnalysisId })
                 }).then(() => {
-                    console.log('✅ Analysis ID stored, refreshing page to show results section...');
+                    console.log('[SignalR] Analysis ID stored successfully');
                     
-                    // ✅ REFRESH PAGE TO SHOW THE ANALYSIS RESULTS SECTION
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 300); // Small delay to ensure session is persisted
+                    // Update the global analysis ID
+                    window.currentAnalysisId = currentAnalysisId;
+                    
+                    // Show view switching buttons if they exist
+                    if (typeof injectAnalysisButtons === 'function') {
+                        injectAnalysisButtons();
+                    }
+                    
+                    // For workflow mode, show results in current page
+                    if (document.querySelector('.workflow-horizontal-container')) {
+                        console.log('[SignalR] Workflow mode detected, showing results in current page');
+                        
+                        // Update the result display in the bottom panel
+                        const bottomPanelView = document.getElementById('bottomPanelView');
+                        if (bottomPanelView && data.result) {
+                            // Update or create result display
+                            let resultCard = bottomPanelView.querySelector('.workflow-card');
+                            if (!resultCard) {
+                                resultCard = document.createElement('div');
+                                resultCard.className = 'workflow-card';
+                                resultCard.innerHTML = `
+                                    <div class="workflow-card-header workflow-card-header-success">
+                                        <h6 class="mb-0">Analysis Results</h6>
+                                    </div>
+                                    <div class="workflow-card-body">
+                                        <pre class="analysis-text workflow-pre" style="white-space: pre-wrap; font-family: monospace;"></pre>
+                                    </div>
+                                `;
+                                bottomPanelView.appendChild(resultCard);
+                            }
+                            
+                            const preElement = resultCard.querySelector('pre');
+                            if (preElement) {
+                                preElement.textContent = data.result;
+                            }
+                            
+                            bottomPanelView.style.display = 'block';
+                        }
+                    }
                 }).catch(err => {
-                    console.error("Failed to store analysis ID:", err);
-                    console.log('🔄 Falling back to page reload...');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 300);
+                    console.error("[SignalR] Failed to store analysis ID:", err);
                 });
             }
             
-            // Set the global analysis ID for view switching
-            window.currentAnalysisId = currentAnalysisId;
-            console.log('Analysis complete! Use the view switching buttons above to choose between Bottom Panel and Side Panel views.');
+            console.log('[SignalR] Analysis complete! Analysis ID:', currentAnalysisId);
         }
     });
 
@@ -84,12 +151,18 @@ function startPollingFallback() {
         }, 1000); // 1 second delay
     } else {
         console.error("No analysisId available for fallback polling");
-        hideProgress();
+        try {
+            hideProgress();
+        } catch (error) {
+            console.log('[Progress] Error hiding progress in fallback (may be in workflow mode):', error);
+        }
     }
 }
 
 // US-006A: Async analysis with progress updates
 function startAnalysis() {
+    console.log('[startAnalysis] Starting analysis process');
+    
     // Validate form data first
     const repositoryPath = document.querySelector('input[name="repositoryPath"]')?.value;
     const apiKey = document.querySelector('input[name="apiKey"]')?.value;
@@ -157,7 +230,11 @@ function startAnalysis() {
         // Validate that we have a reasonable file path
         if (!fullFilePath || fullFilePath === '') {
             alert('Please select a file or enter a valid file path');
-            hideProgress();
+            try {
+                hideProgress();
+            } catch (error) {
+                console.log('[Progress] Error hiding progress during file validation (may be in workflow mode):', error);
+            }
             return;
         }
         
@@ -166,7 +243,11 @@ function startAnalysis() {
         const extension = fullFilePath.toLowerCase().substring(fullFilePath.lastIndexOf('.'));
         if (!allowedExtensions.includes(extension)) {
             alert('Unsupported file type. Allowed extensions: ' + allowedExtensions.join(', '));
-            hideProgress();
+            try {
+                hideProgress();
+            } catch (error) {
+                console.log('[Progress] Error hiding progress during file type validation (may be in workflow mode):', error);
+            }
             return;
         }
         
@@ -200,24 +281,40 @@ function startAnalysis() {
         return response.json();
     })
     .then(data => {
+        console.log('[startAnalysis] Response received:', data);
+        
         if (data.success) {
             currentAnalysisId = data.analysisId;
+            console.log('[startAnalysis] Analysis started with ID:', currentAnalysisId);
+            
             if (signalRConnection && signalRConnection.state === signalR.HubConnectionState.Connected) {
+                console.log('[startAnalysis] Joining SignalR group for analysis:', currentAnalysisId);
                 signalRConnection.invoke("JoinAnalysisGroup", currentAnalysisId)
                     .catch(err => {
-                        console.error("Failed to join SignalR group:", err);
+                        console.error("[startAnalysis] Failed to join SignalR group:", err);
                         startPollingFallback();
                     });
             } else {
+                console.log('[startAnalysis] Using polling fallback');
                 startPollingFallback();
             }
         } else {
-            hideProgress();
+            console.error('[startAnalysis] Analysis start failed:', data.error);
+            try {
+                hideProgress();
+            } catch (error) {
+                console.log('[Progress] Error hiding progress after analysis error (may be in workflow mode):', error);
+            }
             alert('Error starting analysis: ' + (data.error || 'Unknown error'));
         }
     })
     .catch(error => {
-        hideProgress();
+        console.error('[startAnalysis] Network error:', error);
+        try {
+            hideProgress();
+        } catch (error) {
+            console.log('[Progress] Error hiding progress after network error (may be in workflow mode):', error);
+        }
         alert('Network error: ' + error.message);
     });
 }
@@ -247,7 +344,11 @@ function pollStatus(analysisId) {
             })
             .catch(error => {
                 clearInterval(interval);
-                hideProgress();
+                try {
+                    hideProgress();
+                } catch (error) {
+                    console.log('[Progress] Error hiding progress during polling error (may be in workflow mode):', error);
+                }
 
                 // Show error result card
                 document.getElementById('analysisResult').style.display = 'block';
@@ -263,19 +364,103 @@ function pollStatus(analysisId) {
 }
 
 function showProgress() {
-    document.getElementById('progressContainer').style.display = 'block';
-    document.getElementById('analysisForm').style.display = 'none';
-    document.getElementById('analysisResult').style.display = 'none'; // Hide result during progress
+    console.log('[Progress] showProgress called');
+    
+    // Check if workflow layout elements exist
+    const progressContainer = document.getElementById('progressContainer');
+    const analysisForm = document.getElementById('analysisForm');
+    const analysisResult = document.getElementById('analysisResult');
+    
+    if (progressContainer && analysisForm && analysisResult) {
+        // Original layout - use existing functionality
+        console.log('[Progress] Using original layout');
+        progressContainer.style.display = 'block';
+        analysisForm.style.display = 'none';
+        analysisResult.style.display = 'none';
+    } else {
+        // Workflow layout - hide workflow and show progress/results
+        console.log('[Progress] Using workflow layout');
+        
+        // Hide the workflow container
+        const workflowContainer = document.querySelector('.workflow-horizontal-container');
+        if (workflowContainer) {
+            workflowContainer.style.display = 'none';
+            console.log('[Progress] Hidden workflow container');
+        }
+        
+        // Show the analysis results section (which includes progress)
+        const analysisResultsSection = document.getElementById('analysisResultsSection');
+        if (analysisResultsSection) {
+            analysisResultsSection.style.display = 'block';
+            analysisResultsSection.classList.remove('hidden-analysis');
+            console.log('[Progress] Shown analysis results section');
+        }
+        
+        // Show progress within the results section
+        const progressMessage = document.getElementById('progressMessage');
+        if (progressMessage) {
+            progressMessage.style.display = 'block';
+            console.log('[Progress] Shown progress message');
+        }
+        
+        // Hide any existing result content during progress
+        const bottomPanelView = document.getElementById('bottomPanelView');
+        if (bottomPanelView) {
+            bottomPanelView.style.display = 'none';
+            console.log('[Progress] Hidden bottom panel view during progress');
+        }
+    }
 }
 
 function hideProgress() {
-    document.getElementById('progressContainer').style.display = 'none';
-    document.getElementById('analysisForm').style.display = 'block';
+    console.log('[Progress] hideProgress called');
+    
+    // Check if workflow layout elements exist
+    const progressContainer = document.getElementById('progressContainer');
+    const analysisForm = document.getElementById('analysisForm');
+    
+    if (progressContainer && analysisForm) {
+        // Original layout - use existing functionality
+        console.log('[Progress] Using original layout hide');
+        progressContainer.style.display = 'none';
+        analysisForm.style.display = 'block';
+    } else {
+        // Workflow layout - show workflow and hide progress
+        console.log('[Progress] Using workflow layout hide');
+        
+        // Show the workflow container again
+        const workflowContainer = document.querySelector('.workflow-horizontal-container');
+        if (workflowContainer) {
+            workflowContainer.style.display = 'flex';
+            console.log('[Progress] Shown workflow container');
+        }
+        
+        // Hide progress within the results section
+        const progressMessage = document.getElementById('progressMessage');
+        if (progressMessage) {
+            progressMessage.style.display = 'none';
+            console.log('[Progress] Hidden progress message');
+        }
+        
+        // Show the result content
+        const bottomPanelView = document.getElementById('bottomPanelView');
+        if (bottomPanelView) {
+            bottomPanelView.style.display = 'block';
+            console.log('[Progress] Shown bottom panel view');
+        }
+    }
 }
 
 function updateProgress(status) {
-    document.getElementById('progressMessage').textContent = status || 'Processing...';
-    document.getElementById('status').textContent = status || 'Processing...';
+    const progressMessage = document.getElementById('progressMessage');
+    const statusElement = document.getElementById('status');
+    
+    if (progressMessage) {
+        progressMessage.textContent = status || 'Processing...';
+    }
+    if (statusElement) {
+        statusElement.textContent = status || 'Processing...';
+    }
 }
 
 // Directory Browser Functions

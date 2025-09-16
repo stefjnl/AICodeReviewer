@@ -94,15 +94,23 @@ public class HomeController : Controller
     [HttpPost]
     public IActionResult SetRepositoryPath(string repositoryPath)
     {
-        // Validate and normalize path
-        string normalizedPath = string.IsNullOrWhiteSpace(repositoryPath)
-            ? _environment.ContentRootPath
-            : Path.IsPathRooted(repositoryPath)
-                ? repositoryPath
-                : Path.Combine(_environment.ContentRootPath, repositoryPath);
+        try
+        {
+            // Validate and normalize path
+            string normalizedPath = string.IsNullOrWhiteSpace(repositoryPath)
+                ? _environment.ContentRootPath
+                : Path.IsPathRooted(repositoryPath)
+                    ? repositoryPath
+                    : Path.Combine(_environment.ContentRootPath, repositoryPath);
 
-        HttpContext.Session.SetString("RepositoryPath", normalizedPath);
-        return RedirectToAction("Index");
+            HttpContext.Session.SetString("RepositoryPath", normalizedPath);
+            return Json(new { success = true, repositoryPath = normalizedPath });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting repository path");
+            return Json(new { success = false, error = ex.Message });
+        }
     }
 
     [HttpPost]
@@ -122,9 +130,24 @@ public class HomeController : Controller
     [HttpPost]
     public IActionResult SelectDocuments(string[] selectedDocuments)
     {
-        var selections = selectedDocuments?.ToList() ?? new List<string>();
-        HttpContext.Session.SetObject("SelectedDocuments", selections);
-        return RedirectToAction("Index");
+        try
+        {
+            var selections = selectedDocuments?.ToList() ?? new List<string>();
+            HttpContext.Session.SetObject("SelectedDocuments", selections);
+            
+            var displayNames = selections.Select(doc => DocumentService.GetDocumentDisplayName(doc)).ToList();
+            return Json(new {
+                success = true,
+                selectedDocuments = selections,
+                displayNames = displayNames,
+                count = selections.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error selecting documents");
+            return Json(new { success = false, error = ex.Message });
+        }
     }
 
 

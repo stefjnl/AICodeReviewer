@@ -540,6 +540,10 @@ body {
     padding: 20px;
 }
 
+.analysis-results.hidden-analysis {
+    display: none;
+}
+
 .analysis-results h5 {
     color: #e2e8f0;
     font-size: 1.1rem;
@@ -748,17 +752,92 @@ small.text-muted {
     border-bottom: 1px solid #38a169;
 }
 
-/* Results section dark theme */
+/* Results section dark theme - Enhanced for better visibility */
 .analysis-results {
     background-color: #2d3748;
     border: 1px solid #4a5568;
     border-radius: 8px;
     padding: 20px;
+    min-height: 200px;
+    margin-top: 20px;
+}
+
+.analysis-results.hidden-analysis {
+    display: none !important;
 }
 
 .analysis-results h5 {
     color: #e2e8f0;
     font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+/* Enhanced workflow card styling for analysis results */
+.analysis-results .workflow-card {
+    margin-bottom: 15px;
+    background-color: #1a202c;
+    border: 1px solid #4a5568;
+}
+
+.analysis-results .workflow-card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #4a5568;
+    background-color: #2d3748;
+    color: #e2e8f0;
+}
+
+.analysis-results .workflow-card-header-success {
+    background-color: #22543d;
+    border-bottom: 1px solid #38a169;
+    color: #c6f6d5;
+}
+
+.analysis-results .workflow-card-body {
+    padding: 16px;
+    color: #e2e8f0;
+}
+
+.analysis-results .analysis-text {
+    max-height: 400px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    background-color: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+/* Progress message styling */
+.analysis-results #progressMessage {
+    text-align: center;
+    padding: 20px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #e2e8f0;
+    background-color: #1a365d;
+    border: 1px solid #3182ce;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.analysis-results .spinner-border {
+    margin-right: 8px;
+    color: #63b3ed;
+}
+
+/* Button container for view switching */
+#analysisButtonsContainer {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+#analysisButtonsContainer .btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 4px;
 }
 
 /* Dark theme for all text elements */
