@@ -6,11 +6,11 @@ namespace AICodeReviewer.Web.Services;
 /// <summary>
 /// Service for parsing AI responses and extracting structured feedback
 /// </summary>
-public class AIPromptResponseService
+public class ParseResponseService
 {
-    private readonly ILogger<AIPromptResponseService> _logger;
+    private readonly ILogger<ParseResponseService> _logger;
 
-    public AIPromptResponseService(ILogger<AIPromptResponseService> logger)
+    public ParseResponseService(ILogger<ParseResponseService> logger)
     {
         _logger = logger;
     }

@@ -16,7 +16,7 @@ builder.Services.AddMemoryCache(options =>
 });
 
 // Register custom services
-builder.Services.AddScoped<AIPromptResponseService>();
+builder.Services.AddScoped<ParseResponseService>();
 
 // In service registration section
 builder.Services.AddSignalR();

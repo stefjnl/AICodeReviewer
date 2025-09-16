@@ -1,9 +1,9 @@
-    using System.Text;
-    using System.Text.Json;
-    using AICodeReviewer.Web.Models;
-    using System.Reflection;
-    
-    namespace AICodeReviewer.Web;
+using System.Text;
+using System.Text.Json;
+using AICodeReviewer.Web.Models;
+using System.Reflection;
+
+namespace AICodeReviewer.Web.Services;
 
 public class PromptTemplate
 {
@@ -69,7 +69,7 @@ public static class AIService
 
             var requestBody = new
             {
-                model = model,
+                model,
                 messages = new[]
                 {
                     new { role = "system", content = $"You are a {template.Role} reviewing code changes. Provide concise, actionable feedback." },

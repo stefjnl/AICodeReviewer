@@ -12,13 +12,13 @@ public class ResultsController : Controller
 {
     private readonly IMemoryCache _cache;
     private readonly ILogger<ResultsController> _logger;
-    private readonly AIPromptResponseService _aiPromptResponseService;
+    private readonly ParseResponseService _parseResponseService;
 
-    public ResultsController(IMemoryCache cache, ILogger<ResultsController> logger, AIPromptResponseService aiPromptResponseService)
+    public ResultsController(IMemoryCache cache, ILogger<ResultsController> logger, ParseResponseService parseResponseService)
     {
         _cache = cache;
         _logger = logger;
-        _aiPromptResponseService = aiPromptResponseService;
+        _parseResponseService = parseResponseService;
     }
 
     /// <summary>
@@ -62,7 +62,7 @@ public class ResultsController : Controller
             var rawContent = _cache.Get<string>($"content_{analysisId}") ?? string.Empty;
 
             // Parse raw AI response into structured feedback using the service
-            var feedback = _aiPromptResponseService.ParseAIResponse(result.Result ?? string.Empty);
+            var feedback = _parseResponseService.ParseAIResponse(result.Result ?? string.Empty);
             _logger.LogInformation($"[Analysis {analysisId}] Parsed {feedback.Count} feedback items from AI response");
 
             var analysisResults = new AnalysisResults
