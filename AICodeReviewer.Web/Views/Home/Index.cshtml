@@ -43,266 +43,241 @@
         </div>
     }
     
-    <!-- Workflow Container -->
-    <!-- Workflow Container -->
-    <div class="workflow-container">
-
-        <!-- Document Management Section -->
-        <div class="workflow-section">
-            <h5>📁 Requirements Documents</h5>
-
-            <!-- Folder Configuration -->
-            <div class="mb-3">
-                <form asp-action="SetDocumentsFolder" method="post">
-                    <div class="workflow-input-group">
-                        <input type="text" class="workflow-form-control" name="folderPath"
-                               placeholder="Documents folder path"
-                               value="@ViewBag.DocumentsFolder">
-                        <button class="workflow-btn workflow-btn-secondary" type="submit">Set Folder</button>
-                    </div>
-                </form>
+    <!-- Horizontal Workflow Container -->
+    <div class="workflow-horizontal-container">
+        
+        <!-- Step 1: Requirements Documents -->
+        <div class="workflow-step" data-step="1">
+            <div class="workflow-step-header">
+                <span>📁</span>
+                Requirements Documents
             </div>
-
-            <!-- Document Selection -->
-            <div class="flow-item" onclick="toggleStandardsSelector()" tabindex="0">
-                <span class="icon">📄</span>
-                <span class="value" id="standardsValue">
-                    @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
-                    {
-                        @($"Selected: {string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))}")
-                    }
-                    else
-                    {
-                        <em>No documents selected</em>
-                    }
-                </span>
-                <span class="edit-icon">✏️</span>
-            </div>
-
-            <!-- Hidden form that appears on click -->
-            <div id="standardsDropdown" class="workflow-dropdown" style="display: none;">
-                @if (ViewBag.AvailableDocuments.Count > 0)
-                {
-                    <form asp-action="SelectDocuments" method="post">
-                        <div class="mb-3">
-                            <label>Select coding standards:</label>
-                            @foreach (var doc in ViewBag.AvailableDocuments)
-                            {
-                                <div class="workflow-form-check">
-                                    <input class="workflow-form-check-input" type="checkbox"
-                                           name="selectedDocuments" value="@doc"
-                                           @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
-                                    <label class="workflow-form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
-                                </div>
-                            }
+            <div class="workflow-step-content">
+                <!-- Folder Configuration -->
+                <div class="mb-3">
+                    <form asp-action="SetDocumentsFolder" method="post">
+                        <div class="workflow-input-group">
+                            <input type="text" class="workflow-form-control" name="folderPath"
+                                   placeholder="Documents folder path"
+                                   value="@ViewBag.DocumentsFolder">
+                            <button class="workflow-btn workflow-btn-secondary" type="submit">Set Folder</button>
                         </div>
-                        <button type="submit" class="workflow-btn workflow-btn-primary">Apply Selection</button>
                     </form>
-                }
-                else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
-                {
-                    <div class="workflow-alert workflow-alert-info">
-                        📋 No .md documents found in folder
-                    </div>
-                }
-            </div>
-
-            <!-- Selected Documents Summary -->
-            @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
-            {
-                <div class="workflow-alert workflow-alert-success mt-3">
-                    ✅ Selected: <strong>@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</strong>
                 </div>
-            }
-
-            <!-- Document Scan Error -->
-            @if (ViewBag.DocumentScanError != null)
-            {
-                <div class="workflow-alert workflow-alert-warning mt-3">
-                    ⚠️ @ViewBag.DocumentScanError
+                
+                <!-- Document Selection -->
+                <div class="flow-item" onclick="toggleStandardsSelector()" tabindex="0">
+                    <span class="icon">📄</span>
+                    <span class="value" id="standardsValue">
+                        @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
+                        {
+                            @($"Selected: {string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))}")
+                        }
+                        else
+                        {
+                            <em>No documents selected</em>
+                        }
+                    </span>
+                    <span class="edit-icon">✏️</span>
                 </div>
-            }
-        </div>
 
-        <!-- Language Selection Section -->
-        <div class="workflow-section">
-            <h5>⚙️ Programming Language</h5>
-
-            <div class="flow-item" onclick="toggleLanguageSelector()" tabindex="0">
-                <span class="icon">⚙️</span>
-                <span class="value" id="languageValue">C# (.NET)</span>
-                <span class="edit-icon">✏️</span>
-            </div>
-
-            <!-- Hidden dropdown that appears on click -->
-            <div id="languageDropdown" class="workflow-dropdown" style="display: none;">
-                <select class="workflow-form-select" id="languageSelect" name="language">
-                    <option value="NET" selected>.NET</option>
-                    <option value="Python">Python</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Repository Path Section -->
-        <div class="workflow-section">
-            <h5>📁 Git Repository</h5>
-
-            <!-- Repository Path Configuration -->
-            <div class="mb-3">
-                <form asp-action="SetRepositoryPath" method="post">
-                    <div class="workflow-input-group">
-                        <input type="text" class="workflow-form-control" name="repositoryPath"
-                               placeholder="Repository path"
-                               value="@ViewBag.RepositoryPath"
-                               id="repositoryPathInput">
-                        <button class="workflow-btn workflow-btn-secondary" type="button" onclick="openDirectoryBrowser()">
-                            📁 Browse
-                        </button>
-                        <button class="workflow-btn workflow-btn-primary" type="submit">Set Repository</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Directory Browser Modal -->
-            <div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="workflow-modal-content">
-                        <div class="workflow-modal-header">
-                            <h5 class="workflow-modal-title">📁 Select Repository Directory</h5>
-                            <button type="button" class="workflow-btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="workflow-modal-body">
+                <!-- Hidden form that appears on click -->
+                <div id="standardsDropdown" class="workflow-dropdown" style="display: none;">
+                    @if (ViewBag.AvailableDocuments.Count > 0)
+                    {
+                        <form asp-action="SelectDocuments" method="post">
                             <div class="mb-3">
-                                <div class="workflow-input-group">
-                                    <input type="text" class="workflow-form-control" id="currentDirectoryPath" readonly>
-                                    <button class="workflow-btn workflow-btn-secondary" type="button" onclick="navigateToParent()">
-                                        ⬆️ Up
-                                    </button>
-                                    <button class="workflow-btn workflow-btn-primary" type="button" onclick="selectCurrentDirectory()">
-                                        ✅ Select This Folder
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="directory-browser-container" style="max-height: 400px; overflow-y: auto;">
-                                <div id="directoryBrowserLoading" class="text-center p-4" style="display: none;">
-                                    <div class="spinner-border" role="status">
-                                        <span class="visually-hidden">Loading...</span>
+                                <label>Select coding standards:</label>
+                                @foreach (var doc in ViewBag.AvailableDocuments)
+                                {
+                                    <div class="workflow-form-check">
+                                        <input class="workflow-form-check-input" type="checkbox"
+                                               name="selectedDocuments" value="@doc"
+                                               @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
+                                        <label class="workflow-form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
                                     </div>
-                                    <p class="mt-2">Loading directories...</p>
-                                </div>
+                                }
+                            </div>
+                            <button type="submit" class="workflow-btn workflow-btn-primary">Apply Selection</button>
+                        </form>
+                    }
+                    else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
+                    {
+                        <div class="workflow-alert workflow-alert-info">
+                            📋 No .md documents found in folder
+                        </div>
+                    }
+                </div>
+                
+                <!-- Selected Documents Summary -->
+                @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
+                {
+                    <div class="workflow-alert workflow-alert-success mt-3">
+                        ✅ Selected: <strong>@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</strong>
+                    </div>
+                }
+                
+                <!-- Document Scan Error -->
+                @if (ViewBag.DocumentScanError != null)
+                {
+                    <div class="workflow-alert workflow-alert-warning mt-3">
+                        ⚠️ @ViewBag.DocumentScanError
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <div class="workflow-step-connector">→</div>
+        
+        <!-- Step 2: Programming Language -->
+        <div class="workflow-step" data-step="2">
+            <div class="workflow-step-header">
+                <span>⚙️</span>
+                Programming Language
+            </div>
+            <div class="workflow-step-content">
+                <div class="flow-item" onclick="toggleLanguageSelector()" tabindex="0">
+                    <span class="icon">⚙️</span>
+                    <span class="value" id="languageValue">C# (.NET)</span>
+                    <span class="edit-icon">✏️</span>
+                </div>
 
-                                <div id="directoryBrowserContent">
-                                    <!-- Directory content will be loaded here -->
+                <!-- Hidden dropdown that appears on click -->
+                <div id="languageDropdown" class="workflow-dropdown" style="display: none;">
+                    <select class="workflow-form-select" id="languageSelect" name="language">
+                        <option value="NET" selected>.NET</option>
+                        <option value="Python">Python</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="workflow-step-connector">→</div>
+        
+        <!-- Step 3: Git Repository -->
+        <div class="workflow-step" data-step="3">
+            <div class="workflow-step-header">
+                <span>📁</span>
+                Git Repository
+            </div>
+            <div class="workflow-step-content">
+                <!-- Repository Path Configuration -->
+                <div class="mb-3">
+                    <form asp-action="SetRepositoryPath" method="post">
+                        <div class="workflow-input-group">
+                            <input type="text" class="workflow-form-control" name="repositoryPath"
+                                   placeholder="Repository path"
+                                   value="@ViewBag.RepositoryPath"
+                                   id="repositoryPathInput">
+                            <button class="workflow-btn workflow-btn-secondary" type="button" onclick="openDirectoryBrowser()">
+                                📁 Browse
+                            </button>
+                            <button class="workflow-btn workflow-btn-primary" type="submit">Set Repository</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Directory Browser Modal -->
+                <div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="workflow-modal-content">
+                            <div class="workflow-modal-header">
+                                <h5 class="workflow-modal-title">📁 Select Repository Directory</h5>
+                                <button type="button" class="workflow-btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="workflow-modal-body">
+                                <div class="mb-3">
+                                    <div class="workflow-input-group">
+                                        <input type="text" class="workflow-form-control" id="currentDirectoryPath" readonly>
+                                        <button class="workflow-btn workflow-btn-secondary" type="button" onclick="navigateToParent()">
+                                            ⬆️ Up
+                                        </button>
+                                        <button class="workflow-btn workflow-btn-primary" type="button" onclick="selectCurrentDirectory()">
+                                            ✅ Select This Folder
+                                        </button>
+                                    </div>
                                 </div>
-
-                                <div id="directoryBrowserError" class="workflow-alert workflow-alert-danger" style="display: none;">
-                                    <!-- Error messages will appear here -->
+                                
+                                <div class="directory-browser-container" style="max-height: 400px; overflow-y: auto;">
+                                    <div id="directoryBrowserLoading" class="text-center p-4" style="display: none;">
+                                        <div class="spinner-border" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading directories...</p>
+                                    </div>
+                                    
+                                    <div id="directoryBrowserContent">
+                                        <!-- Directory content will be loaded here -->
+                                    </div>
+                                    
+                                    <div id="directoryBrowserError" class="workflow-alert workflow-alert-danger" style="display: none;">
+                                        <!-- Error messages will appear here -->
+                                    </div>
                                 </div>
                             </div>
+                            <div class="workflow-modal-footer">
+                                <button type="button" class="workflow-btn workflow-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="workflow-btn workflow-btn-primary" onclick="selectCurrentDirectory()">Select Folder</button>
+                            </div>
                         </div>
-                        <div class="workflow-modal-footer">
-                            <button type="button" class="workflow-btn workflow-btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="workflow-btn workflow-btn-primary" onclick="selectCurrentDirectory()">Select Folder</button>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Analysis Type Selection -->
-        <div class="workflow-section">
-            <h5>🔍 Analysis Type</h5>
-            <div class="workflow-form-check">
-                <input class="workflow-form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
-                <label class="workflow-form-check-label" for="uncommittedChanges">
-                    Uncommitted Changes
-                </label>
+        
+        <div class="workflow-step-connector">→</div>
+        
+        <!-- Step 4: Analysis Type -->
+        <div class="workflow-step" data-step="4">
+            <div class="workflow-step-header">
+                <span>🔍</span>
+                Analysis Type
             </div>
-            <div class="workflow-form-check">
-                <input class="workflow-form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
-                <label class="workflow-form-check-label" for="specificCommit">
-                    Specific Commit
-                </label>
-            </div>
-            <div class="workflow-form-check">
-                <input class="workflow-form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
-                <label class="workflow-form-check-label" for="singleFile">
-                    Single File
-                </label>
-            </div>
-            <div class="mt-2" id="commitIdContainer" style="display: none;">
-                <div class="workflow-input-group">
-                    <input type="text" class="workflow-form-control" id="commitId" name="commitId"
-                           placeholder="Enter commit ID (full or partial hash)">
-                    <button class="workflow-btn workflow-btn-secondary" type="button" id="validateCommit">Validate</button>
+            <div class="workflow-step-content">
+                <div class="workflow-form-check">
+                    <input class="workflow-form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
+                    <label class="workflow-form-check-label" for="uncommittedChanges">
+                        Uncommitted Changes
+                    </label>
                 </div>
-                <div id="commitValidationResult" class="workflow-form-text"></div>
-            </div>
-            <div class="mt-2" id="filePickerContainer" style="display: none;">
-                <div class="workflow-input-group">
-                    <input type="text" class="workflow-form-control" id="filePath" name="filePath"
-                           placeholder="Enter full file path (e.g., C:\path\to\file.py or /path/to/file.py)"
-                           style="transition: background-color 0.3s, border-color 0.3s;">
-                    <button class="workflow-btn workflow-btn-secondary" type="button" id="browseFile">Browse</button>
-                    <input type="file" id="fileInput" accept=".cs,.js,.py" style="display: none;">
+                <div class="workflow-form-check">
+                    <input class="workflow-form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
+                    <label class="workflow-form-check-label" for="specificCommit">
+                        Specific Commit
+                    </label>
                 </div>
-                <div id="fileValidationResult" class="workflow-form-text"></div>
-                <small class="workflow-text-muted">
-                    <strong>Note:</strong> Due to browser security, file browsing only provides the filename.
-                    Please enter the <strong>full file path</strong> manually or use the repository-relative path.
-                    Supported types: .cs (C#), .js (JavaScript), .py (Python)
-                </small>
+                <div class="workflow-form-check">
+                    <input class="workflow-form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
+                    <label class="workflow-form-check-label" for="singleFile">
+                        Single File
+                    </label>
+                </div>
+                <div class="mt-2" id="commitIdContainer" style="display: none;">
+                    <div class="workflow-input-group">
+                        <input type="text" class="workflow-form-control" id="commitId" name="commitId"
+                               placeholder="Enter commit ID (full or partial hash)">
+                        <button class="workflow-btn workflow-btn-secondary" type="button" id="validateCommit">Validate</button>
+                    </div>
+                    <div id="commitValidationResult" class="workflow-form-text"></div>
+                </div>
+                <div class="mt-2" id="filePickerContainer" style="display: none;">
+                    <div class="workflow-input-group">
+                        <input type="text" class="workflow-form-control" id="filePath" name="filePath"
+                               placeholder="Enter full file path (e.g., C:\path\to\file.py or /path/to/file.py)"
+                               style="transition: background-color 0.3s, border-color 0.3s;">
+                        <button class="workflow-btn workflow-btn-secondary" type="button" id="browseFile">Browse</button>
+                        <input type="file" id="fileInput" accept=".cs,.js,.py" style="display: none;">
+                    </div>
+                    <div id="fileValidationResult" class="workflow-form-text"></div>
+                    <small class="workflow-text-muted">
+                        <strong>Note:</strong> Due to browser security, file browsing only provides the filename.
+                        Please enter the <strong>full file path</strong> manually or use the repository-relative path.
+                        Supported types: .cs (C#), .js (JavaScript), .py (Python)
+                    </small>
+                </div>
             </div>
         </div>
-
-        <!-- AI Analysis Section -->
-        <div class="workflow-section workflow-analysis">
-            <h5>🤖 AI Code Analysis</h5>
-
-            <!-- Progress Container -->
-            <div id="progressContainer" style="display: none;" class="mt-4">
-                <div class="workflow-alert workflow-alert-info">
-                    <div class="d-flex align-items-center">
-                        <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
-                        <span id="progressMessage">Starting analysis...</span>
-                    </div>
-                </div>
-                <div class="mt-3">
-                    <div class="fw-bold">Status:</div>
-                    <div id="status">Waiting...</div>
-                </div>
-            </div>
-
-            <!-- Analysis Result Display -->
-            <div id="analysisResult" class="mt-4" style="display: none;">
-                <div class="workflow-card">
-                    <div class="workflow-card-header workflow-card-header-success">
-                        <h6 class="mb-0">🔍 AI Analysis Results</h6>
-                    </div>
-                    <div class="workflow-card-body">
-                        <pre id="result" class="workflow-pre" style="white-space: pre-wrap; font-family: monospace;"></pre>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Run Analysis Form -->
-            @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
-            {
-                <div id="analysisForm">
-                    <button type="button" class="workflow-btn workflow-btn-success btn-lg" onclick="startAnalysis()">
-                        🚀 Run AI Analysis
-                    </button>
-                </div>
-            }
-            else
-            {
-                <div class="workflow-alert workflow-alert-info">
-                    📋 Please select coding standards documents above to enable AI analysis
-                </div>
-            }
-        </div>
-
+        
     </div>
 
     <!-- Git Diff Display (Outside workflow-container) -->
@@ -801,5 +776,30 @@
         document.getElementById('languageValue').textContent =
             this.value === 'NET' ? 'C# (.NET)' : 'Python';
         document.getElementById('languageDropdown').style.display = 'none';
+    });
+
+    // Initialize horizontal workflow manager
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.horizontalWorkflow) {
+            console.log('Horizontal workflow manager initialized');
+            
+            // Override dropdown functions to work with new structure
+            window.originalToggleStandardsSelector = window.toggleStandardsSelector;
+            window.originalToggleLanguageSelector = window.toggleLanguageSelector;
+            
+            window.toggleStandardsSelector = function() {
+                const dropdown = document.querySelector('[data-step="1"] #standardsDropdown');
+                if (dropdown) {
+                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                }
+            };
+            
+            window.toggleLanguageSelector = function() {
+                const dropdown = document.querySelector('[data-step="2"] #languageDropdown');
+                if (dropdown) {
+                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                }
+            };
+        }
     });
 </script>
