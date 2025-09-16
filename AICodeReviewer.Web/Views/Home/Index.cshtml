@@ -43,12 +43,15 @@
         </div>
     }
     
-    <!-- Document Management Section -->
-    <div class="document-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+    <!-- Workflow Container -->
+    <div class="workflow-container">
+        
+        <!-- Document Management Section -->
+        <div class="workflow-section document-section">
         <h5>📁 Requirements Documents</h5>
         
         <!-- Folder Configuration -->
-        <div class="mb-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+        <div class="mb-3">
             <form asp-action="SetDocumentsFolder" method="post">
                 <div class="input-group">
                     <input type="text" class="form-control" name="folderPath"
@@ -76,7 +79,7 @@
         </div>
 
         <!-- Hidden form that appears on click -->
-        <div id="standardsDropdown" style="display: none;">
+        <div id="standardsDropdown" class="workflow-dropdown" style="display: none;">
             @if (ViewBag.AvailableDocuments.Count > 0)
             {
                 <form asp-action="SelectDocuments" method="post">
@@ -95,13 +98,13 @@
                     <button type="submit" class="btn btn-primary">Apply Selection</button>
                 </form>
             }
+            else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
+            {
+                <div class="alert alert-info">
+                    📋 No .md documents found in folder
+                </div>
+            }
         </div>
-        else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
-        {
-            <div class="alert alert-info">
-                📋 No .md documents found in folder
-            </div>
-        }
         
         <!-- Selected Documents Summary -->
         @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
@@ -118,40 +121,31 @@
                 ⚠️ @ViewBag.DocumentScanError
             </div>
         }
-    </div>
-    
-@*     <!-- Language Selection Section -->
-    <div class="language-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-        <h5>🐍 Programming Language</h5>
-        <div class="mb-3">
-            <label for="languageSelect" class="form-label">Select the programming language for analysis:</label>
-            <select class="form-select" id="languageSelect" name="language">
-                <option value="NET" selected>.NET</option>
-                <option value="Python">Python</option>
-            </select>
+        <!-- Language Selection Section -->
+        <div class="workflow-section language-section">
+            <h5>⚙️ Programming Language</h5>
+            
+            <div class="flow-item" onclick="toggleLanguageSelector()" tabindex="0">
+                <span class="icon">⚙️</span>
+                <span class="value" id="languageValue">C# (.NET)</span>
+                <span class="edit-icon">✏️</span>
+            </div>
+
+            <!-- Hidden dropdown that appears on click -->
+            <div id="languageDropdown" class="workflow-dropdown" style="display: none;">
+                <select class="form-select" id="languageSelect" name="language">
+                    <option value="NET" selected>.NET</option>
+                    <option value="Python">Python</option>
+                </select>
+            </div>
         </div>
-    </div> *@
-
-    <div class="flow-item" onclick="toggleLanguageSelector()" tabindex="0">
-        <span class="icon">⚙️</span>
-        <span class="value" id="languageValue">C# (.NET)</span>
-        <span class="edit-icon">✏️</span>
-    </div>
-
-    <!-- Hidden dropdown that appears on click -->
-    <div id="languageDropdown" style="display: none;">
-        <select class="form-select" id="languageSelect" name="language">
-            <option value="NET" selected>.NET</option>
-            <option value="Python">Python</option>
-        </select>
-    </div>
-    
-    <!-- Repository Path Section -->
-    <div class="repository-section mt-4">
+        
+        <!-- Repository Path Section -->
+        <div class="workflow-section repository-section">
         <h5>📁 Git Repository</h5>
         
         <!-- Repository Path Configuration -->
-        <div class="mb-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+        <div class="mb-3">
             <form asp-action="SetRepositoryPath" method="post">
                 <div class="input-group">
                     <input type="text" class="form-control" name="repositoryPath"
@@ -213,7 +207,7 @@
         </div>
         
         <!-- Analysis Type Selection -->
-        <div class="analysis-type-section mt-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+        <div class="analysis-type-section mt-3">
             <h6>🔍 Analysis Type</h6>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
@@ -234,7 +228,7 @@
                 </label>
             </div>
             <div class="mt-2" id="commitIdContainer" style="display: none;">
-                <div class="input-group" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+                <div class="input-group">
                     <input type="text" class="form-control" id="commitId" name="commitId"
                            placeholder="Enter commit ID (full or partial hash)">
                     <button class="btn btn-outline-secondary" type="button" id="validateCommit">Validate</button>
@@ -242,7 +236,7 @@
                 <div id="commitValidationResult" class="form-text"></div>
             </div>
             <div class="mt-2" id="filePickerContainer" style="display: none;">
-                <div class="input-group" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+                <div class="input-group">
                     <input type="text" class="form-control" id="filePath" name="filePath"
                            placeholder="Enter full file path (e.g., C:\path\to\file.py or /path/to/file.py)"
                            style="transition: background-color 0.3s, border-color 0.3s;">
@@ -309,11 +303,11 @@
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- AI Analysis Section -->
-    <div class="analysis-section mt-5">
-        <h5>🤖 AI Code Analysis</h5>
+        </div>
+        
+        <!-- AI Analysis Section -->
+        <div class="workflow-section workflow-analysis analysis-section">
+            <h5>🤖 AI Code Analysis</h5>
         
         <!-- Progress Container -->
         <div id="progressContainer" style="display: none;" class="mt-4">
@@ -407,9 +401,10 @@
                 ❌ @analysisError
             </div>
         }
+            </div>
+        </div>
+    
     </div>
-
-</div>
 
 <!-- SignalR Client Library -->
 <script src="https://unpkg.com/@@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
@@ -787,9 +782,15 @@
         });
     });
 
-
-        function toggleLanguageSelector() {
+    // Function to toggle language selector
+    function toggleLanguageSelector() {
         const dropdown = document.getElementById('languageDropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Function to toggle standards selector (document management)
+    function toggleStandardsSelector() {
+        const dropdown = document.getElementById('standardsDropdown');
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
     }
 
@@ -799,9 +800,4 @@
             this.value === 'NET' ? 'C# (.NET)' : 'Python';
         document.getElementById('languageDropdown').style.display = 'none';
     });
-
-        function toggleStandardsSelector() {
-        const dropdown = document.getElementById('standardsDropdown');
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-    }
 </script>
