@@ -13,8 +13,16 @@ public interface ISignalRBroadcastService
     /// </summary>
     /// <param name="analysisId">Analysis identifier</param>
     /// <param name="status">Current status message</param>
-    /// <param name="cache">Memory cache for storing progress</param>
-    Task BroadcastProgressAsync(string analysisId, string status, IMemoryCache cache);
+    Task BroadcastProgressAsync(string analysisId, string status);
+
+    /// <summary>
+    /// Broadcast progress update with model information for an analysis
+    /// </summary>
+    /// <param name="analysisId">Analysis identifier</param>
+    /// <param name="status">Current status message</param>
+    /// <param name="modelUsed">Primary model being used</param>
+    /// <param name="fallbackModel">Fallback model available</param>
+    Task BroadcastProgressWithModelAsync(string analysisId, string status, string? modelUsed = null, string? fallbackModel = null);
 
     /// <summary>
     /// Broadcast analysis completion with results
@@ -22,22 +30,29 @@ public interface ISignalRBroadcastService
     /// <param name="analysisId">Analysis identifier</param>
     /// <param name="result">Analysis results</param>
     /// <param name="session">Http session for storing analysis ID</param>
-    /// <param name="cache">Memory cache for storing results</param>
-    Task BroadcastCompleteAsync(string analysisId, string? result, ISession session, IMemoryCache cache);
+    Task BroadcastCompleteAsync(string analysisId, string? result, ISession session);
+
+    /// <summary>
+    /// Broadcast analysis completion with results and model information
+    /// </summary>
+    /// <param name="analysisId">Analysis identifier</param>
+    /// <param name="result">Analysis results</param>
+    /// <param name="session">Http session for storing analysis ID</param>
+    /// <param name="modelUsed">Primary model used</param>
+    /// <param name="fallbackModel">Fallback model available</param>
+    Task BroadcastCompleteWithModelAsync(string analysisId, string? result, ISession session, string? modelUsed = null, string? fallbackModel = null);
 
     /// <summary>
     /// Broadcast analysis error
     /// </summary>
     /// <param name="analysisId">Analysis identifier</param>
     /// <param name="error">Error message</param>
-    /// <param name="cache">Memory cache for storing error</param>
-    Task BroadcastErrorAsync(string analysisId, string error, IMemoryCache cache);
+    Task BroadcastErrorAsync(string analysisId, string error);
 
     /// <summary>
     /// Store progress in cache for fallback access
     /// </summary>
     /// <param name="analysisId">Analysis identifier</param>
     /// <param name="status">Current status</param>
-    /// <param name="cache">Memory cache</param>
-    void StoreProgressInCache(string analysisId, string status, IMemoryCache cache);
+    void StoreProgressInCache(string analysisId, string status);
 }

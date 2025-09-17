@@ -1,5 +1,4 @@
 using AICodeReviewer.Web.Models;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace AICodeReviewer.Web.Domain.Interfaces;
 
@@ -26,9 +25,8 @@ public interface IAnalysisService
     /// Get the current status of an analysis
     /// </summary>
     /// <param name="analysisId">Unique analysis identifier</param>
-    /// <param name="cache">Memory cache for retrieving results</param>
     /// <returns>Analysis status and results</returns>
-    ProgressDto GetAnalysisStatus(string analysisId, IMemoryCache cache);
+    ProgressDto GetAnalysisStatus(string analysisId);
 
     /// <summary>
     /// Store analysis ID in session for tracking

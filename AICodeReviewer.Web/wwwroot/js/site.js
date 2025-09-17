@@ -20,8 +20,18 @@ function initializeSignalR() {
         // Update progress message
         const progressMessage = document.getElementById('progressMessage');
         if (progressMessage) {
-            progressMessage.innerText = data.status;
-            console.log('[SignalR] Updated progress message:', data.status);
+            let statusText = data.status;
+            
+            // Add model information if available
+            if (data.modelUsed) {
+                statusText += ` (Model: ${data.modelUsed})`;
+            }
+            if (data.fallbackModel) {
+                statusText += ` [Fallback: ${data.fallbackModel}]`;
+            }
+            
+            progressMessage.innerText = statusText;
+            console.log('[SignalR] Updated progress message:', statusText);
         }
         
         // Handle result display
@@ -355,7 +365,15 @@ function pollStatus(analysisId) {
         fetch(`/Home/GetAnalysisStatus?analysisId=${encodeURIComponent(analysisId)}`)
             .then(response => response.json())
             .then(data => {
-                updateProgress(data.status);
+                // Handle model information for polling fallback
+                let statusText = data.status;
+                if (data.modelUsed) {
+                    statusText += ` (Model: ${data.modelUsed})`;
+                }
+                if (data.fallbackModel) {
+                    statusText += ` [Fallback: ${data.fallbackModel}]`;
+                }
+                updateProgress(statusText);
                 
                 if (data.isComplete) {
                     clearInterval(interval);

@@ -126,14 +126,6 @@ public class HomeController : Controller
     }
 
     /// <summary>
-    /// Privacy policy page
-    /// </summary>
-    public IActionResult Privacy()
-    {
-        return View();
-    }
-
-    /// <summary>
     /// Set repository path for analysis
     /// </summary>
     [HttpPost]
@@ -251,7 +243,7 @@ public class HomeController : Controller
     {
         try
         {
-            var result = _analysisService.GetAnalysisStatus(analysisId, _cache);
+            var result = _analysisService.GetAnalysisStatus(analysisId);
             return Json(result);
         }
         catch (Exception ex)

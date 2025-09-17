@@ -14,14 +14,16 @@ public class SignalRBroadcastService : ISignalRBroadcastService
 {
     private readonly IHubContext<ProgressHub> _hubContext;
     private readonly ILogger<SignalRBroadcastService> _logger;
+    private readonly IMemoryCache _cache;
 
-    public SignalRBroadcastService(IHubContext<ProgressHub> hubContext, ILogger<SignalRBroadcastService> logger)
+    public SignalRBroadcastService(IHubContext<ProgressHub> hubContext, ILogger<SignalRBroadcastService> logger, IMemoryCache cache)
     {
         _hubContext = hubContext;
         _logger = logger;
+        _cache = cache;
     }
 
-    public async Task BroadcastProgressAsync(string analysisId, string status, IMemoryCache cache)
+    public async Task BroadcastProgressAsync(string analysisId, string status)
     {
         try
         {
@@ -29,7 +31,7 @@ public class SignalRBroadcastService : ISignalRBroadcastService
             await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
             
             // Store in cache for fallback
-            StoreProgressInCache(analysisId, status, cache);
+            StoreProgressInCache(analysisId, status);
             
             _logger.LogInformation("Broadcasted progress for analysis {AnalysisId}: {Status}", analysisId, status);
         }
@@ -39,7 +41,26 @@ public class SignalRBroadcastService : ISignalRBroadcastService
         }
     }
 
-    public async Task BroadcastCompleteAsync(string analysisId, string? result, ISession session, IMemoryCache cache)
+    public async Task BroadcastProgressWithModelAsync(string analysisId, string status, string? modelUsed = null, string? fallbackModel = null)
+    {
+        try
+        {
+            var progressDto = new ProgressDto(status, null, null, false, modelUsed, fallbackModel);
+            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
+            
+            // Store in cache for fallback
+            StoreProgressInCache(analysisId, status);
+            
+            _logger.LogInformation("Broadcasted progress for analysis {AnalysisId}: {Status}, Model: {ModelUsed}, Fallback: {FallbackModel}",
+                analysisId, status, modelUsed ?? "None", fallbackModel ?? "None");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "SignalR broadcast with model failed for analysis {AnalysisId}", analysisId);
+        }
+    }
+
+    public async Task BroadcastCompleteAsync(string analysisId, string? result, ISession session)
     {
         try
         {
@@ -59,7 +80,7 @@ public class SignalRBroadcastService : ISignalRBroadcastService
                 CompletedAt = DateTime.UtcNow
             };
             
-            cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
+            _cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
             
             _logger.LogInformation("Broadcasted completion for analysis {AnalysisId}", analysisId);
         }
@@ -69,7 +90,37 @@ public class SignalRBroadcastService : ISignalRBroadcastService
         }
     }
 
-    public async Task BroadcastErrorAsync(string analysisId, string error, IMemoryCache cache)
+    public async Task BroadcastCompleteWithModelAsync(string analysisId, string? result, ISession session, string? modelUsed = null, string? fallbackModel = null)
+    {
+        try
+        {
+            var progressDto = new ProgressDto("Analysis complete", result, null, true, modelUsed, fallbackModel);
+            await _hubContext.Clients.Group(analysisId).SendAsync("UpdateProgress", progressDto);
+            
+            // Store analysis ID in session for view switching
+            session.SetString("AnalysisId", analysisId);
+            
+            // Store in cache for fallback
+            var cacheResult = new AnalysisResult
+            {
+                Status = progressDto.Status,
+                Result = progressDto.Result,
+                Error = progressDto.Error,
+                CreatedAt = DateTime.UtcNow,
+                CompletedAt = DateTime.UtcNow
+            };
+            
+            _cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
+            
+            _logger.LogInformation("Broadcasted completion for analysis {AnalysisId} with model {ModelUsed}", analysisId, modelUsed ?? "None");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "SignalR broadcast completion with model failed for analysis {AnalysisId}", analysisId);
+        }
+    }
+
+    public async Task BroadcastErrorAsync(string analysisId, string error)
     {
         try
         {
@@ -86,7 +137,7 @@ public class SignalRBroadcastService : ISignalRBroadcastService
                 CompletedAt = DateTime.UtcNow
             };
             
-            cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
+            _cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
             
             _logger.LogInformation("Broadcasted error for analysis {AnalysisId}: {Error}", analysisId, error);
         }
@@ -96,7 +147,7 @@ public class SignalRBroadcastService : ISignalRBroadcastService
         }
     }
 
-    public void StoreProgressInCache(string analysisId, string status, IMemoryCache cache)
+    public void StoreProgressInCache(string analysisId, string status)
     {
         try
         {
@@ -109,7 +160,7 @@ public class SignalRBroadcastService : ISignalRBroadcastService
                 CreatedAt = DateTime.UtcNow
             };
             
-            cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
+            _cache.Set($"analysis_{analysisId}", cacheResult, new MemoryCacheEntryOptions().SetSize(1));
             _logger.LogDebug("Stored progress in cache for analysis {AnalysisId}: {Status}", analysisId, status);
         }
         catch (Exception ex)

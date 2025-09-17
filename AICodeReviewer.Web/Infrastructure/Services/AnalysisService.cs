@@ -18,6 +18,7 @@ public class AnalysisService : IAnalysisService
     private readonly IPathValidationService _pathService;
     private readonly ISignalRBroadcastService _signalRService;
     private readonly IHubContext<ProgressHub> _hubContext;
+    private readonly IMemoryCache _cache;
 
     public AnalysisService(
         ILogger<AnalysisService> logger,
@@ -25,7 +26,8 @@ public class AnalysisService : IAnalysisService
         IDocumentManagementService documentService,
         IPathValidationService pathService,
         ISignalRBroadcastService signalRService,
-        IHubContext<ProgressHub> hubContext)
+        IHubContext<ProgressHub> hubContext,
+        IMemoryCache cache)
     {
         _logger = logger;
         _repositoryService = repositoryService;
@@ -33,6 +35,7 @@ public class AnalysisService : IAnalysisService
         _pathService = pathService;
         _signalRService = signalRService;
         _hubContext = hubContext;
+        _cache = cache;
     }
 
     public async Task<(string analysisId, bool success, string? error)> StartAnalysisAsync(
@@ -58,8 +61,9 @@ public class AnalysisService : IAnalysisService
             _logger.LogInformation($"[RunAnalysis] Session SelectedDocuments: {string.Join(", ", session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>())}");
             _logger.LogInformation($"[RunAnalysis] Final selectedDocuments count: {selectedDocuments.Count}");
             
-            var apiKey = configuration["OpenRouter:ApiKey"];
-            var model = configuration["OpenRouter:Model"];
+            var apiKey = configuration["OpenRouter:ApiKey"] ?? "";
+            var model = configuration["OpenRouter:Model"] ?? "";
+            var fallbackModel = configuration["OpenRouter:FallbackModel"] ?? "";
 
             // Store language in session for consistency
             session.SetString("Language", language);
@@ -136,22 +140,23 @@ public class AnalysisService : IAnalysisService
                 try
                 {
                     await RunBackgroundAnalysisAsync(
-                        analysisId, 
-                        repositoryPath, 
-                        selectedDocuments, 
-                        docsFolder, 
-                        apiKey, 
-                        model, 
-                        language, 
-                        analysisType, 
-                        commitId, 
+                        analysisId,
+                        repositoryPath,
+                        selectedDocuments,
+                        docsFolder,
+                        apiKey,
+                        model,
+                        fallbackModel,
+                        language,
+                        analysisType,
+                        commitId,
                         filePath,
                         session);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Background analysis failed for analysis {AnalysisId}", analysisId);
-                    await _signalRService.BroadcastErrorAsync(analysisId, $"Background analysis error: {ex.Message}", null!);
+                    await _signalRService.BroadcastErrorAsync(analysisId, $"Background analysis error: {ex.Message}");
                 }
             }).ContinueWith(t =>
             {
@@ -171,7 +176,7 @@ public class AnalysisService : IAnalysisService
         }
     }
 
-    public ProgressDto GetAnalysisStatus(string analysisId, IMemoryCache cache)
+    public ProgressDto GetAnalysisStatus(string analysisId)
     {
         if (string.IsNullOrEmpty(analysisId))
         {
@@ -179,7 +184,7 @@ public class AnalysisService : IAnalysisService
             return new ProgressDto("NotStarted", null, null, false);
         }
 
-        if (cache.TryGetValue($"analysis_{analysisId}", out AnalysisResult? result))
+        if (_cache.TryGetValue($"analysis_{analysisId}", out AnalysisResult? result))
         {
             _logger.LogInformation($"[Analysis {analysisId}] Serving result: Status={result.Status}, ResultLength={result.Result?.Length ?? 0}");
             return new ProgressDto(result.Status, result.Result, result.Error, result.IsComplete);
@@ -187,6 +192,22 @@ public class AnalysisService : IAnalysisService
 
         _logger.LogWarning("Analysis {AnalysisId} not found in cache", analysisId);
         return new ProgressDto("NotFound", null, "Analysis not found or expired", true);
+    }
+
+    /// <summary>
+    /// Checks if an error message indicates a rate-limiting issue
+    /// </summary>
+    private static bool IsRateLimitError(string? errorMessage)
+    {
+        if (string.IsNullOrEmpty(errorMessage))
+            return false;
+            
+        // Check for HTTP 429 status code or rate limit keywords
+        return errorMessage.Contains("429") ||
+               errorMessage.Contains("rate limit") ||
+               errorMessage.Contains("rate-limit") ||
+               errorMessage.Contains("Rate limit") ||
+               errorMessage.Contains("too many requests");
     }
 
     public void StoreAnalysisId(string analysisId, ISession session)
@@ -208,6 +229,7 @@ public class AnalysisService : IAnalysisService
         string documentsFolder,
         string apiKey,
         string model,
+        string fallbackModel,
         string language,
         string analysisType = "uncommitted",
         string? commitId = null,
@@ -220,7 +242,8 @@ public class AnalysisService : IAnalysisService
         _logger.LogInformation($"[Analysis {analysisId}] Documents folder: {documentsFolder}");
         _logger.LogInformation($"[Analysis {analysisId}] Language: {language}");
         _logger.LogInformation($"[Analysis {analysisId}] API key configured: {!string.IsNullOrEmpty(apiKey)}");
-        _logger.LogInformation($"[Analysis {analysisId}] Model: {model}");
+        _logger.LogInformation($"[Analysis {analysisId}] Primary model: {model}");
+        _logger.LogInformation($"[Analysis {analysisId}] Fallback model: {fallbackModel ?? "None"}");
 
         try
         {
@@ -248,7 +271,7 @@ public class AnalysisService : IAnalysisService
             if (result != null)
             {
                 result.Status = "Reading git changes...";
-                await _signalRService.BroadcastProgressAsync(analysisId, "Reading git changes...", null!);
+                await _signalRService.BroadcastProgressWithModelAsync(analysisId, "Reading git changes...", model, fallbackModel);
                 _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Reading git changes...'");
             }
 
@@ -297,7 +320,7 @@ public class AnalysisService : IAnalysisService
                     result.Error = isFileContent ? $"File reading error: {content}" : $"Git diff error: {content}";
                     result.CompletedAt = DateTime.UtcNow;
                     
-                    await _signalRService.BroadcastErrorAsync(analysisId, result.Error, null!);
+                    await _signalRService.BroadcastErrorAsync(analysisId, result.Error);
                     _logger.LogInformation($"[Analysis {analysisId}] Set error status and completed");
                 }
                 return;
@@ -309,7 +332,7 @@ public class AnalysisService : IAnalysisService
             if (result != null)
             {
                 result.Status = "Loading documents...";
-                await _signalRService.BroadcastProgressAsync(analysisId, "Loading documents...", null!);
+                await _signalRService.BroadcastProgressWithModelAsync(analysisId, "Loading documents...", model, fallbackModel);
                 _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Loading documents...'");
             }
             
@@ -358,8 +381,8 @@ public class AnalysisService : IAnalysisService
             if (result != null)
             {
                 result.Status = "AI analysis...";
-                await _signalRService.BroadcastProgressAsync(analysisId, "AI analysis...", null!);
-                _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'AI analysis...'");
+                await _signalRService.BroadcastProgressWithModelAsync(analysisId, $"AI analysis... (Using: {model})", model, fallbackModel);
+                _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'AI analysis...' with model {model}");
             }
             
             // Get requirements
@@ -371,7 +394,8 @@ public class AnalysisService : IAnalysisService
             _logger.LogInformation($"[Analysis {analysisId}] - Content length: {content?.Length ?? 0}");
             _logger.LogInformation($"[Analysis {analysisId}] - Coding standards count: {codingStandards.Count}");
             _logger.LogInformation($"[Analysis {analysisId}] - API key configured: {!string.IsNullOrEmpty(apiKey)}");
-            _logger.LogInformation($"[Analysis {analysisId}] - Model: {model}");
+            _logger.LogInformation($"[Analysis {analysisId}] - Primary model: {model}");
+            _logger.LogInformation($"[Analysis {analysisId}] - Fallback model: {fallbackModel ?? "None"}");
             _logger.LogInformation($"[Analysis {analysisId}] - Analysis type: {(isFileContent ? "Single File" : "Git Diff")}");
             
             // Add timeout protection (60 seconds)
@@ -380,6 +404,7 @@ public class AnalysisService : IAnalysisService
             string analysis;
             bool aiError;
             string? errorMessage;
+            bool fallbackWasUsed = false; // Track if fallback model was used
             
             try
             {
@@ -387,7 +412,7 @@ public class AnalysisService : IAnalysisService
                 
                 // Call AI service with timeout
                 var (analysisResult, isError, errorMsg) = await Task.Run(async () =>
-                    await AIService.AnalyzeCodeAsync(content, codingStandards, requirements, apiKey, model, language, isFileContent),
+                    await AIService.AnalyzeCodeAsync(content ?? "", codingStandards, requirements, apiKey, model, language, isFileContent),
                     cts.Token);
                 
                 analysis = analysisResult;
@@ -398,6 +423,29 @@ public class AnalysisService : IAnalysisService
                 if (aiError)
                 {
                     _logger.LogError($"[Analysis {analysisId}] AI analysis failed with detailed error: {errorMessage}");
+                    
+                    // Check if this is a rate-limit error and we have a fallback model
+                    if (IsRateLimitError(errorMessage) && !string.IsNullOrEmpty(fallbackModel))
+                    {
+                        fallbackWasUsed = true; // Mark that fallback was used
+                        _logger.LogInformation($"[Analysis {analysisId}] Rate limit detected for primary model {model}, falling back to {fallbackModel}");
+                        await _signalRService.BroadcastProgressWithModelAsync(analysisId, $"Rate limited, switching to fallback model ({fallbackModel})...", model, fallbackModel);
+                        
+                        // Retry with fallback model
+                        (analysisResult, isError, errorMsg) = await Task.Run(async () =>
+                            await AIService.AnalyzeCodeAsync(content ?? "", codingStandards, requirements, apiKey, fallbackModel, language, isFileContent),
+                            cts.Token);
+                        
+                        analysis = analysisResult;
+                        aiError = isError;
+                        errorMessage = errorMsg;
+                        
+                        _logger.LogInformation($"[Analysis {analysisId}] Fallback model call complete - Error: {aiError}, Analysis length: {analysis?.Length ?? 0}");
+                        if (aiError)
+                        {
+                            _logger.LogError($"[Analysis {analysisId}] Fallback model analysis failed with detailed error: {errorMessage}");
+                        }
+                    }
                 }
             }
             catch (OperationCanceledException)
@@ -418,11 +466,15 @@ public class AnalysisService : IAnalysisService
             // Broadcast completion
             if (aiError)
             {
-                await _signalRService.BroadcastErrorAsync(analysisId, $"AI analysis failed: {errorMessage}", null!);
+                await _signalRService.BroadcastErrorAsync(analysisId, $"AI analysis failed: {errorMessage}");
             }
             else
             {
-                await _signalRService.BroadcastCompleteAsync(analysisId, analysis, session!, null!);
+                // Determine which model was actually used and show it in the completion message
+                string usedModel = fallbackWasUsed ? fallbackModel : model;
+                await _signalRService.BroadcastCompleteWithModelAsync(analysisId, analysis, session!, usedModel, fallbackModel);
+                
+                _logger.LogInformation($"[Analysis {analysisId}] Analysis completed successfully using model: {usedModel}");
             }
 
             _logger.LogInformation($"[Analysis {analysisId}] Background analysis task completed");
@@ -432,7 +484,7 @@ public class AnalysisService : IAnalysisService
             _logger.LogError(ex, $"[Analysis {analysisId}] Unhandled exception in background analysis");
             try
             {
-                await _signalRService.BroadcastErrorAsync(analysisId, $"Analysis error: {ex.Message}", null!);
+                await _signalRService.BroadcastErrorAsync(analysisId, $"Analysis error: {ex.Message}");
                 _logger.LogInformation($"[Analysis {analysisId}] Set error status due to exception: {ex.Message}");
             }
             catch (Exception broadcastEx)
