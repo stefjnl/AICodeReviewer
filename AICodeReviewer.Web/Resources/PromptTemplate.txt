@@ -1,4 +1,12 @@
-Review this {LanguageName} code diff. Provide feedback using EXACTLY this format:
+Review this {LanguageName} code diff against the following coding standards:
+
+CODING STANDARDS:
+{StandardsText}
+
+REQUIREMENTS:
+{Requirements}
+
+Provide feedback using EXACTLY this format:
 
 **Critical** [Category] - [FileName] Line [X]: [Issue description]
 Suggestion: [Specific fix]
@@ -11,12 +19,6 @@ Suggestion: [Specific fix]
 
 **Style** [Category] - [FileName] Line [X]: [Issue description]
 Suggestion: [Specific fix]
-
-CODING STANDARDS:
-{StandardsText}
-
-REQUIREMENTS:
-{Requirements}
 
 DIFF:
 {GitDiff}
