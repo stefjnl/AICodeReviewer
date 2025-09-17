@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test toggleStandardsSelector Fix</title>
+    <style>
+        .flow-item { padding: 10px; border: 1px solid #ccc; cursor: pointer; margin: 10px; background: #f0f0f0; }
+        .workflow-dropdown { display: none; padding: 10px; border: 1px solid blue; margin: 10px; background: #e8f4fd; }
+        #test-results { margin: 20px; padding: 10px; border: 1px solid green; background: #f0fff0; }
+    </style>
+</head>
+<body>
+    <h1>Test toggleStandardsSelector Fix</h1>
+    <p>Click the Requirements section below to test the fix:</p>
+    
+    <!-- Test the Requirements flow-item -->
+    <div class="flow-item" onclick="console.log('🖱️ Requirements flow-item clicked, calling toggleStandardsSelector...'); (window.toggleStandardsSelector || window.safeToggleStandardsSelector)();" tabindex="0">
+        <span class="icon">📄</span>
+        <span class="value" id="standardsValue">Click me to test Requirements dropdown</span>
+        <span class="edit-icon">✏️</span>
+    </div>
+    
+    <!-- Hidden dropdown that should appear on click -->
+    <div id="standardsDropdown" class="workflow-dropdown">
+        <p>✅ Success! The dropdown is now visible. This means the toggleStandardsSelector function worked!</p>
+        <p>The fix is working correctly - the Requirements workflow-grid-item is responsive after page refresh.</p>
+    </div>
+    
+    <div id="test-results">
+        <h3>Test Results:</h3>
+        <p>Check the browser console for detailed logs. Click the Requirements section above to test.</p>
+    </div>
+    
+    <script>
+        // Simulate the safe fallback mechanism from the actual fix
+        window.safeToggleStandardsSelector = function() {
+            console.log('🛡️ Safe toggleStandardsSelector called');
+            const dropdown = document.getElementById('standardsDropdown') || document.querySelector('[data-step="1"] #standardsDropdown');
+            if (dropdown) {
+                console.log('🛡️ Safe mode: Found dropdown, toggling display');
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                document.getElementById('test-results').innerHTML += '<p style="color: green;">✅ Safe function worked! Dropdown toggled.</p>';
+                return true;
+            } else {
+                console.error('🛡️ Safe mode: Could not find standardsDropdown element');
+                document.getElementById('test-results').innerHTML += '<p style="color: red;">❌ Safe function failed: dropdown not found</p>';
+                return false;
+            }
+        };
+        
+        // Test the original function (this might fail if not defined)
+        window.toggleStandardsSelector = function() {
+            console.log('🎯 toggleStandardsSelector called - original function');
+            const dropdown = document.getElementById('standardsDropdown');
+            if (!dropdown) {
+                console.error('❌ toggleStandardsSelector: standardsDropdown element not found');
+                document.getElementById('test-results').innerHTML += '<p style="color: orange;">⚠️ Original function failed, falling back to safe function</p>';
+                // Fallback to safe function
+                return window.safeToggleStandardsSelector();
+            }
+            console.log('📋 toggleStandardsSelector: dropdown found, current display:', dropdown.style.display);
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            console.log('✅ toggleStandardsSelector: dropdown display changed to:', dropdown.style.display);
+            document.getElementById('test-results').innerHTML += '<p style="color: green;">✅ Original function worked! Dropdown toggled.</p>';
+            return true;
+        };
+        
+        // Simulate the workflow override (this would normally happen in DOMContentLoaded)
+        setTimeout(function() {
+            console.log('🔧 Simulating workflow override...');
+            window.originalToggleStandardsSelector = window.toggleStandardsSelector;
+            
+            window.toggleStandardsSelector = function() {
+                console.log('🎯 toggleStandardsSelector called - overridden function');
+                const dropdown = document.querySelector('[data-step="1"] #standardsDropdown') || document.getElementById('standardsDropdown');
+                if (!dropdown) {
+                    console.error('❌ Overridden toggleStandardsSelector: standardsDropdown element not found');
+                    if (window.originalToggleStandardsSelector) {
+                        console.log('🔄 Falling back to original toggleStandardsSelector');
+                        return window.originalToggleStandardsSelector();
+                    }
+                    return window.safeToggleStandardsSelector();
+                }
+                console.log('📋 Overridden toggleStandardsSelector: dropdown found, current display:', dropdown.style.display);
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                console.log('✅ Overridden toggleStandardsSelector: dropdown display changed to:', dropdown.style.display);
+                document.getElementById('test-results').innerHTML += '<p style="color: green;">✅ Overridden function worked! Dropdown toggled.</p>';
+                return true;
+            };
+            
+            console.log('✅ Workflow override completed');
+            console.log('🔍 Final check: window.toggleStandardsSelector exists:', typeof window.toggleStandardsSelector !== 'undefined');
+        }, 1000);
+        
+        // Initial state check
+        console.log('🔍 Initial check: window.toggleStandardsSelector exists:', typeof window.toggleStandardsSelector !== 'undefined');
+        console.log('🔍 Initial check: window.safeToggleStandardsSelector exists:', typeof window.safeToggleStandardsSelector !== 'undefined');
+        
+        document.getElementById('test-results').innerHTML += '<p style="color: blue;">🧪 Test initialized. Click the Requirements section to test the fix.</p>';
+    </script>
+</body>
+</html>

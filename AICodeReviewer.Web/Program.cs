@@ -1,5 +1,7 @@
 using AICodeReviewer.Web.Hubs;
 using AICodeReviewer.Web.Services;
+using AICodeReviewer.Web.Domain.Interfaces;
+using AICodeReviewer.Web.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +10,11 @@ builder.Services.AddControllersWithViews(options =>
 {
     // Disable antiforgery validation for AJAX endpoints
     options.Filters.Add(new Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryTokenAttribute());
+})
+.AddJsonOptions(options =>
+{
+    // Configure JSON serialization to use string enum conversion
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
 builder.Services.AddMemoryCache(options =>
@@ -17,6 +24,14 @@ builder.Services.AddMemoryCache(options =>
 
 // Register custom services
 builder.Services.AddScoped<AIPromptResponseService>();
+
+// Register domain services
+builder.Services.AddScoped<IAnalysisService, AnalysisService>();
+builder.Services.AddScoped<IRepositoryManagementService, RepositoryManagementService>();
+builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService>();
+builder.Services.AddScoped<IPathValidationService, PathValidationService>();
+builder.Services.AddScoped<ISignalRBroadcastService, SignalRBroadcastService>();
+builder.Services.AddScoped<IDirectoryBrowsingService, DirectoryBrowsingService>();
 
 // In service registration section
 builder.Services.AddSignalR();

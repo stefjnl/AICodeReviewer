@@ -5,7 +5,7 @@
     var analysisId = Context.Session.GetString("AnalysisId");
 }
 
-<div class="text-center">
+<div class="text-center workflow-main-container">
     <h1 class="display-4">Welcome</h1>
     
     <!-- Debug info for development -->
@@ -23,6 +23,26 @@
             console.log('🆔 Set window.currentAnalysisId to:', window.currentAnalysisId);
             </text>
         }
+        
+        // Debug toggleStandardsSelector function availability
+        console.log('🔍 Debug: Checking toggleStandardsSelector availability at page load');
+        console.log('🔍 window.toggleStandardsSelector exists:', typeof window.toggleStandardsSelector !== 'undefined');
+        console.log('🔍 window.toggleStandardsSelector type:', typeof window.toggleStandardsSelector);
+        
+        // Safety mechanism: Define a fallback toggleStandardsSelector function
+        // This ensures the function exists even if the main definition fails
+        window.safeToggleStandardsSelector = function() {
+            console.log('🛡️ Safe toggleStandardsSelector called');
+            const dropdown = document.getElementById('standardsDropdown') || document.querySelector('[data-step="1"] #standardsDropdown');
+            if (dropdown) {
+                console.log('🛡️ Safe mode: Found dropdown, toggling display');
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            } else {
+                console.error('🛡️ Safe mode: Could not find standardsDropdown element');
+            }
+        };
+        
+        console.log('🛡️ Safe toggleStandardsSelector function defined');
     </script>
     
     @if (ViewBag.BranchInfo != null)
@@ -30,354 +50,792 @@
         <div class="git-status">
             @if (ViewBag.IsError)
             {
-                <div class="alert alert-warning" role="alert">
+                <div class="workflow-alert workflow-alert-warning" role="alert">
                     ⚠️ @ViewBag.BranchInfo
                 </div>
             }
             else
             {
-                <div class="alert alert-success" role="alert">
+                <div class="workflow-alert workflow-alert-success" role="alert">
                     🌿 Current branch: <strong>@ViewBag.BranchInfo</strong>
                 </div>
             }
         </div>
     }
     
-    <!-- Document Management Section -->
-    <div class="document-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-        <h5>📁 Requirements Documents</h5>
+    <!-- CSS Grid Workflow Container -->
+    <div class="workflow-grid-container">
         
-        <!-- Folder Configuration -->
-        <div class="mb-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-            <form asp-action="SetDocumentsFolder" method="post">
-                <div class="input-group">
-                    <input type="text" class="form-control" name="folderPath"
-                           placeholder="Documents folder path"
-                           value="@ViewBag.DocumentsFolder">
-                    <button class="btn btn-outline-secondary" type="submit">Set Folder</button>
-                </div>
-            </form>
-        </div>
-        
-        <!-- Document Selection -->
-        @if (ViewBag.AvailableDocuments.Count > 0)
-        {
-            <form asp-action="SelectDocuments" method="post">
+        <!-- Step 1: Requirements -->
+        <div class="workflow-grid-item" data-step="1">
+            <div class="workflow-grid-item-header">
+                <span>📁</span>
+                Requirements
+            </div>
+            <div class="workflow-grid-item-content">
+                <!-- Folder Configuration -->
                 <div class="mb-3">
-                    <label>Select coding standards:</label>
-                    @foreach (var doc in ViewBag.AvailableDocuments)
+                    <form asp-action="SetDocumentsFolder" method="post">
+                        <div class="workflow-input-group">
+                            <input type="text" class="workflow-form-control" name="folderPath"
+                                   placeholder="Documents folder path"
+                                   value="@ViewBag.DocumentsFolder">
+                            <button class="workflow-btn workflow-btn-secondary" type="submit">Set Folder</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Document Selection -->
+                <div class="flow-item" onclick="console.log('🖱️ Requirements flow-item clicked, calling toggleStandardsSelector...'); (window.toggleStandardsSelector || window.safeToggleStandardsSelector)();" tabindex="0">
+                    <span class="icon">📄</span>
+                    <span class="value" id="standardsValue">
+                        @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
+                        {
+                            @($"Selected: {string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))}")
+                        }
+                        else
+                        {
+                            <em>No documents selected</em>
+                        }
+                    </span>
+                    <span class="edit-icon">✏️</span>
+                </div>
+
+                <!-- Hidden form that appears on click -->
+                <div id="standardsDropdown" class="workflow-dropdown" style="display: none;">
+                    @if (ViewBag.AvailableDocuments.Count > 0)
                     {
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox"
-                                   name="selectedDocuments" value="@doc"
-                                   @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
-                            <label class="form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
+                        <form asp-action="SelectDocuments" method="post" id="documentSelectionForm">
+                            <div class="mb-3">
+                                <label>Select coding standards:</label>
+                                @foreach (var doc in ViewBag.AvailableDocuments)
+                                {
+                                    <div class="workflow-form-check">
+                                        <input class="workflow-form-check-input" type="checkbox"
+                                               name="selectedDocuments" value="@doc"
+                                               @(ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Contains(doc) ? "checked" : "")>
+                                        <label class="workflow-form-check-label">@DocumentService.GetDocumentDisplayName(doc)</label>
+                                    </div>
+                                }
+                            </div>
+                            <button type="submit" class="workflow-btn workflow-btn-primary" onclick="handleDocumentSelection(event)">Apply Selection</button>
+                        </form>
+                        <script>
+                            // Handle document selection with AJAX to prevent page reload
+                            function handleDocumentSelection(event) {
+                                event.preventDefault();
+                                const form = document.getElementById('documentSelectionForm');
+                                const formData = new FormData(form);
+                                
+                                fetch('/Home/SelectDocuments', {
+                                    method: 'POST',
+                                    body: formData
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success !== false) {
+                                        console.log('[Index] Document selection successful');
+                                        // Update the UI to reflect the selection
+                                        const selectedDocs = Array.from(formData.getAll('selectedDocuments'));
+                                        const displayText = selectedDocs.length > 0
+                                            ? `Selected: ${selectedDocs.map(doc => doc.split('/').pop()).join(', ')}`
+                                            : 'No documents selected';
+                                        document.getElementById('standardsValue').innerHTML = `<em>${displayText}</em>`;
+                                        document.getElementById('standardsDropdown').style.display = 'none';
+                                        
+                                        // Validate and advance workflow - auto-advance through all steps with defaults
+                                        if (window.workflowAPI) {
+                                            console.log('[Index] Validating step 1 after document selection');
+                                            window.workflowAPI.validateAndAdvanceStep(1);
+                                            
+                                            // Auto-advance through steps 2, 3, 4, and 5 since they have defaults
+                                            // Use a more reliable chained approach
+                                            setTimeout(() => {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-advancing to step 2 (language)');
+                                                    window.workflowAPI.validateAndAdvanceStep(2);
+                                                }
+                                            }, 200);
+                                            
+                                            setTimeout(() => {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-advancing to step 3 (repository)');
+                                                    // Set default repository path if not set
+                                                    const repoInput = document.getElementById('repositoryPathInput');
+                                                    if (repoInput && !repoInput.value.trim()) {
+                                                        repoInput.value = '@Html.Raw(ViewBag.RepositoryPath ?? "")' || 'C:\\git\\AICodeReviewer\\AICodeReviewer';
+                                                        console.log('[Index] Set default repository path:', repoInput.value);
+                                                    }
+                                                    window.workflowAPI.validateAndAdvanceStep(3);
+                                                }
+                                            }, 400);
+                                            
+                                            setTimeout(() => {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-advancing to step 4 (analysis type)');
+                                                    window.workflowAPI.validateAndAdvanceStep(4);
+                                                }
+                                            }, 600);
+                                            
+                                            setTimeout(() => {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-advancing to step 5 (model selection)');
+                                                    window.workflowAPI.validateAndAdvanceStep(5);
+                                                }
+                                            }, 800);
+                                            
+                                            setTimeout(() => {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-advancing to step 6 (start analysis)');
+                                                    window.workflowAPI.validateAndAdvanceStep(6);
+                                                }
+                                            }, 1000);
+                                        }
+                                    } else {
+                                        console.error('[Index] Document selection failed:', data.error);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('[Index] Error submitting document selection:', error);
+                                    // Fallback to traditional form submission
+                                    form.submit();
+                                });
+                            }
+                            
+                            // Add validation after document selection form submission (fallback)
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const documentForm = document.querySelector('[data-step="1"] form');
+                                if (documentForm) {
+                                    documentForm.addEventListener('submit', function(e) {
+                                        // Only use fallback if the onclick handler didn't prevent default
+                                        if (!e.defaultPrevented) {
+                                            setTimeout(function() {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Validating step 1 after document selection (fallback)');
+                                                    window.workflowAPI.validateAndAdvanceStep(1);
+                                                    // Auto-advance through steps 2, 3, 4, and 5 since they have defaults - fallback
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 2 (language) - fallback');
+                                                            window.workflowAPI.validateAndAdvanceStep(2);
+                                                        }
+                                                    }, 200);
+                                                    
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 3 (repository) - fallback');
+                                                            // Set default repository path if not set
+                                                            const repoInput = document.getElementById('repositoryPathInput');
+                                                            if (repoInput && !repoInput.value.trim()) {
+                                                                repoInput.value = '@Html.Raw(ViewBag.RepositoryPath ?? "")' || 'C:\\git\\AICodeReviewer\\AICodeReviewer';
+                                                                console.log('[Index] Set default repository path (fallback):', repoInput.value);
+                                                            }
+                                                            window.workflowAPI.validateAndAdvanceStep(3);
+                                                        }
+                                                    }, 400);
+                                                    
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 4 (analysis type) - fallback');
+                                                            window.workflowAPI.validateAndAdvanceStep(4);
+                                                        }
+                                                    }, 600);
+                                                    
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 5 (model selection) - fallback');
+                                                            window.workflowAPI.validateAndAdvanceStep(5);
+                                                        }
+                                                    }, 800);
+                                                    
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 6 (start analysis) - fallback');
+                                                            window.workflowAPI.validateAndAdvanceStep(6);
+                                                        }
+                                                    }, 1000);
+                                                }
+                                            }, 500);
+                                        }
+                                    });
+                                }
+                            });
+                        </script>
+                    }
+                    else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
+                    {
+                        <div class="workflow-alert workflow-alert-info">
+                            📋 No .md documents found in folder
                         </div>
                     }
                 </div>
-                <button type="submit" class="btn btn-primary">Apply Selection</button>
-            </form>
-        }
-        else if (!string.IsNullOrEmpty(ViewBag.DocumentsFolder))
-        {
-            <div class="alert alert-info">
-                📋 No .md documents found in folder
-            </div>
-        }
-        
-        <!-- Selected Documents Summary -->
-        @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
-        {
-            <div class="alert alert-success mt-3">
-                ✅ Selected: <strong>@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</strong>
-            </div>
-        }
-        
-        <!-- Document Scan Error -->
-        @if (ViewBag.DocumentScanError != null)
-        {
-            <div class="alert alert-warning mt-3">
-                ⚠️ @ViewBag.DocumentScanError
-            </div>
-        }
-    </div>
-    
-    <!-- Language Selection Section -->
-    <div class="language-section mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-        <h5>🐍 Programming Language</h5>
-        <div class="mb-3">
-            <label for="languageSelect" class="form-label">Select the programming language for analysis:</label>
-            <select class="form-select" id="languageSelect" name="language">
-                <option value="NET" selected>.NET</option>
-                <option value="Python">Python</option>
-            </select>
-        </div>
-    </div>
-    
-    <!-- Repository Path Section -->
-    <div class="repository-section mt-4">
-        <h5>📁 Git Repository</h5>
-        
-        <!-- Repository Path Configuration -->
-        <div class="mb-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-            <form asp-action="SetRepositoryPath" method="post">
-                <div class="input-group">
-                    <input type="text" class="form-control" name="repositoryPath"
-                           placeholder="Repository path"
-                           value="@ViewBag.RepositoryPath"
-                           id="repositoryPathInput">
-                    <button class="btn btn-outline-secondary" type="button" onclick="openDirectoryBrowser()">
-                        📁 Browse
-                    </button>
-                    <button class="btn btn-outline-primary" type="submit">Set Repository</button>
-                </div>
-            </form>
-        </div>
-        
-        <!-- Directory Browser Modal -->
-        <div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">📁 Select Repository Directory</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                
+                <!-- Selected Documents Summary -->
+                @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
+                {
+                    <div class="workflow-alert workflow-alert-success mt-3">
+                        ✅ Selected: <strong>@string.Join(", ", ((List<string>)ViewBag.SelectedDocuments).Select(doc => DocumentService.GetDocumentDisplayName(doc)))</strong>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="currentDirectoryPath" readonly>
-                                <button class="btn btn-outline-secondary" type="button" onclick="navigateToParent()">
-                                    ⬆️ Up
-                                </button>
-                                <button class="btn btn-outline-primary" type="button" onclick="selectCurrentDirectory()">
-                                    ✅ Select This Folder
-                                </button>
-                            </div>
-                        </div>
+                }
+                
+                <!-- Document Scan Error -->
+                @if (ViewBag.DocumentScanError != null)
+                {
+                    <div class="workflow-alert workflow-alert-warning mt-3">
+                        ⚠️ @ViewBag.DocumentScanError
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <!-- Step 2: Language -->
+        <div class="workflow-grid-item" data-step="2">
+            <div class="workflow-grid-item-header">
+                <span>⚙️</span>
+                Language
+            </div>
+            <div class="workflow-grid-item-content">
+                <div class="selected-item">
+                    <span class="icon">🐍</span>
+                    <span class="value" id="languageValue">Python</span>
+                    <span class="edit-icon">✏️</span>
+                </div>
+
+                <!-- Language selection dropdown inside white content area -->
+                <div class="language-selection">
+                    <label for="language-dropdown">Select Language:</label>
+                    <select id="language-dropdown" class="form-select">
+                        <option value="csharp">.NET (C#)</option>
+                        <option value="python" selected>Python</option>
+                        <option value="javascript">JavaScript</option>
+                    </select>
+                </div>
+                <script>
+                    // Add validation for language selection
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const languageDropdown = document.getElementById('language-dropdown');
                         
-                        <div class="directory-browser-container" style="max-height: 400px; overflow-y: auto;">
-                            <div id="directoryBrowserLoading" class="text-center p-4" style="display: none;">
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="mt-2">Loading directories...</p>
-                            </div>
-                            
-                            <div id="directoryBrowserContent">
-                                <!-- Directory content will be loaded here -->
-                            </div>
-                            
-                            <div id="directoryBrowserError" class="alert alert-danger" style="display: none;">
-                                <!-- Error messages will appear here -->
-                            </div>
+                        // Auto-validate step 2 when workflow reaches it (language has default value)
+                        function autoValidateStep2() {
+                            if (window.workflowAPI && window.horizontalWorkflow) {
+                                const currentStep = window.horizontalWorkflow.getCurrentStep();
+                                // Auto-validate if we're at step 2 and it has valid default
+                                if (currentStep === 2) {
+                                    console.log('[Index] Auto-validating step 2 - checking default language');
+                                    // Step 2 should be valid by default since Python is pre-selected
+                                    const isValid = window.workflowAPI.isStepValid(2);
+                                    if (isValid) {
+                                        console.log('[Index] Step 2 auto-validation successful, advancing');
+                                        window.workflowAPI.validateAndAdvanceStep(2);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Listen for workflow step changes to auto-validate when reaching step 2
+                        window.addEventListener('workflowStepChanged', function(event) {
+                            if (event.detail.currentStep === 2) {
+                                console.log('[Index] Reached step 2, triggering auto-validation');
+                                autoValidateStep2();
+                            }
+                        });
+                        
+                        // Also try on page load in case workflow is already at step 2
+                        setTimeout(autoValidateStep2, 500);
+                        
+                        if (languageDropdown) {
+                            languageDropdown.addEventListener('change', function() {
+                                // Update the display with the selected language
+                                updateLanguageDisplay(this.value);
+                                
+                                setTimeout(function() {
+                                    if (window.workflowAPI) {
+                                        console.log('[Index] Validating step 2 after language selection');
+                                        window.workflowAPI.validateAndAdvanceStep(2);
+                                    }
+                                }, 300);
+                            });
+                        }
+                    });
+                    
+                    // Function to update language display
+                    function updateLanguageDisplay(languageValue) {
+                        const languageValueElement = document.getElementById('languageValue');
+                        const languageIcon = document.querySelector('.selected-item .icon');
+                        
+                        if (languageValueElement && languageIcon) {
+                            switch(languageValue) {
+                                case 'csharp':
+                                    languageValueElement.textContent = '.NET (C#)';
+                                    languageIcon.textContent = '🔷';
+                                    break;
+                                case 'python':
+                                    languageValueElement.textContent = 'Python';
+                                    languageIcon.textContent = '🐍';
+                                    break;
+                                case 'javascript':
+                                    languageValueElement.textContent = 'JavaScript';
+                                    languageIcon.textContent = '📜';
+                                    break;
+                                default:
+                                    languageValueElement.textContent = 'Python';
+                                    languageIcon.textContent = '🐍';
+                            }
+                        }
+                    }
+                </script>
+            </div>
+        </div>
+        
+        <!-- Step 3: Repository -->
+        <div class="workflow-grid-item" data-step="3">
+            <div class="workflow-grid-item-header">
+                <span>📁</span>
+                Repository
+            </div>
+            <div class="workflow-grid-item-content">
+                <!-- Repository Path Configuration -->
+                <div class="mb-3">
+                    <form asp-action="SetRepositoryPath" method="post" id="repositoryPathForm">
+                        <div class="workflow-input-group">
+                            <input type="text" class="workflow-form-control" name="repositoryPath"
+                                   placeholder="Repository path"
+                                   value="@ViewBag.RepositoryPath"
+                                   id="repositoryPathInput">
+                            <button class="workflow-btn workflow-btn-secondary" type="button" onclick="openDirectoryBrowser()">
+                                📁 Browse
+                            </button>
+                            <button class="workflow-btn workflow-btn-primary" type="submit" onclick="handleRepositoryPath(event)">Set Repository</button>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="selectCurrentDirectory()">Select Folder</button>
-                    </div>
+                    </form>
+                    <script>
+                        // Handle repository path submission with AJAX to prevent page reload
+                        function handleRepositoryPath(event) {
+                            event.preventDefault();
+                            const form = document.getElementById('repositoryPathForm');
+                            const formData = new FormData(form);
+                            
+                            fetch('/Home/SetRepositoryPath', {
+                                method: 'POST',
+                                body: formData
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success !== false) {
+                                    console.log('[Index] Repository path set successfully');
+                                    // Validate and advance workflow
+                                    if (window.workflowAPI) {
+                                        console.log('[Index] Validating step 3 after repository selection');
+                                        window.workflowAPI.validateAndAdvanceStep(3);
+                                    }
+                                } else {
+                                    console.error('[Index] Repository path setting failed:', data.error);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('[Index] Error submitting repository path:', error);
+                                // Fallback to traditional form submission
+                                form.submit();
+                            });
+                        }
+                        
+                        // Add validation after repository path form submission (fallback)
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const repositoryForm = document.querySelector('[data-step="3"] form');
+                            if (repositoryForm) {
+                                repositoryForm.addEventListener('submit', function(e) {
+                                    // Only use fallback if the onclick handler didn't prevent default
+                                    if (!e.defaultPrevented) {
+                                        setTimeout(function() {
+                                            if (window.workflowAPI) {
+                                                console.log('[Index] Validating step 3 after repository selection (fallback)');
+                                                // Ensure repository path is set to default if empty for fallback validation
+                                                const repoInput = document.getElementById('repositoryPathInput');
+                                                if (repoInput && !repoInput.value.trim()) {
+                                                    repoInput.value = '@Html.Raw(ViewBag.RepositoryPath ?? "")' || 'C:\\git\\AICodeReviewer\\AICodeReviewer';
+                                                    console.log('[Index] Set default repository path (fallback validation):', repoInput.value);
+                                                }
+                                                window.workflowAPI.validateAndAdvanceStep(3);
+                                            }
+                                        }, 500);
+                                    }
+                                });
+                            }
+                        });
+                    </script>
                 </div>
+                
             </div>
         </div>
         
-        <!-- Analysis Type Selection -->
-        <div class="analysis-type-section mt-3" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-            <h6>🔍 Analysis Type</h6>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
-                <label class="form-check-label" for="uncommittedChanges">
-                    Uncommitted Changes
-                </label>
+        <!-- Step 4: Analysis -->
+        <div class="workflow-grid-item" data-step="4">
+            <div class="workflow-grid-item-header">
+                <span>🔍</span>
+                Analysis
             </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
-                <label class="form-check-label" for="specificCommit">
-                    Specific Commit
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
-                <label class="form-check-label" for="singleFile">
-                    Single File
-                </label>
-            </div>
-            <div class="mt-2" id="commitIdContainer" style="display: none;">
-                <div class="input-group" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-                    <input type="text" class="form-control" id="commitId" name="commitId"
-                           placeholder="Enter commit ID (full or partial hash)">
-                    <button class="btn btn-outline-secondary" type="button" id="validateCommit">Validate</button>
+            <div class="workflow-grid-item-content">
+                <div class="workflow-form-check">
+                    <input class="workflow-form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
+                    <label class="workflow-form-check-label" for="uncommittedChanges">
+                        Uncommitted Changes
+                    </label>
                 </div>
-                <div id="commitValidationResult" class="form-text"></div>
-            </div>
-            <div class="mt-2" id="filePickerContainer" style="display: none;">
-                <div class="input-group" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-                    <input type="text" class="form-control" id="filePath" name="filePath"
-                           placeholder="Enter full file path (e.g., C:\path\to\file.py or /path/to/file.py)"
-                           style="transition: background-color 0.3s, border-color 0.3s;">
-                    <button class="btn btn-outline-secondary" type="button" id="browseFile">Browse</button>
-                    <input type="file" id="fileInput" accept=".cs,.js,.py" style="display: none;">
+                <div class="workflow-form-check">
+                    <input class="workflow-form-check-input" type="radio" name="analysisType" id="stagedChanges" value="staged">
+                    <label class="workflow-form-check-label" for="stagedChanges">
+                        Staged Changes Only
+                    </label>
                 </div>
-                <div id="fileValidationResult" class="form-text"></div>
-                <small class="text-muted">
-                    <strong>Note:</strong> Due to browser security, file browsing only provides the filename.
-                    Please enter the <strong>full file path</strong> manually or use the repository-relative path.
-                    Supported types: .cs (C#), .js (JavaScript), .py (Python)
-                </small>
+                <div class="workflow-form-check">
+                    <input class="workflow-form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
+                    <label class="workflow-form-check-label" for="specificCommit">
+                        Specific Commit
+                    </label>
+                </div>
+                <div class="workflow-form-check">
+                    <input class="workflow-form-check-input" type="radio" name="analysisType" id="singleFile" value="singlefile">
+                    <label class="workflow-form-check-label" for="singleFile">
+                        Single File
+                    </label>
+                </div>
+                <div class="mt-2" id="commitIdContainer" style="display: none;">
+                    <div class="workflow-input-group">
+                        <input type="text" class="workflow-form-control" id="commitId" name="commitId"
+                               placeholder="Enter commit ID (full or partial hash)">
+                        <button class="workflow-btn workflow-btn-secondary" type="button" id="validateCommit">Validate</button>
+                    </div>
+                    <div id="commitValidationResult" class="workflow-form-text"></div>
+                </div>
+                <div class="mt-2" id="filePickerContainer" style="display: none;">
+                    <div class="workflow-input-group">
+                        <input type="text" class="workflow-form-control" id="filePath" name="filePath"
+                               placeholder="Enter full file path (e.g., C:\path\to\file.py or /path/to/file.py)"
+                               style="transition: background-color 0.3s, border-color 0.3s;">
+                        <button class="workflow-btn workflow-btn-secondary" type="button" id="browseFile">Browse</button>
+                        <input type="file" id="fileInput" accept=".cs,.js,.py" style="display: none;">
+                    </div>
+                    <div id="fileValidationResult" class="workflow-form-text"></div>
+                    <small class="workflow-text-muted">
+                        <strong>Note:</strong> Due to browser security, file browsing only provides the filename.
+                        Please enter the <strong>full file path</strong> manually or use the repository-relative path.
+                        Supported types: .cs (C#), .js (JavaScript), .py (Python)
+                    </small>
+                </div>
+                <script>
+                    // Add validation for analysis type selection
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const analysisTypeRadios = document.querySelectorAll('input[name="analysisType"]');
+                        const commitIdInput = document.getElementById('commitId');
+                        const filePathInput = document.getElementById('filePath');
+                        
+                        // Auto-validate step 4 when workflow reaches it (analysis type has default value)
+                        function autoValidateStep4() {
+                            if (window.workflowAPI && window.horizontalWorkflow) {
+                                const currentStep = window.horizontalWorkflow.getCurrentStep();
+                                // Auto-validate if we're at step 4 and it has valid default
+                                if (currentStep === 4) {
+                                    console.log('[Index] Auto-validating step 4 - checking default analysis type');
+                                    // Step 4 should be valid by default since "uncommitted" is pre-selected
+                                    const isValid = window.workflowAPI.isStepValid(4);
+                                    if (isValid) {
+                                        console.log('[Index] Step 4 auto-validation successful, advancing');
+                                        window.workflowAPI.validateAndAdvanceStep(4);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Listen for workflow step changes to auto-validate when reaching step 4
+                        window.addEventListener('workflowStepChanged', function(event) {
+                            if (event.detail.currentStep === 4) {
+                                console.log('[Index] Reached step 4, triggering auto-validation');
+                                autoValidateStep4();
+                            }
+                        });
+                        
+                        // Also try on page load in case workflow is already at step 4
+                        setTimeout(autoValidateStep4, 500);
+                        
+                        // Validate when analysis type changes
+                        analysisTypeRadios.forEach(radio => {
+                            radio.addEventListener('change', function() {
+                                setTimeout(function() {
+                                    if (window.workflowAPI) {
+                                        console.log('[Index] Validating step 4 after analysis type change');
+                                        window.workflowAPI.validateAndAdvanceStep(4);
+                                    }
+                                }, 300);
+                            });
+                        });
+                        
+                        // Validate when commit ID is entered
+                        if (commitIdInput) {
+                            commitIdInput.addEventListener('input', function() {
+                                setTimeout(function() {
+                                    const currentAnalysisType = document.querySelector('input[name="analysisType"]:checked');
+                                    if (currentAnalysisType && currentAnalysisType.value === '2' && window.workflowAPI) {
+                                        console.log('[Index] Validating step 4 after commit ID input');
+                                        window.workflowAPI.validateAndAdvanceStep(4);
+                                    }
+                                }, 500);
+                            });
+                        }
+                        
+                        // Validate when file path is entered
+                        if (filePathInput) {
+                            filePathInput.addEventListener('input', function() {
+                                setTimeout(function() {
+                                    const currentAnalysisType = document.querySelector('input[name="analysisType"]:checked');
+                                    if (currentAnalysisType && currentAnalysisType.value === '3' && window.workflowAPI) {
+                                        console.log('[Index] Validating step 4 after file path input');
+                                        window.workflowAPI.validateAndAdvanceStep(4);
+                                    }
+                                }, 500);
+                            });
+                        }
+                    });
+                </script>
             </div>
         </div>
         
-        <!-- Git Diff Display -->
-        <div id="gitDiffSection" class="git-diff-section">
-            @if (ViewBag.GitDiff != null)
+        <!-- Step 5: Model -->
+        <div class="workflow-grid-item" data-step="5">
+            <div class="workflow-grid-item-header">
+                <span>🤖</span>
+                Model
+            </div>
+            <div class="workflow-grid-item-content">
+                <div class="flow-item" onclick="toggleModelSelector()" tabindex="0">
+                    <span class="icon">🤖</span>
+                    <span class="value" id="modelValue">
+                        @if (ViewBag.AvailableModels != null && ViewBag.AvailableModels.Count > 0)
+                        {
+                            @(ViewBag.AvailableModels[0])
+                        }
+                        else
+                        {
+                            <em>No models available</em>
+                        }
+                    </span>
+                    <span class="edit-icon">✏️</span>
+                </div>
+
+                <!-- Hidden dropdown that appears on click -->
+                <div id="modelDropdown" class="workflow-dropdown" style="display: none;">
+                    <select class="workflow-form-select" id="modelSelect" name="model">
+                        @if (ViewBag.AvailableModels != null && ViewBag.AvailableModels.Count > 0)
+                        {
+                            var firstModel = ViewBag.AvailableModels[0];
+                            @foreach (var availableModel in ViewBag.AvailableModels)
+                            {
+                                if (availableModel == firstModel)
+                                {
+                                    <option value="@availableModel" selected>@availableModel</option>
+                                }
+                                else
+                                {
+                                    <option value="@availableModel">@availableModel</option>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <option value="">No models available</option>
+                        }
+                    </select>
+                </div>
+                <script>
+                    // Add validation for model selection
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const modelSelect = document.getElementById('modelSelect');
+                        
+                        // Auto-validate step 5 when workflow reaches it (model has default value)
+                        function autoValidateStep5() {
+                            if (window.workflowAPI && window.horizontalWorkflow) {
+                                const currentStep = window.horizontalWorkflow.getCurrentStep();
+                                // Auto-validate if we're at step 5 and it has valid default
+                                if (currentStep === 5) {
+                                    console.log('[Index] Auto-validating step 5 - checking default model');
+                                    // Step 5 should be valid by default since first model is pre-selected
+                                    const isValid = window.workflowAPI.isStepValid(5);
+                                    if (isValid) {
+                                        console.log('[Index] Step 5 auto-validation successful, advancing');
+                                        window.workflowAPI.validateAndAdvanceStep(5);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Listen for workflow step changes to auto-validate when reaching step 5
+                        window.addEventListener('workflowStepChanged', function(event) {
+                            if (event.detail.currentStep === 5) {
+                                console.log('[Index] Reached step 5, triggering auto-validation');
+                                autoValidateStep5();
+                            }
+                        });
+                        
+                        // Also try on page load in case workflow is already at step 5
+                        setTimeout(autoValidateStep5, 500);
+                        
+                        if (modelSelect) {
+                            modelSelect.addEventListener('change', function() {
+                                setTimeout(function() {
+                                    if (window.workflowAPI) {
+                                        console.log('[Index] Validating step 5 after model selection');
+                                        window.workflowAPI.validateAndAdvanceStep(5);
+                                    }
+                                }, 300);
+                            });
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Start Analysis Button - Below Grid -->
+    <div class="start-button-container">
+        <button id="startAnalysisBtn" class="workflow-btn workflow-btn-success workflow-btn-lg" onclick="startAnalysisFromWorkflow()">
+            🚀 Start Analysis
+        </button>
+        <div class="mt-3">
+            <small class="workflow-text-muted">
+                Click to begin the AI code analysis with your selected configuration
+            </small>
+        </div>
+    </div>
+
+    <!-- Git Diff Display (Outside workflow-container) -->
+    <div id="gitDiffSection" class="git-diff-section">
+        @if (ViewBag.GitDiff != null)
+        {
+            @if (ViewBag.GitDiffError)
             {
-                @if (ViewBag.GitDiffError)
-                {
-                    <div class="alert alert-warning">
-                        ⚠️ @ViewBag.GitDiff
-                    </div>
-                }
-                else
-                {
-                    <div class="card">
-                        <div class="card-header bg-info text-white">
-                            <h6 class="mb-0">
-                                <button class="btn btn-link text-white" type="button" data-bs-toggle="collapse" data-bs-target="#gitDiffCollapse">
-                                    📊 Git Changes (Click to expand/collapse)
-                                </button>
-                            </h6>
-                        </div>
-                        <div class="collapse" id="gitDiffCollapse">
-                            <div class="card-body">
-                                <pre class="git-diff-text" style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em; max-height: 300px; overflow-y: auto;">@ViewBag.GitDiff</pre>
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-        
-        <!-- Commit Analysis Info (shown when specific commit is selected) -->
-        <div id="commitAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
-            <div class="d-flex align-items-center">
-                <div class="me-2">🔍</div>
-                <div>
-                    <strong>Commit Analysis Mode</strong><br>
-                    <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
+                <div class="workflow-alert workflow-alert-warning">
+                    ⚠️ @ViewBag.GitDiff
                 </div>
+            }
+            else
+            {
+                <div class="workflow-card">
+                    <div class="workflow-card-header">
+                        <h6 class="mb-0">
+                            <button class="workflow-btn workflow-btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#gitDiffCollapse">
+                                📊 Git Changes (Click to expand/collapse)
+                            </button>
+                        </h6>
+                    </div>
+                    <div class="collapse" id="gitDiffCollapse">
+                        <div class="workflow-card-body">
+                            <pre class="git-diff-text workflow-pre" style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em; max-height: 300px; overflow-y: auto;">@ViewBag.GitDiff</pre>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- Commit Analysis Info (shown when specific commit is selected) -->
+    <div id="commitAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
+        <div class="d-flex align-items-center">
+            <div class="me-2">🔍</div>
+            <div>
+                <strong>Commit Analysis Mode</strong><br>
+                <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staged Changes Analysis Info (shown when staged changes is selected) -->
+    <div id="stagedAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
+        <div class="d-flex align-items-center">
+            <div class="me-2">📝</div>
+            <div>
+                <strong>Staged Changes Only Mode</strong><br>
+                <small>Analyze only the changes that have been staged for commit using 'git add'. No unstaged changes will be included.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Single File Analysis Info (shown when single file is selected) -->
+    <div id="singleFileAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
+        <div class="d-flex align-items-center">
+            <div class="me-2">📄</div>
+            <div>
+                <strong>Single File Analysis Mode</strong><br>
+                <small>Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Results - Always include but conditionally show/hide -->
+    <div class="analysis-results mt-4" id="analysisResultsSection" data-analysis-id="@(string.IsNullOrEmpty(analysisId) ? "" : analysisId)" @(string.IsNullOrEmpty(analysisId) && string.IsNullOrEmpty(analysisResult) && string.IsNullOrEmpty(analysisError) ? "class=\"hidden-analysis\"" : "")>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5>🔍 AI Analysis Results</h5>
+            <div class="btn-group" role="group" id="analysisButtonsContainer">
+                <!-- Buttons will be injected here by JS if needed -->
+                <button type="button" class="btn workflow-btn-secondary" id="newAnalysisBtn" onclick="resetAnalysisUI()" style="display: none;">
+                    <i class="fas fa-plus"></i> New Analysis
+                </button>
             </div>
         </div>
 
-        <!-- Single File Analysis Info (shown when single file is selected) -->
-        <div id="singleFileAnalysisInfo" class="alert alert-info mt-3" style="display: none;">
-            <div class="d-flex align-items-center">
-                <div class="me-2">📄</div>
-                <div>
-                    <strong>Single File Analysis Mode</strong><br>
-                    <small>Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</small>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- AI Analysis Section -->
-    <div class="analysis-section mt-5">
-        <h5>🤖 AI Code Analysis</h5>
-        
-        <!-- Progress Container -->
-        <div id="progressContainer" style="display: none;" class="mt-4">
-            <div class="alert alert-info">
+        <!-- Progress Message Display (for SignalR updates) -->
+        <div id="progressContainer" style="display: none;">
+            <div class="workflow-alert workflow-alert-info mb-3">
                 <div class="d-flex align-items-center">
-                    <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
                     <span id="progressMessage">Starting analysis...</span>
                 </div>
             </div>
-            <div class="mt-3">
-                <div class="fw-bold">Status:</div>
-                <div id="status">Waiting...</div>
-            </div>
         </div>
-        
-        <!-- Analysis Result Display -->
-        <div id="analysisResult" class="mt-4" style="display: none;">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h6 class="mb-0">🔍 AI Analysis Results</h6>
+
+        <!-- Analysis Result Display (for SignalR results) -->
+        <div id="analysisResult" style="display: none;">
+            <div class="workflow-card mb-3">
+                <div class="workflow-card-header workflow-card-header-success">
+                    <h6 class="mb-0">Analysis Results</h6>
                 </div>
-                <div class="card-body">
-                    <pre id="result" style="white-space: pre-wrap; font-family: monospace;"></pre>
+                <div class="workflow-card-body">
+                    <pre id="result" class="analysis-text workflow-pre" style="white-space: pre-wrap; font-family: monospace;"></pre>
                 </div>
             </div>
         </div>
-        
-        <!-- Run Analysis Form -->
-        @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
-        {
-            <div id="analysisForm">
-                <button type="button" class="btn btn-success btn-lg" onclick="startAnalysis()">
-                    🚀 Run AI Analysis
-                </button>
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-info">
-                📋 Please select coding standards documents above to enable AI analysis
-            </div>
-        }
-        
-        <!-- Analysis Results - Always include but conditionally show/hide -->
-        <div class="analysis-results mt-4" id="analysisResultsSection" data-analysis-id="@(string.IsNullOrEmpty(analysisId) ? "" : analysisId)" style="@((!string.IsNullOrEmpty(analysisId) || !string.IsNullOrEmpty(analysisResult) || !string.IsNullOrEmpty(analysisError)) ? "" : "display: none;")">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5>🔍 AI Analysis Results</h5>
-                <div class="btn-group" role="group" id="analysisButtonsContainer">
-                    <!-- Buttons will be injected here by JS if needed -->
+
+        <!-- Bottom Panel View -->
+        <div id="bottomPanelView">
+            @if (!string.IsNullOrEmpty(analysisResult))
+            {
+                <div class="workflow-card">
+                    <div class="workflow-card-header workflow-card-header-success">
+                        <h6 class="mb-0">Analysis Results</h6>
+                    </div>
+                    <div class="workflow-card-body">
+                        <pre class="analysis-text workflow-pre" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- Bottom Panel View -->
-            <div id="bottomPanelView">
-                @if (!string.IsNullOrEmpty(analysisResult))
-                {
-                    <div class="card">
-                        <div class="card-header bg-success text-white">
-                            <h6 class="mb-0">Analysis Results</h6>
-                        </div>
-                        <div class="card-body">
-                            <pre class="analysis-text" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="alert alert-info">
-                        <div class="d-flex align-items-center">
-                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                            <span>Analysis results will appear here...</span>
-                        </div>
-                    </div>
-                }
-            </div>
-            
-            <!-- Side Panel View (initially hidden) -->
-            <div id="sidePanelView" style="display: none;">
-                <div class="alert alert-info">
-                    <div class="d-flex align-items-center">
-                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                        <span>Loading side-panel view...</span>
-                    </div>
+            }
+        </div>
+
+        <!-- Side Panel View (initially hidden) -->
+        <div id="sidePanelView" style="display: none;">
+            <div class="workflow-alert workflow-alert-info">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span>Loading side-panel view...</span>
                 </div>
             </div>
         </div>
-        
-        @if (!string.IsNullOrEmpty(analysisError))
-        {
-            <div class="alert alert-danger mt-3" id="analysisErrorSection">
-                ❌ @analysisError
-            </div>
-        }
     </div>
 
-</div>
+@if (!string.IsNullOrEmpty(analysisError))
+{
+        <div class="workflow-alert workflow-alert-danger mt-3" id="analysisErrorSection">
+            ❌ @analysisError
+        </div>
+}
 
 <!-- SignalR Client Library -->
 <script src="https://unpkg.com/@@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
@@ -432,11 +890,14 @@
     }
     
     function loadSidePanelView() {
+        console.log('[Index] Loading side panel view, currentAnalysisId:', window.currentAnalysisId);
+        
         // Use the global currentAnalysisId from site.js
         if (!window.currentAnalysisId) {
+            console.error('[Index] No analysis ID available for side-panel view');
             const sidePanelView = document.getElementById('sidePanelView');
             if (sidePanelView) {
-                sidePanelView.innerHTML = '<div class="alert alert-warning">No analysis ID available for side-panel view</div>';
+                sidePanelView.innerHTML = '<div class="workflow-alert workflow-alert-warning">No analysis ID available for side-panel view</div>';
             }
             return;
         }
@@ -445,25 +906,65 @@
         const sidePanelView = document.getElementById('sidePanelView');
         if (sidePanelView) {
             sidePanelView.innerHTML =
-                '<div class="alert alert-info">' +
+                '<div class="workflow-alert workflow-alert-info">' +
                 '<div class="d-flex align-items-center">' +
                 '<div class="spinner-border spinner-border-sm me-2" role="status"></div>' +
                 '<span>Loading side-panel view...</span>' +
                 '</div>' +
                 '</div>';
+            sidePanelView.style.display = 'block';
         }
         
         // Redirect to results page with the analysis ID
+        console.log('[Index] Redirecting to results page:', window.currentAnalysisId);
         window.location.href = `/results/${window.currentAnalysisId}`;
     }
     
     // Initialize view based on current state
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('[Index] Initializing analysis results view');
+        
+        // Check if we have analysis data from session
+        const analysisId = '@(analysisId ?? "")';
+        const analysisResult = '@(Html.Raw(analysisResult?.Replace("'", "\\'") ?? ""))';
+        const analysisError = '@(Html.Raw(analysisError?.Replace("'", "\\'") ?? ""))';
+        
+        console.log('[Index] Session data - Analysis ID:', analysisId);
+        console.log('[Index] Session data - Has result:', !!analysisResult);
+        console.log('[Index] Session data - Has error:', !!analysisError);
+        
+        // Set global analysis ID
+        if (analysisId) {
+            window.currentAnalysisId = analysisId;
+            console.log('[Index] Set global analysis ID:', window.currentAnalysisId);
+        }
+        
         // Only initialize if the view switching elements exist
         const analysisResultsSection = document.getElementById('analysisResultsSection');
         if (analysisResultsSection) {
-            // Set initial state to bottom panel view
-            switchToBottomPanel();
+            // If we have analysis data, show the results section
+            if (analysisId || analysisResult || analysisError) {
+                console.log('[Index] Found analysis data, showing results section');
+                analysisResultsSection.style.display = 'block';
+                analysisResultsSection.classList.remove('hidden-analysis');
+                
+                // Update the analysis ID in the dataset
+                if (analysisId) {
+                    analysisResultsSection.dataset.analysisId = analysisId;
+                }
+                
+                // Set initial state to bottom panel view
+                switchToBottomPanel();
+                
+                // Inject analysis buttons if we have an analysis ID
+                if (analysisId && typeof injectAnalysisButtons === 'function') {
+                    injectAnalysisButtons();
+                }
+            } else {
+                console.log('[Index] No analysis data found, keeping results section hidden');
+                analysisResultsSection.style.display = 'none';
+                analysisResultsSection.classList.add('hidden-analysis');
+            }
             
             // Hide the old analysis result section if it exists
             const oldResult = document.querySelector('.analysis-results pre');
@@ -494,17 +995,17 @@
 
         console.log('🔧 Creating analysis buttons...');
 
-        // Create buttons
+        // Create buttons with workflow styling
         const bottomBtn = document.createElement('button');
         bottomBtn.type = 'button';
-        bottomBtn.className = 'btn btn-outline-primary';
+        bottomBtn.className = 'btn workflow-btn-primary';
         bottomBtn.id = 'bottomPanelBtn';
         bottomBtn.onclick = switchToBottomPanel;
         bottomBtn.textContent = '📋 Bottom Panel';
 
         const sideBtn = document.createElement('button');
         sideBtn.type = 'button';
-        sideBtn.className = 'btn btn-outline-primary';
+        sideBtn.className = 'btn workflow-btn-outline-primary';
         sideBtn.id = 'sidePanelBtn';
         sideBtn.onclick = switchToSidePanel;
         sideBtn.textContent = '🔀 Side Panel';
@@ -519,6 +1020,28 @@
 
         console.log('✅ Analysis buttons injected dynamically');
     }
+    
+    // Add missing workflow button style
+    const style = document.createElement('style');
+    style.textContent = `
+        .workflow-btn-outline-primary {
+            background-color: transparent;
+            border: 1px solid #63b3ed;
+            color: #63b3ed;
+            border-radius: 6px;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .workflow-btn-outline-primary:hover {
+            background-color: #63b3ed;
+            color: #1a202c;
+        }
+    `;
+    document.head.appendChild(style);
     
     // Only run if the section exists
     document.addEventListener('DOMContentLoaded', function() {
@@ -547,6 +1070,7 @@
     // Radio button change handler for analysis type
     document.addEventListener('DOMContentLoaded', function() {
         const uncommittedRadio = document.getElementById('uncommittedChanges');
+        const stagedRadio = document.getElementById('stagedChanges');
         const commitRadio = document.getElementById('specificCommit');
         const singleFileRadio = document.getElementById('singleFile');
         const commitIdContainer = document.getElementById('commitIdContainer');
@@ -556,11 +1080,12 @@
         
         function toggleAnalysisTypeFields() {
             const gitDiffSection = document.getElementById('gitDiffSection');
+            const stagedAnalysisInfo = document.getElementById('stagedAnalysisInfo');
             const commitAnalysisInfo = document.getElementById('commitAnalysisInfo');
             const singleFileAnalysisInfo = document.getElementById('singleFileAnalysisInfo');
             
             // Initialize on first call
-            if (!gitDiffSection || !commitAnalysisInfo || !singleFileAnalysisInfo) {
+            if (!gitDiffSection || !stagedAnalysisInfo || !commitAnalysisInfo || !singleFileAnalysisInfo) {
                 console.log('Elements not found, skipping toggle');
                 return;
             }
@@ -573,6 +1098,7 @@
                 
                 // Hide git diff section and show commit analysis info
                 gitDiffSection.style.display = 'none';
+                stagedAnalysisInfo.style.display = 'none';
                 commitAnalysisInfo.style.display = 'block';
                 singleFileAnalysisInfo.style.display = 'none';
             } else if (singleFileRadio.checked) {
@@ -585,8 +1111,24 @@
                 
                 // Hide git diff section and show single file analysis info
                 gitDiffSection.style.display = 'none';
+                stagedAnalysisInfo.style.display = 'none';
                 commitAnalysisInfo.style.display = 'none';
                 singleFileAnalysisInfo.style.display = 'block';
+            } else if (stagedRadio.checked) {
+                commitIdContainer.style.display = 'none';
+                commitIdInput.required = false;
+                commitIdInput.value = '';
+                document.getElementById('commitValidationResult').innerHTML = '';
+                filePickerContainer.style.display = 'none';
+                filePathInput.required = false;
+                filePathInput.value = '';
+                document.getElementById('fileValidationResult').innerHTML = '';
+                
+                // Hide git diff section and show staged analysis info
+                gitDiffSection.style.display = 'none';
+                stagedAnalysisInfo.style.display = 'block';
+                commitAnalysisInfo.style.display = 'none';
+                singleFileAnalysisInfo.style.display = 'none';
             } else {
                 commitIdContainer.style.display = 'none';
                 commitIdInput.required = false;
@@ -599,6 +1141,7 @@
                 
                 // Show git diff section and hide analysis info
                 gitDiffSection.style.display = 'block';
+                stagedAnalysisInfo.style.display = 'none';
                 commitAnalysisInfo.style.display = 'none';
                 singleFileAnalysisInfo.style.display = 'none';
             }
@@ -608,6 +1151,7 @@
         toggleAnalysisTypeFields();
         
         uncommittedRadio.addEventListener('change', toggleAnalysisTypeFields);
+        stagedRadio.addEventListener('change', toggleAnalysisTypeFields);
         commitRadio.addEventListener('change', toggleAnalysisTypeFields);
         singleFileRadio.addEventListener('change', toggleAnalysisTypeFields);
         
@@ -754,4 +1298,289 @@
             }
         });
     });
+
+
+    // Function to toggle standards selector (document management)
+    function toggleStandardsSelector() {
+        console.log('🎯 toggleStandardsSelector called - original function');
+        const dropdown = document.getElementById('standardsDropdown');
+        if (!dropdown) {
+            console.error('❌ toggleStandardsSelector: standardsDropdown element not found');
+            return;
+        }
+        console.log('📋 toggleStandardsSelector: dropdown found, current display:', dropdown.style.display);
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        console.log('✅ toggleStandardsSelector: dropdown display changed to:', dropdown.style.display);
+    }
+
+    // Function to toggle model selector
+    function toggleModelSelector() {
+        const dropdown = document.getElementById('modelDropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+
+
+    // Update model display when selection changes
+    document.getElementById('modelSelect').addEventListener('change', function() {
+        document.getElementById('modelValue').textContent = this.value;
+        document.getElementById('modelDropdown').style.display = 'none';
+    });
+
+    // Initialize horizontal workflow manager
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔄 DOMContentLoaded fired - initializing workflow');
+        
+        if (window.horizontalWorkflow) {
+            console.log('Horizontal workflow manager initialized');
+            
+            // Override dropdown functions to work with new structure
+            console.log('🔧 Workflow: Overriding dropdown functions');
+            console.log('🔧 Workflow: Original toggleStandardsSelector exists:', typeof window.toggleStandardsSelector !== 'undefined');
+            
+            window.originalToggleStandardsSelector = window.toggleStandardsSelector;
+            window.originalToggleLanguageSelector = window.toggleLanguageSelector;
+            window.originalToggleModelSelector = window.toggleModelSelector;
+            
+            window.toggleStandardsSelector = function() {
+                console.log('🎯 toggleStandardsSelector called - overridden function');
+                const dropdown = document.querySelector('[data-step="1"] #standardsDropdown');
+                if (!dropdown) {
+                    console.error('❌ Overridden toggleStandardsSelector: standardsDropdown element not found');
+                    // Fallback to original function if override fails
+                    if (window.originalToggleStandardsSelector) {
+                        console.log('🔄 Falling back to original toggleStandardsSelector');
+                        return window.originalToggleStandardsSelector();
+                    }
+                    return;
+                }
+                console.log('📋 Overridden toggleStandardsSelector: dropdown found, current display:', dropdown.style.display);
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                console.log('✅ Overridden toggleStandardsSelector: dropdown display changed to:', dropdown.style.display);
+            };
+            
+            console.log('✅ Workflow: Dropdown functions overridden successfully');
+            
+            // Log final state after override
+            console.log('🔍 Final check: window.toggleStandardsSelector exists:', typeof window.toggleStandardsSelector !== 'undefined');
+            console.log('🔍 Final check: window.toggleStandardsSelector type:', typeof window.toggleStandardsSelector);
+            
+            // No toggle needed for language selector - dropdown is always visible
+            
+            window.toggleModelSelector = function() {
+                const dropdown = document.querySelector('[data-step="5"] #modelDropdown');
+                if (dropdown) {
+                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                }
+            };
+            
+            // Listen for workflow step changes to auto-validate steps with default values
+            window.addEventListener('workflowStepChanged', function(event) {
+                const currentStep = event.detail.currentStep;
+                console.log('[Index] Workflow step changed to:', currentStep);
+                
+                // Auto-validate step 2 when user reaches it (language has default value)
+                if (currentStep === 2) {
+                    setTimeout(function() {
+                        if (window.workflowAPI) {
+                            console.log('[Index] Auto-validating step 2 after reaching it');
+                            const isValid = window.workflowAPI.validateAndAdvanceStep(2);
+                            console.log('[Index] Step 2 auto-validation result:', isValid);
+                            
+                            // If step 2 validation succeeds, automatically advance step 3
+                            if (isValid) {
+                                setTimeout(function() {
+                                    if (window.workflowAPI) {
+                                        console.log('[Index] Auto-validating step 3 (repository) after step 2');
+                                        // Ensure repository path is set to default if empty
+                                        const repoInput = document.getElementById('repositoryPathInput');
+                                        if (repoInput && !repoInput.value.trim()) {
+                                            repoInput.value = '@Html.Raw(ViewBag.RepositoryPath ?? "")' || 'C:\\git\\AICodeReviewer\\AICodeReviewer';
+                                            console.log('[Index] Set default repository path for auto-validation:', repoInput.value);
+                                        }
+                                        const step3Valid = window.workflowAPI.validateAndAdvanceStep(3);
+                                        console.log('[Index] Step 3 auto-validation result:', step3Valid);
+                                        
+                                        // If step 3 validation succeeds, automatically advance step 4
+                                        if (step3Valid) {
+                                            setTimeout(function() {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-validating step 4 (analysis type) after step 3');
+                                                    const step4Valid = window.workflowAPI.validateAndAdvanceStep(4);
+                                                    console.log('[Index] Step 4 auto-validation result:', step4Valid);
+                                                    
+                                                    // If step 4 validation succeeds, automatically advance step 5
+                                                    if (step4Valid) {
+                                                        setTimeout(function() {
+                                                            if (window.workflowAPI) {
+                                                                console.log('[Index] Auto-validating step 5 (model) after step 4');
+                                                                const step5Valid = window.workflowAPI.validateAndAdvanceStep(5);
+                                                                console.log('[Index] Step 5 auto-validation result:', step5Valid);
+                                                                
+                                                                // If step 5 validation succeeds, automatically advance step 6
+                                                                if (step5Valid) {
+                                                                    setTimeout(function() {
+                                                                        if (window.workflowAPI) {
+                                                                            console.log('[Index] Auto-validating step 6 (start analysis) after step 5');
+                                                                            const step6Valid = window.workflowAPI.validateAndAdvanceStep(6);
+                                                                            console.log('[Index] Step 6 auto-validation result:', step6Valid);
+                                                                        }
+                                                                    }, 200);
+                                                                }
+                                                            }
+                                                        }, 200);
+                                                    }
+                                                }
+                                            }, 200);
+                                        }
+                                    }
+                                }, 300);
+                            }
+                        }
+                    }, 200);
+                }
+            });
+        }
+    });
+
+    // Start Analysis Workflow Integration
+    function startAnalysisFromWorkflow() {
+        console.log('[Index] Starting analysis from workflow');
+        
+        try {
+            // Validate that all workflow steps are complete
+            const currentStep = window.horizontalWorkflow?.getCurrentStep();
+            console.log('[Index] Checking workflow completion - Current step:', currentStep);
+            
+            if (window.horizontalWorkflow && currentStep >= 6) {
+                console.log('[Index] All workflow steps complete (step >= 6), proceeding with analysis');
+                
+                // Hide workflow and show progress immediately
+                const workflowContainer = document.querySelector('.workflow-grid-container');
+                if (workflowContainer) {
+                    workflowContainer.style.display = 'none';
+                }
+                
+                // Show the analysis results section
+                const analysisResultsSection = document.getElementById('analysisResultsSection');
+                if (analysisResultsSection) {
+                    analysisResultsSection.style.display = 'block';
+                    analysisResultsSection.classList.remove('hidden-analysis');
+                }
+                
+                // Show progress container for SignalR updates
+                const progressContainer = document.getElementById('progressContainer');
+                if (progressContainer) {
+                    progressContainer.style.display = 'block';
+                }
+                
+                // Hide bottom panel view during progress
+                const bottomPanelView = document.getElementById('bottomPanelView');
+                if (bottomPanelView) {
+                    bottomPanelView.style.display = 'none';
+                }
+                
+                // Hide analysis result display initially
+                const analysisResult = document.getElementById('analysisResult');
+                if (analysisResult) {
+                    analysisResult.style.display = 'none';
+                }
+                
+                // Update progress message
+                const progressMessage = document.getElementById('progressMessage');
+                if (progressMessage) {
+                    progressMessage.style.display = 'block';
+                    progressMessage.textContent = 'Starting analysis...';
+                }
+                
+                // Call the existing startAnalysis function from site.js
+                if (typeof startAnalysis === 'function') {
+                    startAnalysis();
+                } else {
+                    console.error('[Index] startAnalysis function not found');
+                    alert('Analysis function not available. Please check the console for errors.');
+                    // Reset UI on error
+                    if (typeof resetAnalysisUI === 'function') {
+                        resetAnalysisUI();
+                    }
+                }
+            } else {
+                console.warn('[Index] Workflow not complete, current step:', window.horizontalWorkflow?.getCurrentStep());
+                alert('Please complete all workflow steps before starting analysis.');
+            }
+        } catch (error) {
+            console.error('[Index] Error in startAnalysisFromWorkflow:', error);
+            alert('Error starting analysis: ' + error.message);
+            if (typeof resetAnalysisUI === 'function') {
+                resetAnalysisUI();
+            }
+        }
+    }
+    
+    // Reset analysis UI on error
+    function resetAnalysisUI() {
+        const workflowContainer = document.querySelector('.workflow-grid-container');
+        if (workflowContainer) {
+            workflowContainer.style.display = 'flex';
+        }
+        
+        const analysisResultsSection = document.getElementById('analysisResultsSection');
+        if (analysisResultsSection) {
+            analysisResultsSection.style.display = 'none';
+        }
+        
+        const progressMessage = document.getElementById('progressMessage');
+        if (progressMessage) {
+            progressMessage.style.display = 'none';
+        }
+    }
+    
+    // Auto-validate step 6 when step 5 is completed
+    window.addEventListener('workflowStepChanged', function(event) {
+        console.log('[Index] Workflow step changed event received:', event.detail.currentStep);
+        if (event.detail.currentStep >= 6) {
+            console.log('[Index] Step 5 completed, auto-validating step 6');
+            if (window.workflowAPI) {
+                window.workflowAPI.validateAndAdvanceStep(6);
+            }
+        }
+    });
 </script>
+
+<!-- Directory Browser Modal -->
+<div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-labelledby="directoryBrowserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="directoryBrowserModalLabel">📁 Select Repository Directory</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="currentDirectoryPath" class="form-label">Current Path:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="currentDirectoryPath">
+                        <button class="btn btn-outline-secondary" type="button" onclick="navigateToPath()">Go</button>
+                        <button class="btn btn-outline-secondary" type="button" onclick="selectCurrentDirectory()">Select</button>
+                    </div>
+                </div>
+                
+                <div id="directoryBrowserLoading" class="text-center" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading directories...</p>
+                </div>
+                
+                <div id="directoryBrowserError" style="display: none;"></div>
+                
+                <div id="directoryBrowserContent" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Directory content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="selectCurrentDirectory()">Select Directory</button>
+            </div>
+        </div>
+    </div>
+</div>
