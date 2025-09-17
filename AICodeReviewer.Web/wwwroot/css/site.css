@@ -1398,10 +1398,167 @@ small.text-muted {
     background: #63b3ed;
 }
 
-/* Remove responsive breakpoints - desktop only */
-@media (max-width: 1200px) {
-    .workflow-horizontal-container {
-        gap: 1.5rem;
-        padding: 1.5rem;
+/* CSS Grid Layout for Workflow - Desktop Optimized for 1366px screens */
+.workflow-grid-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.workflow-grid-item {
+    min-height: 180px;
+    max-width: 200px;
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.workflow-grid-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.workflow-grid-item::before {
+    content: attr(data-step);
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #3182ce;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    z-index: 10;
+}
+
+.workflow-grid-item.active::before {
+    background-color: #38a169;
+    box-shadow: 0 0 0 4px rgba(56, 161, 105, 0.3);
+}
+
+.workflow-grid-item.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.workflow-grid-item.disabled::before {
+    background-color: #4a5568;
+}
+
+/* Grid item headers - optimized for space */
+.workflow-grid-item-header {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 0.75rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.workflow-grid-item-content {
+    color: #a0aec0;
+    font-size: 0.875rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure content fills available space */
+.workflow-grid-item-content > *:last-child {
+    margin-top: auto;
+}
+
+/* Start Analysis Button Container - optimized spacing */
+.start-button-container {
+    text-align: center;
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.start-button-container .workflow-btn-lg {
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+}
+
+/* Responsive behavior - Mobile */
+@media (max-width: 768px) {
+    .workflow-grid-container {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+        padding: 0 1rem;
+        gap: 1rem;
     }
+    
+    .workflow-grid-item {
+        max-width: 100%;
+        min-height: 160px;
+    }
+    
+    .workflow-grid-item-header {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .workflow-grid-item-content {
+        font-size: 0.95rem;
+    }
+}
+
+/* Desktop optimizations for 1366px screens - exact fit */
+@media (min-width: 769px) and (max-width: 1366px) {
+    .workflow-grid-container {
+        gap: 0.75rem;
+        padding: 0 0.5rem;
+        max-width: 1060px;
+    }
+    
+    .workflow-grid-item {
+        max-width: 200px;
+        padding: 0.75rem;
+        min-height: 170px;
+    }
+    
+    .workflow-grid-item-header {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Large desktop screens */
+@media (min-width: 1367px) {
+    .workflow-grid-container {
+        gap: 1.5rem;
+        padding: 0 2rem;
+        max-width: 1200px;
+    }
+}
+
+/* Remove old horizontal workflow styles that conflict with grid */
+.workflow-horizontal-container,
+.workflow-step-connector {
+    display: none;
+}
+
+/* Keep workflow-step for JavaScript compatibility but override sizing */
+.workflow-step {
+    min-width: auto;
+    max-width: none;
 }

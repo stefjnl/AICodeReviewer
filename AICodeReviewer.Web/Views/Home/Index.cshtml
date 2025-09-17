@@ -43,16 +43,16 @@
         </div>
     }
     
-    <!-- Horizontal Workflow Container -->
-    <div class="workflow-horizontal-container">
+    <!-- CSS Grid Workflow Container -->
+    <div class="workflow-grid-container">
         
-        <!-- Step 1: Requirements Documents -->
-        <div class="workflow-step" data-step="1">
-            <div class="workflow-step-header">
+        <!-- Step 1: Requirements -->
+        <div class="workflow-grid-item" data-step="1">
+            <div class="workflow-grid-item-header">
                 <span>📁</span>
-                Requirements Documents
+                Requirements
             </div>
-            <div class="workflow-step-content"> 
+            <div class="workflow-grid-item-content">
                 <!-- Folder Configuration -->
                 <div class="mb-3">
                     <form asp-action="SetDocumentsFolder" method="post">
@@ -123,35 +123,53 @@
                                         document.getElementById('standardsValue').innerHTML = `<em>${displayText}</em>`;
                                         document.getElementById('standardsDropdown').style.display = 'none';
                                         
-                                        // Validate and advance workflow - advance to step 5 (model selection) after documents
+                                        // Validate and advance workflow - auto-advance through all steps with defaults
                                         if (window.workflowAPI) {
                                             console.log('[Index] Validating step 1 after document selection');
                                             window.workflowAPI.validateAndAdvanceStep(1);
-                                            // Auto-advance through steps 2, 3, and 4 since they have defaults
+                                            
+                                            // Auto-advance through steps 2, 3, 4, and 5 since they have defaults
+                                            // Use a more reliable chained approach
+                                            setTimeout(() => {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-advancing to step 2 (language)');
+                                                    window.workflowAPI.validateAndAdvanceStep(2);
+                                                }
+                                            }, 200);
+                                            
+                                            setTimeout(() => {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-advancing to step 3 (repository)');
+                                                    // Set default repository path if not set
+                                                    const repoInput = document.getElementById('repositoryPathInput');
+                                                    if (repoInput && !repoInput.value.trim()) {
+                                                        repoInput.value = '@Html.Raw(ViewBag.RepositoryPath ?? "")' || 'C:\\git\\AICodeReviewer\\AICodeReviewer';
+                                                        console.log('[Index] Set default repository path:', repoInput.value);
+                                                    }
+                                                    window.workflowAPI.validateAndAdvanceStep(3);
+                                                }
+                                            }, 400);
+                                            
+                                            setTimeout(() => {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-advancing to step 4 (analysis type)');
+                                                    window.workflowAPI.validateAndAdvanceStep(4);
+                                                }
+                                            }, 600);
+                                            
                                             setTimeout(() => {
                                                 if (window.workflowAPI) {
                                                     console.log('[Index] Auto-advancing to step 5 (model selection)');
-                                                    window.workflowAPI.validateAndAdvanceStep(2);
-                                                    setTimeout(() => {
-                                                        if (window.workflowAPI) {
-                                                            console.log('[Index] Auto-advancing to step 3 (repository)');
-                                                            window.workflowAPI.validateAndAdvanceStep(3);
-                                                            setTimeout(() => {
-                                                                if (window.workflowAPI) {
-                                                                    console.log('[Index] Auto-advancing to step 4 (analysis type)');
-                                                                    window.workflowAPI.validateAndAdvanceStep(4);
-                                                                    setTimeout(() => {
-                                                                        if (window.workflowAPI) {
-                                                                            console.log('[Index] Auto-advancing to step 5 (model selection)');
-                                                                            window.workflowAPI.validateAndAdvanceStep(5);
-                                                                        }
-                                                                    }, 300);
-                                                                }
-                                                            }, 300);
-                                                        }
-                                                    }, 300);
+                                                    window.workflowAPI.validateAndAdvanceStep(5);
                                                 }
-                                            }, 500);
+                                            }, 800);
+                                            
+                                            setTimeout(() => {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-advancing to step 6 (start analysis)');
+                                                    window.workflowAPI.validateAndAdvanceStep(6);
+                                                }
+                                            }, 1000);
                                         }
                                     } else {
                                         console.error('[Index] Document selection failed:', data.error);
@@ -175,31 +193,47 @@
                                                 if (window.workflowAPI) {
                                                     console.log('[Index] Validating step 1 after document selection (fallback)');
                                                     window.workflowAPI.validateAndAdvanceStep(1);
-                                                    // Auto-advance through steps 2, 3, and 4 since they have defaults
+                                                    // Auto-advance through steps 2, 3, 4, and 5 since they have defaults - fallback
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 2 (language) - fallback');
+                                                            window.workflowAPI.validateAndAdvanceStep(2);
+                                                        }
+                                                    }, 200);
+                                                    
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 3 (repository) - fallback');
+                                                            // Set default repository path if not set
+                                                            const repoInput = document.getElementById('repositoryPathInput');
+                                                            if (repoInput && !repoInput.value.trim()) {
+                                                                repoInput.value = '@Html.Raw(ViewBag.RepositoryPath ?? "")' || 'C:\\git\\AICodeReviewer\\AICodeReviewer';
+                                                                console.log('[Index] Set default repository path (fallback):', repoInput.value);
+                                                            }
+                                                            window.workflowAPI.validateAndAdvanceStep(3);
+                                                        }
+                                                    }, 400);
+                                                    
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 4 (analysis type) - fallback');
+                                                            window.workflowAPI.validateAndAdvanceStep(4);
+                                                        }
+                                                    }, 600);
+                                                    
                                                     setTimeout(() => {
                                                         if (window.workflowAPI) {
                                                             console.log('[Index] Auto-advancing to step 5 (model selection) - fallback');
-                                                            window.workflowAPI.validateAndAdvanceStep(2);
-                                                            setTimeout(() => {
-                                                                if (window.workflowAPI) {
-                                                                    console.log('[Index] Auto-advancing to step 3 (repository) - fallback');
-                                                                    window.workflowAPI.validateAndAdvanceStep(3);
-                                                                    setTimeout(() => {
-                                                                        if (window.workflowAPI) {
-                                                                            console.log('[Index] Auto-advancing to step 4 (analysis type) - fallback');
-                                                                            window.workflowAPI.validateAndAdvanceStep(4);
-                                                                            setTimeout(() => {
-                                                                                if (window.workflowAPI) {
-                                                                                    console.log('[Index] Auto-advancing to step 5 (model selection) - fallback');
-                                                                                    window.workflowAPI.validateAndAdvanceStep(5);
-                                                                                }
-                                                                            }, 300);
-                                                                        }
-                                                                    }, 300);
-                                                                }
-                                                            }, 300);
+                                                            window.workflowAPI.validateAndAdvanceStep(5);
                                                         }
-                                                    }, 500);
+                                                    }, 800);
+                                                    
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 6 (start analysis) - fallback');
+                                                            window.workflowAPI.validateAndAdvanceStep(6);
+                                                        }
+                                                    }, 1000);
                                                 }
                                             }, 500);
                                         }
@@ -234,15 +268,13 @@
             </div>
         </div>
         
-        <div class="workflow-step-connector">→</div>
-        
-        <!-- Step 2: Programming Language -->
-        <div class="workflow-step" data-step="2">
-            <div class="workflow-step-header">
+        <!-- Step 2: Language -->
+        <div class="workflow-grid-item" data-step="2">
+            <div class="workflow-grid-item-header">
                 <span>⚙️</span>
-                Programming Language
+                Language
             </div>
-            <div class="workflow-step-content">
+            <div class="workflow-grid-item-content">
                 <div class="flow-item" onclick="toggleLanguageSelector()" tabindex="0">
                     <span class="icon">⚙️</span>
                     <span class="value" id="languageValue">C# (.NET)</span>
@@ -304,15 +336,13 @@
             </div>
         </div>
         
-        <div class="workflow-step-connector">→</div>
-        
-        <!-- Step 3: Git Repository -->
-        <div class="workflow-step" data-step="3">
-            <div class="workflow-step-header">
+        <!-- Step 3: Repository -->
+        <div class="workflow-grid-item" data-step="3">
+            <div class="workflow-grid-item-header">
                 <span>📁</span>
-                Git Repository
+                Repository
             </div>
-            <div class="workflow-step-content">
+            <div class="workflow-grid-item-content">
                 <!-- Repository Path Configuration -->
                 <div class="mb-3">
                     <form asp-action="SetRepositoryPath" method="post" id="repositoryPathForm">
@@ -368,6 +398,12 @@
                                         setTimeout(function() {
                                             if (window.workflowAPI) {
                                                 console.log('[Index] Validating step 3 after repository selection (fallback)');
+                                                // Ensure repository path is set to default if empty for fallback validation
+                                                const repoInput = document.getElementById('repositoryPathInput');
+                                                if (repoInput && !repoInput.value.trim()) {
+                                                    repoInput.value = '@Html.Raw(ViewBag.RepositoryPath ?? "")' || 'C:\\git\\AICodeReviewer\\AICodeReviewer';
+                                                    console.log('[Index] Set default repository path (fallback validation):', repoInput.value);
+                                                }
                                                 window.workflowAPI.validateAndAdvanceStep(3);
                                             }
                                         }, 500);
@@ -426,15 +462,13 @@
             </div>
         </div>
         
-        <div class="workflow-step-connector">→</div>
-        
-        <!-- Step 4: Analysis Type -->
-        <div class="workflow-step" data-step="4">
-            <div class="workflow-step-header">
+        <!-- Step 4: Analysis -->
+        <div class="workflow-grid-item" data-step="4">
+            <div class="workflow-grid-item-header">
                 <span>🔍</span>
-                Analysis Type
+                Analysis
             </div>
-            <div class="workflow-step-content">
+            <div class="workflow-grid-item-content">
                 <div class="workflow-form-check">
                     <input class="workflow-form-check-input" type="radio" name="analysisType" id="uncommittedChanges" value="uncommitted" checked>
                     <label class="workflow-form-check-label" for="uncommittedChanges">
@@ -553,15 +587,13 @@
             </div>
         </div>
         
-        <div class="workflow-step-connector">→</div>
-        
-        <!-- Step 5: AI Model Selection -->
-        <div class="workflow-step" data-step="5">
-            <div class="workflow-step-header">
+        <!-- Step 5: Model -->
+        <div class="workflow-grid-item" data-step="5">
+            <div class="workflow-grid-item-header">
                 <span>🤖</span>
-                AI Model
+                Model
             </div>
-            <div class="workflow-step-content">
+            <div class="workflow-grid-item-content">
                 <div class="flow-item" onclick="toggleModelSelector()" tabindex="0">
                     <span class="icon">🤖</span>
                     <span class="value" id="modelValue">
@@ -649,28 +681,18 @@
             </div>
         </div>
         
-        <div class="workflow-step-connector">→</div>
-        
-        <!-- Step 6: Start Analysis -->
-        <div class="workflow-step" data-step="6">
-            <div class="workflow-step-header">
-                <span>🚀</span>
-                Start Analysis
-            </div>
-            <div class="workflow-step-content">
-                <div class="text-center">
-                    <button id="startAnalysisBtn" class="workflow-btn workflow-btn-success workflow-btn-lg" onclick="startAnalysisFromWorkflow()">
-                        🚀 Start Analysis
-                    </button>
-                    <div class="mt-3">
-                        <small class="workflow-text-muted">
-                            Click to begin the AI code analysis with your selected configuration
-                        </small>
-                    </div>
-                </div>
-            </div>
+    </div>
+
+    <!-- Start Analysis Button - Below Grid -->
+    <div class="start-button-container">
+        <button id="startAnalysisBtn" class="workflow-btn workflow-btn-success workflow-btn-lg" onclick="startAnalysisFromWorkflow()">
+            🚀 Start Analysis
+        </button>
+        <div class="mt-3">
+            <small class="workflow-text-muted">
+                Click to begin the AI code analysis with your selected configuration
+            </small>
         </div>
-        
     </div>
 
     <!-- Git Diff Display (Outside workflow-container) -->
@@ -1314,39 +1336,60 @@
                     setTimeout(function() {
                         if (window.workflowAPI) {
                             console.log('[Index] Auto-validating step 2 after reaching it');
-                            window.workflowAPI.validateAndAdvanceStep(2);
+                            const isValid = window.workflowAPI.validateAndAdvanceStep(2);
+                            console.log('[Index] Step 2 auto-validation result:', isValid);
+                            
+                            // If step 2 validation succeeds, automatically advance step 3
+                            if (isValid) {
+                                setTimeout(function() {
+                                    if (window.workflowAPI) {
+                                        console.log('[Index] Auto-validating step 3 (repository) after step 2');
+                                        // Ensure repository path is set to default if empty
+                                        const repoInput = document.getElementById('repositoryPathInput');
+                                        if (repoInput && !repoInput.value.trim()) {
+                                            repoInput.value = '@Html.Raw(ViewBag.RepositoryPath ?? "")' || 'C:\\git\\AICodeReviewer\\AICodeReviewer';
+                                            console.log('[Index] Set default repository path for auto-validation:', repoInput.value);
+                                        }
+                                        const step3Valid = window.workflowAPI.validateAndAdvanceStep(3);
+                                        console.log('[Index] Step 3 auto-validation result:', step3Valid);
+                                        
+                                        // If step 3 validation succeeds, automatically advance step 4
+                                        if (step3Valid) {
+                                            setTimeout(function() {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-validating step 4 (analysis type) after step 3');
+                                                    const step4Valid = window.workflowAPI.validateAndAdvanceStep(4);
+                                                    console.log('[Index] Step 4 auto-validation result:', step4Valid);
+                                                    
+                                                    // If step 4 validation succeeds, automatically advance step 5
+                                                    if (step4Valid) {
+                                                        setTimeout(function() {
+                                                            if (window.workflowAPI) {
+                                                                console.log('[Index] Auto-validating step 5 (model) after step 4');
+                                                                const step5Valid = window.workflowAPI.validateAndAdvanceStep(5);
+                                                                console.log('[Index] Step 5 auto-validation result:', step5Valid);
+                                                                
+                                                                // If step 5 validation succeeds, automatically advance step 6
+                                                                if (step5Valid) {
+                                                                    setTimeout(function() {
+                                                                        if (window.workflowAPI) {
+                                                                            console.log('[Index] Auto-validating step 6 (start analysis) after step 5');
+                                                                            const step6Valid = window.workflowAPI.validateAndAdvanceStep(6);
+                                                                            console.log('[Index] Step 6 auto-validation result:', step6Valid);
+                                                                        }
+                                                                    }, 200);
+                                                                }
+                                                            }
+                                                        }, 200);
+                                                    }
+                                                }
+                                            }, 200);
+                                        }
+                                    }
+                                }, 300);
+                            }
                         }
-                    }, 500);
-                }
-                
-                // Auto-validate step 5 when user reaches it (model has default value)
-                if (currentStep === 5) {
-                    setTimeout(function() {
-                        if (window.workflowAPI) {
-                            console.log('[Index] Auto-validating step 5 after reaching it');
-                            window.workflowAPI.validateAndAdvanceStep(5);
-                        }
-                    }, 500);
-                }
-                
-                // Auto-validate step 4 when user reaches it (analysis type has default value)
-                if (currentStep === 4) {
-                    setTimeout(function() {
-                        if (window.workflowAPI) {
-                            console.log('[Index] Auto-validating step 4 after reaching it');
-                            window.workflowAPI.validateAndAdvanceStep(4);
-                        }
-                    }, 500);
-                }
-                
-                // Auto-validate step 5 when user reaches it (model has default value)
-                if (currentStep === 5) {
-                    setTimeout(function() {
-                        if (window.workflowAPI) {
-                            console.log('[Index] Auto-validating step 5 after reaching it');
-                            window.workflowAPI.validateAndAdvanceStep(5);
-                        }
-                    }, 500);
+                    }, 200);
                 }
             });
         }
@@ -1358,11 +1401,14 @@
         
         try {
             // Validate that all workflow steps are complete
-            if (window.horizontalWorkflow && window.horizontalWorkflow.getCurrentStep() >= 6) {
-                console.log('[Index] All workflow steps complete, proceeding with analysis');
+            const currentStep = window.horizontalWorkflow?.getCurrentStep();
+            console.log('[Index] Checking workflow completion - Current step:', currentStep);
+            
+            if (window.horizontalWorkflow && currentStep >= 6) {
+                console.log('[Index] All workflow steps complete (step >= 6), proceeding with analysis');
                 
                 // Hide workflow and show progress immediately
-                const workflowContainer = document.querySelector('.workflow-horizontal-container');
+                const workflowContainer = document.querySelector('.workflow-grid-container');
                 if (workflowContainer) {
                     workflowContainer.style.display = 'none';
                 }
@@ -1425,7 +1471,7 @@
     
     // Reset analysis UI on error
     function resetAnalysisUI() {
-        const workflowContainer = document.querySelector('.workflow-horizontal-container');
+        const workflowContainer = document.querySelector('.workflow-grid-container');
         if (workflowContainer) {
             workflowContainer.style.display = 'flex';
         }
@@ -1443,6 +1489,7 @@
     
     // Auto-validate step 6 when step 5 is completed
     window.addEventListener('workflowStepChanged', function(event) {
+        console.log('[Index] Workflow step changed event received:', event.detail.currentStep);
         if (event.detail.currentStep >= 6) {
             console.log('[Index] Step 5 completed, auto-validating step 6');
             if (window.workflowAPI) {
