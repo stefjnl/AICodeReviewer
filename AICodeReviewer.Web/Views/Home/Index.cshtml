@@ -123,10 +123,35 @@
                                         document.getElementById('standardsValue').innerHTML = `<em>${displayText}</em>`;
                                         document.getElementById('standardsDropdown').style.display = 'none';
                                         
-                                        // Validate and advance workflow
+                                        // Validate and advance workflow - advance to step 5 (model selection) after documents
                                         if (window.workflowAPI) {
                                             console.log('[Index] Validating step 1 after document selection');
                                             window.workflowAPI.validateAndAdvanceStep(1);
+                                            // Auto-advance through steps 2, 3, and 4 since they have defaults
+                                            setTimeout(() => {
+                                                if (window.workflowAPI) {
+                                                    console.log('[Index] Auto-advancing to step 5 (model selection)');
+                                                    window.workflowAPI.validateAndAdvanceStep(2);
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 3 (repository)');
+                                                            window.workflowAPI.validateAndAdvanceStep(3);
+                                                            setTimeout(() => {
+                                                                if (window.workflowAPI) {
+                                                                    console.log('[Index] Auto-advancing to step 4 (analysis type)');
+                                                                    window.workflowAPI.validateAndAdvanceStep(4);
+                                                                    setTimeout(() => {
+                                                                        if (window.workflowAPI) {
+                                                                            console.log('[Index] Auto-advancing to step 5 (model selection)');
+                                                                            window.workflowAPI.validateAndAdvanceStep(5);
+                                                                        }
+                                                                    }, 300);
+                                                                }
+                                                            }, 300);
+                                                        }
+                                                    }, 300);
+                                                }
+                                            }, 500);
                                         }
                                     } else {
                                         console.error('[Index] Document selection failed:', data.error);
@@ -150,6 +175,31 @@
                                                 if (window.workflowAPI) {
                                                     console.log('[Index] Validating step 1 after document selection (fallback)');
                                                     window.workflowAPI.validateAndAdvanceStep(1);
+                                                    // Auto-advance through steps 2, 3, and 4 since they have defaults
+                                                    setTimeout(() => {
+                                                        if (window.workflowAPI) {
+                                                            console.log('[Index] Auto-advancing to step 5 (model selection) - fallback');
+                                                            window.workflowAPI.validateAndAdvanceStep(2);
+                                                            setTimeout(() => {
+                                                                if (window.workflowAPI) {
+                                                                    console.log('[Index] Auto-advancing to step 3 (repository) - fallback');
+                                                                    window.workflowAPI.validateAndAdvanceStep(3);
+                                                                    setTimeout(() => {
+                                                                        if (window.workflowAPI) {
+                                                                            console.log('[Index] Auto-advancing to step 4 (analysis type) - fallback');
+                                                                            window.workflowAPI.validateAndAdvanceStep(4);
+                                                                            setTimeout(() => {
+                                                                                if (window.workflowAPI) {
+                                                                                    console.log('[Index] Auto-advancing to step 5 (model selection) - fallback');
+                                                                                    window.workflowAPI.validateAndAdvanceStep(5);
+                                                                                }
+                                                                            }, 300);
+                                                                        }
+                                                                    }, 300);
+                                                                }
+                                                            }, 300);
+                                                        }
+                                                    }, 500);
                                                 }
                                             }, 500);
                                         }
@@ -505,8 +555,104 @@
         
         <div class="workflow-step-connector">→</div>
         
-        <!-- Step 5: Start Analysis -->
+        <!-- Step 5: AI Model Selection -->
         <div class="workflow-step" data-step="5">
+            <div class="workflow-step-header">
+                <span>🤖</span>
+                AI Model
+            </div>
+            <div class="workflow-step-content">
+                <div class="flow-item" onclick="toggleModelSelector()" tabindex="0">
+                    <span class="icon">🤖</span>
+                    <span class="value" id="modelValue">
+                        @if (ViewBag.AvailableModels != null && ViewBag.AvailableModels.Count > 0)
+                        {
+                            @(ViewBag.AvailableModels[0])
+                        }
+                        else
+                        {
+                            <em>No models available</em>
+                        }
+                    </span>
+                    <span class="edit-icon">✏️</span>
+                </div>
+
+                <!-- Hidden dropdown that appears on click -->
+                <div id="modelDropdown" class="workflow-dropdown" style="display: none;">
+                    <select class="workflow-form-select" id="modelSelect" name="model">
+                        @if (ViewBag.AvailableModels != null && ViewBag.AvailableModels.Count > 0)
+                        {
+                            var firstModel = ViewBag.AvailableModels[0];
+                            @foreach (var availableModel in ViewBag.AvailableModels)
+                            {
+                                if (availableModel == firstModel)
+                                {
+                                    <option value="@availableModel" selected>@availableModel</option>
+                                }
+                                else
+                                {
+                                    <option value="@availableModel">@availableModel</option>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <option value="">No models available</option>
+                        }
+                    </select>
+                </div>
+                <script>
+                    // Add validation for model selection
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const modelSelect = document.getElementById('modelSelect');
+                        
+                        // Auto-validate step 5 when workflow reaches it (model has default value)
+                        function autoValidateStep5() {
+                            if (window.workflowAPI && window.horizontalWorkflow) {
+                                const currentStep = window.horizontalWorkflow.getCurrentStep();
+                                // Auto-validate if we're at step 5 and it has valid default
+                                if (currentStep === 5) {
+                                    console.log('[Index] Auto-validating step 5 - checking default model');
+                                    // Step 5 should be valid by default since first model is pre-selected
+                                    const isValid = window.workflowAPI.isStepValid(5);
+                                    if (isValid) {
+                                        console.log('[Index] Step 5 auto-validation successful, advancing');
+                                        window.workflowAPI.validateAndAdvanceStep(5);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Listen for workflow step changes to auto-validate when reaching step 5
+                        window.addEventListener('workflowStepChanged', function(event) {
+                            if (event.detail.currentStep === 5) {
+                                console.log('[Index] Reached step 5, triggering auto-validation');
+                                autoValidateStep5();
+                            }
+                        });
+                        
+                        // Also try on page load in case workflow is already at step 5
+                        setTimeout(autoValidateStep5, 500);
+                        
+                        if (modelSelect) {
+                            modelSelect.addEventListener('change', function() {
+                                setTimeout(function() {
+                                    if (window.workflowAPI) {
+                                        console.log('[Index] Validating step 5 after model selection');
+                                        window.workflowAPI.validateAndAdvanceStep(5);
+                                    }
+                                }, 300);
+                            });
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+        
+        <div class="workflow-step-connector">→</div>
+        
+        <!-- Step 6: Start Analysis -->
+        <div class="workflow-step" data-step="6">
             <div class="workflow-step-header">
                 <span>🚀</span>
                 Start Analysis
@@ -1108,11 +1254,23 @@
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
     }
 
+    // Function to toggle model selector
+    function toggleModelSelector() {
+        const dropdown = document.getElementById('modelDropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+
     // Update display when selection changes
     document.getElementById('languageSelect').addEventListener('change', function() {
         document.getElementById('languageValue').textContent =
             this.value === 'NET' ? 'C# (.NET)' : 'Python';
         document.getElementById('languageDropdown').style.display = 'none';
+    });
+
+    // Update model display when selection changes
+    document.getElementById('modelSelect').addEventListener('change', function() {
+        document.getElementById('modelValue').textContent = this.value;
+        document.getElementById('modelDropdown').style.display = 'none';
     });
 
     // Initialize horizontal workflow manager
@@ -1123,6 +1281,7 @@
             // Override dropdown functions to work with new structure
             window.originalToggleStandardsSelector = window.toggleStandardsSelector;
             window.originalToggleLanguageSelector = window.toggleLanguageSelector;
+            window.originalToggleModelSelector = window.toggleModelSelector;
             
             window.toggleStandardsSelector = function() {
                 const dropdown = document.querySelector('[data-step="1"] #standardsDropdown');
@@ -1133,6 +1292,13 @@
             
             window.toggleLanguageSelector = function() {
                 const dropdown = document.querySelector('[data-step="2"] #languageDropdown');
+                if (dropdown) {
+                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                }
+            };
+            
+            window.toggleModelSelector = function() {
+                const dropdown = document.querySelector('[data-step="5"] #modelDropdown');
                 if (dropdown) {
                     dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
                 }
@@ -1153,12 +1319,32 @@
                     }, 500);
                 }
                 
+                // Auto-validate step 5 when user reaches it (model has default value)
+                if (currentStep === 5) {
+                    setTimeout(function() {
+                        if (window.workflowAPI) {
+                            console.log('[Index] Auto-validating step 5 after reaching it');
+                            window.workflowAPI.validateAndAdvanceStep(5);
+                        }
+                    }, 500);
+                }
+                
                 // Auto-validate step 4 when user reaches it (analysis type has default value)
                 if (currentStep === 4) {
                     setTimeout(function() {
                         if (window.workflowAPI) {
                             console.log('[Index] Auto-validating step 4 after reaching it');
                             window.workflowAPI.validateAndAdvanceStep(4);
+                        }
+                    }, 500);
+                }
+                
+                // Auto-validate step 5 when user reaches it (model has default value)
+                if (currentStep === 5) {
+                    setTimeout(function() {
+                        if (window.workflowAPI) {
+                            console.log('[Index] Auto-validating step 5 after reaching it');
+                            window.workflowAPI.validateAndAdvanceStep(5);
                         }
                     }, 500);
                 }
@@ -1172,7 +1358,7 @@
         
         try {
             // Validate that all workflow steps are complete
-            if (window.horizontalWorkflow && window.horizontalWorkflow.getCurrentStep() >= 5) {
+            if (window.horizontalWorkflow && window.horizontalWorkflow.getCurrentStep() >= 6) {
                 console.log('[Index] All workflow steps complete, proceeding with analysis');
                 
                 // Hide workflow and show progress immediately
@@ -1255,12 +1441,12 @@
         }
     }
     
-    // Auto-validate step 5 when step 4 is completed
+    // Auto-validate step 6 when step 5 is completed
     window.addEventListener('workflowStepChanged', function(event) {
-        if (event.detail.currentStep >= 5) {
-            console.log('[Index] Step 4 completed, auto-validating step 5');
+        if (event.detail.currentStep >= 6) {
+            console.log('[Index] Step 5 completed, auto-validating step 6');
             if (window.workflowAPI) {
-                window.workflowAPI.validateAndAdvanceStep(5);
+                window.workflowAPI.validateAndAdvanceStep(6);
             }
         }
     });

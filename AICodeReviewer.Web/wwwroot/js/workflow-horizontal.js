@@ -2,7 +2,7 @@
 class HorizontalWorkflowManager {
     constructor() {
         this.currentStep = 1;
-        this.maxSteps = 5;
+        this.maxSteps = 6;
         this.steps = document.querySelectorAll('.workflow-step');
         this.connectors = document.querySelectorAll('.workflow-step-connector');
         this.isInitialized = false;
@@ -197,9 +197,17 @@ class HorizontalWorkflowManager {
                     
                     return hasAnalysisType;
                     
-                case 5: // Start Analysis
-                    // Step 5 is always valid - it's just a button to start analysis
-                    console.log(`[Workflow] Step 5 - Start Analysis step, always valid`);
+                case 5: // AI Model
+                    const modelSelect = step.querySelector('#modelSelect');
+                    // Check if model select exists and has a valid value, or if it doesn't exist (meaning default is set)
+                    const hasModel = modelSelect && (modelSelect.value !== '' && modelSelect.value !== null && modelSelect.value !== undefined);
+                    console.log(`[Workflow] Step 5 - Model selected: ${modelSelect?.value}, Valid: ${hasModel}`);
+                    // Step 5 should be valid by default since first model is pre-selected
+                    return hasModel || !modelSelect;
+                    
+                case 6: // Start Analysis
+                    // Step 6 is always valid - it's just a button to start analysis
+                    console.log(`[Workflow] Step 6 - Start Analysis step, always valid`);
                     return true;
                     
                 default:

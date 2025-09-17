@@ -301,7 +301,8 @@ function startAnalysis() {
         language: document.getElementById('languageSelect')?.value || 'NET',
         analysisType: analysisType,
         commitId: commitId,
-        filePath: fullFilePath
+        filePath: fullFilePath,
+        model: document.getElementById('modelSelect')?.value || 'qwen/qwen3-coder'
         // documentsFolder is intentionally omitted to use session default
     };
     

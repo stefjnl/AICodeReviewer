@@ -62,7 +62,7 @@ public class AnalysisService : IAnalysisService
             _logger.LogInformation($"[RunAnalysis] Final selectedDocuments count: {selectedDocuments.Count}");
             
             var apiKey = configuration["OpenRouter:ApiKey"] ?? "";
-            var model = configuration["OpenRouter:Model"] ?? "";
+            var model = request.Model ?? configuration["OpenRouter:Model"] ?? "";
             var fallbackModel = configuration["OpenRouter:FallbackModel"] ?? "";
 
             // Store language in session for consistency

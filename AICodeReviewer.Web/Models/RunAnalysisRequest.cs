@@ -10,4 +10,5 @@ public class RunAnalysisRequest
     public string? CommitId { get; set; } // Only used when AnalysisType = "commit"
     public string? FilePath { get; set; } // Only used when AnalysisType = "singlefile"
     public string? FileContent { get; set; } // Optional: file content for single file analysis
+    public string? Model { get; set; } // AI model to use for analysis
 }

@@ -115,12 +115,17 @@ public class HomeController : Controller
                 }
             }
 
+            // Pass available models to view
+            var availableModels = _configuration.GetSection("AvailableModels").Get<List<string>>() ?? new List<string>();
+            ViewBag.AvailableModels = availableModels;
+
             return View();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading Index page");
             ViewBag.Error = "Error loading page data";
+            ViewBag.AvailableModels = new List<string>();
             return View();
         }
     }
