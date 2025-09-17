@@ -18,3 +18,5 @@
 *   **Prioritize Performance Optimization:** Implement techniques such as backend caching, asynchronous programming, efficient object allocation, and database query optimization (e.g., filtering columns and rows) to achieve desired system performance.
 *   **Apply SOLID Design Principles:** Follow the SOLID principles (Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion) as fundamental guidelines for designing robust, flexible, and maintainable software architecture.
 *   **Integrate Code Analysis Tools:** Utilize static code analysis tools (e.g., Code Metrics, Code Style, Code Cleanup, SonarAnalyzer, SonarLint) as part of the development workflow to automatically enforce coding standards and identify potential issues during design time.
+*   **Avoid Sync-over-Async:** Never use .GetAwaiter().GetResult() or .Wait() on async methods - always propagate async/await up the call chain to prevent deadlocks. 
+*   **Don't Fake Async:** Only use async/await for truly asynchronous I/O operations, not CPU-bound work that completes immediately.
