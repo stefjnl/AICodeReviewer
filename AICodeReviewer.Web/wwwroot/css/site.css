@@ -408,7 +408,70 @@ body {
     color: #63b3ed;
 }
 
-/* Workflow dropdown styling */
+/* Language selection styling - consistent with Requirements section */
+.language-selection {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background-color: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 6px;
+}
+
+.language-selection label {
+    display: block;
+    color: #e2e8f0;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.language-selection .form-select {
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+    color: #e2e8f0;
+    border-radius: 4px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.language-selection .form-select:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 0.2rem rgba(49, 130, 206, 0.25);
+    outline: none;
+}
+
+/* Selected item display - matches Requirements section pattern */
+.selected-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    cursor: default;
+}
+
+.selected-item .icon {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+    color: #63b3ed;
+}
+
+.selected-item .value {
+    flex: 1;
+    font-weight: 500;
+    color: #e2e8f0;
+    font-size: 0.95rem;
+}
+
+.selected-item .edit-icon {
+    color: #a0aec0;
+    font-size: 0.9rem;
+}
+
+/* Workflow dropdown styling (kept for compatibility) */
 .workflow-dropdown {
     background-color: #1a202c;
     border: 1px solid #4a5568;
@@ -977,6 +1040,67 @@ small.text-muted {
     border-radius: 8px;
 }
 
+/* Enhanced modal animations for seamless opening */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    transform: scale(0.95);
+    opacity: 0;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Smooth loading states for directory browser */
+.directory-browser-container {
+    transition: opacity 0.2s ease-in-out;
+}
+
+#directoryBrowserLoading {
+    transition: opacity 0.2s ease-in-out;
+}
+
+#directoryBrowserContent {
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Ensure modal backdrop is properly styled */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+/* Enhanced directory item hover effects */
+.directory-item:hover,
+.file-item:hover {
+    background-color: rgba(49, 130, 206, 0.1);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+/* Loading spinner enhancements */
+.spinner-border {
+    animation-duration: 0.8s;
+}
+
+/* Ensure modal is properly positioned */
+.modal {
+    z-index: 1055 !important;
+}
+
+.modal-dialog {
+    margin: 1.75rem auto;
+    max-width: 800px;
+    z-index: 1056 !important;
+}
+
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+}
+
 .workflow-modal-header {
     background-color: #2d3748;
     color: #e2e8f0;
@@ -1098,6 +1222,19 @@ small.text-muted {
     display: flex;
     align-items: stretch;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Ensure input groups stay within workflow grid items */
+.workflow-grid-item .workflow-input-group {
+    width: calc(100% - 2rem); /* Account for 1rem padding on each side */
+    max-width: calc(100% - 2rem);
+}
+
+.workflow-grid-item .workflow-input-group .workflow-form-control {
+    min-width: 0; /* Prevent flex item from growing beyond container */
+    flex-shrink: 1; /* Allow shrinking when needed */
 }
 
 .workflow-input-group .workflow-form-control {
@@ -1398,10 +1535,233 @@ small.text-muted {
     background: #63b3ed;
 }
 
-/* Remove responsive breakpoints - desktop only */
-@media (max-width: 1200px) {
-    .workflow-horizontal-container {
-        gap: 1.5rem;
-        padding: 1.5rem;
+/* CSS Grid Layout for Workflow - Desktop Optimized for 1366px screens */
+.workflow-grid-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.workflow-grid-item {
+    min-height: 180px;
+    max-width: 200px;
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.workflow-grid-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.workflow-grid-item::before {
+    content: attr(data-step);
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #3182ce;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    z-index: 10;
+}
+
+.workflow-grid-item.active::before {
+    background-color: #38a169;
+    box-shadow: 0 0 0 4px rgba(56, 161, 105, 0.3);
+}
+
+.workflow-grid-item.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.workflow-grid-item.disabled::before {
+    background-color: #4a5568;
+}
+
+/* Grid item headers - optimized for space */
+.workflow-grid-item-header {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 0.75rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.workflow-grid-item-content {
+    color: #a0aec0;
+    font-size: 0.875rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure content fills available space */
+.workflow-grid-item-content > *:last-child {
+    margin-top: auto;
+}
+
+/* Start Analysis Button Container - optimized spacing */
+.start-button-container {
+    text-align: center;
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.start-button-container .workflow-btn-lg {
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+}
+
+/* Responsive behavior - Mobile */
+@media (max-width: 768px) {
+    .workflow-grid-container {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+        padding: 0 1rem;
+        gap: 1rem;
     }
+    
+    .workflow-grid-item {
+        max-width: 100%;
+        min-height: 160px;
+    }
+    
+    .workflow-grid-item-header {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .workflow-grid-item-content {
+        font-size: 0.95rem;
+    }
+    
+    /* Mobile: Ensure input groups fit properly */
+    .workflow-grid-item .workflow-input-group {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* Tablet and smaller desktop adjustments */
+@media (max-width: 1024px) {
+    .workflow-grid-item .workflow-input-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .workflow-grid-item .workflow-input-group .workflow-form-control {
+        border-radius: 6px !important;
+        width: 100%;
+    }
+    
+    .workflow-grid-item .workflow-input-group .workflow-btn {
+        border-radius: 6px !important;
+        width: 100%;
+    }
+}
+
+/* Desktop optimizations for 1366px screens - exact fit */
+@media (min-width: 769px) and (max-width: 1366px) {
+    .workflow-grid-container {
+        gap: 0.75rem;
+        padding: 0 0.5rem;
+        max-width: 1060px;
+    }
+    
+    .workflow-grid-item {
+        max-width: 200px;
+        padding: 0.75rem;
+        min-height: 170px;
+    }
+    
+    .workflow-grid-item-header {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Desktop optimizations for 1366px screens - exact fit */
+@media (min-width: 769px) and (max-width: 1366px) {
+    .workflow-grid-container {
+        gap: 0.75rem;
+        padding: 0 0.5rem;
+        max-width: 1060px;
+    }
+    
+    .workflow-grid-item {
+        max-width: 200px;
+        padding: 0.75rem;
+        min-height: 170px;
+    }
+    
+    .workflow-grid-item-header {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Ensure input groups fit properly in desktop grid items */
+    .workflow-grid-item .workflow-input-group {
+        width: calc(100% - 1.5rem); /* Account for 0.75rem padding on each side */
+        max-width: calc(100% - 1.5rem);
+    }
+    
+    /* Ensure buttons don't overflow */
+    .workflow-grid-item .workflow-input-group .workflow-btn {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 80px;
+    }
+}
+
+/* Large desktop screens */
+@media (min-width: 1367px) {
+    .workflow-grid-container {
+        gap: 1.5rem;
+        padding: 0 2rem;
+        max-width: 1200px;
+    }
+    
+    /* Ensure input groups fit properly in large desktop grid items */
+    .workflow-grid-item .workflow-input-group {
+        width: calc(100% - 2rem); /* Account for 1rem padding on each side */
+        max-width: calc(100% - 2rem);
+    }
+}
+
+/* Remove old horizontal workflow styles that conflict with grid */
+.workflow-horizontal-container,
+.workflow-step-connector {
+    display: none;
+}
+
+/* Keep workflow-step for JavaScript compatibility but override sizing */
+.workflow-step {
+    min-width: auto;
+    max-width: none;
 }

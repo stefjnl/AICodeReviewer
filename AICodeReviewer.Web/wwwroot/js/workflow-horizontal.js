@@ -1,10 +1,9 @@
-// Horizontal Workflow Manager - Desktop Only
-class HorizontalWorkflowManager {
+// Grid Workflow Manager - Desktop Optimized
+class GridWorkflowManager {
     constructor() {
         this.currentStep = 1;
-        this.maxSteps = 6;
-        this.steps = document.querySelectorAll('.workflow-step');
-        this.connectors = document.querySelectorAll('.workflow-step-connector');
+        this.maxSteps = 5; // Only 5 main steps now, Start Analysis is separate
+        this.steps = document.querySelectorAll('.workflow-grid-item');
         this.isInitialized = false;
         this.initialize();
     }
@@ -42,12 +41,6 @@ class HorizontalWorkflowManager {
                 step.classList.remove('active');
                 step.classList.add('disabled');
             }
-        });
-
-        // Update connector visibility based on progression
-        this.connectors.forEach((connector, index) => {
-            const nextStep = index + 2;
-            connector.style.opacity = nextStep <= this.currentStep ? '0.8' : '0.3';
         });
     }
 
@@ -143,9 +136,12 @@ class HorizontalWorkflowManager {
 
     validateStep(stepNumber) {
         const step = document.querySelector(`[data-step="${stepNumber}"]`);
-        if (!step) return false;
+        if (!step) {
+            console.log(`[Workflow] Step ${stepNumber} validation FAILED - step element not found`);
+            return false;
+        }
 
-        console.log(`[Workflow] Validating step ${stepNumber}`);
+        console.log(`[Workflow] === VALIDATING STEP ${stepNumber} ===`);
         
         // Check for required inputs
         const requiredInputs = step.querySelectorAll('[required]');
@@ -156,27 +152,53 @@ class HorizontalWorkflowManager {
             
             // Custom validation logic for each step
             switch (stepNumber) {
-                case 1: // Requirements Documents
+                case 1: // Requirements
                     const selectedDocuments = step.querySelectorAll('input[name="selectedDocuments"]:checked');
                     const hasSelectedDocs = selectedDocuments.length > 0;
                     console.log(`[Workflow] Step 1 - Selected documents: ${selectedDocuments.length}, Valid: ${hasSelectedDocs}`);
+                    if (!hasSelectedDocs) {
+                        console.log(`[Workflow] Step 1 validation FAILED - no documents selected`);
+                    }
                     return hasSelectedDocs;
                     
-                case 2: // Programming Language
+                case 2: // Language
                     const languageSelect = step.querySelector('#languageSelect');
                     // Check if language select exists and has a valid value, or if it doesn't exist (meaning default is set)
                     const hasLanguage = languageSelect && (languageSelect.value !== '' && languageSelect.value !== null && languageSelect.value !== undefined);
                     console.log(`[Workflow] Step 2 - Language selected: ${languageSelect?.value}, Valid: ${hasLanguage}`);
                     // Step 2 should be valid by default since .NET is pre-selected
-                    return hasLanguage || !languageSelect;
+                    const step2Valid = hasLanguage || !languageSelect;
+                    if (!step2Valid) {
+                        console.log(`[Workflow] Step 2 validation FAILED - no language selected`);
+                    }
+                    return step2Valid;
                     
-                case 3: // Git Repository
+                case 3: // Repository
                     const repositoryPath = step.querySelector('input[name="repositoryPath"]');
-                    const hasRepositoryPath = repositoryPath && repositoryPath.value.trim() !== '';
-                    console.log(`[Workflow] Step 3 - Repository path: ${repositoryPath?.value}, Valid: ${hasRepositoryPath}`);
+                    let hasRepositoryPath = repositoryPath && repositoryPath.value.trim() !== '';
+                    
+                    // If no repository path is set, provide a default
+                    if (!hasRepositoryPath) {
+                        console.log(`[Workflow] Step 3 - No repository path found, setting default`);
+                        // Set default repository path
+                        const defaultPath = 'C:\\git\\AICodeReviewer\\AICodeReviewer'; // Fallback default
+                        if (repositoryPath) {
+                            repositoryPath.value = defaultPath;
+                            hasRepositoryPath = true;
+                            console.log(`[Workflow] Step 3 - Set default repository path: ${defaultPath}`);
+                        } else {
+                            console.log(`[Workflow] Step 3 - Repository input not found, cannot set default`);
+                        }
+                    } else {
+                        console.log(`[Workflow] Step 3 - Repository path: ${repositoryPath.value}, Valid: ${hasRepositoryPath}`);
+                    }
+                    
+                    if (!hasRepositoryPath) {
+                        console.log(`[Workflow] Step 3 validation FAILED - no repository path set and no default available`);
+                    }
                     return hasRepositoryPath;
                     
-                case 4: // Analysis Type
+                case 4: // Analysis
                     const analysisType = step.querySelector('input[name="analysisType"]:checked');
                     const hasAnalysisType = analysisType && analysisType.value !== '';
                     console.log(`[Workflow] Step 4 - Analysis type: ${analysisType?.value}, Valid: ${hasAnalysisType}`);
@@ -185,6 +207,9 @@ class HorizontalWorkflowManager {
                         const commitId = step.querySelector('#commitId');
                         const hasCommitId = commitId && commitId.value.trim() !== '';
                         console.log(`[Workflow] Step 4 - Commit analysis, Commit ID: ${commitId?.value}, Valid: ${hasCommitId}`);
+                        if (!hasCommitId) {
+                            console.log(`[Workflow] Step 4 validation FAILED - commit analysis selected but no commit ID provided`);
+                        }
                         return hasCommitId;
                     }
                     
@@ -192,23 +217,28 @@ class HorizontalWorkflowManager {
                         const filePath = step.querySelector('#filePath');
                         const hasFilePath = filePath && filePath.value.trim() !== '';
                         console.log(`[Workflow] Step 4 - Single file analysis, File path: ${filePath?.value}, Valid: ${hasFilePath}`);
+                        if (!hasFilePath) {
+                            console.log(`[Workflow] Step 4 validation FAILED - single file analysis selected but no file path provided`);
+                        }
                         return hasFilePath;
                     }
                     
+                    if (!hasAnalysisType) {
+                        console.log(`[Workflow] Step 4 validation FAILED - no analysis type selected`);
+                    }
                     return hasAnalysisType;
                     
-                case 5: // AI Model
+                case 5: // Model
                     const modelSelect = step.querySelector('#modelSelect');
                     // Check if model select exists and has a valid value, or if it doesn't exist (meaning default is set)
                     const hasModel = modelSelect && (modelSelect.value !== '' && modelSelect.value !== null && modelSelect.value !== undefined);
                     console.log(`[Workflow] Step 5 - Model selected: ${modelSelect?.value}, Valid: ${hasModel}`);
                     // Step 5 should be valid by default since first model is pre-selected
-                    return hasModel || !modelSelect;
-                    
-                case 6: // Start Analysis
-                    // Step 6 is always valid - it's just a button to start analysis
-                    console.log(`[Workflow] Step 6 - Start Analysis step, always valid`);
-                    return true;
+                    const step5Valid = hasModel || !modelSelect;
+                    if (!step5Valid) {
+                        console.log(`[Workflow] Step 5 validation FAILED - no model selected`);
+                    }
+                    return step5Valid;
                     
                 default:
                     console.log(`[Workflow] Step ${stepNumber} - No validation rules, defaulting to true`);
@@ -233,6 +263,8 @@ class HorizontalWorkflowManager {
 
     nextStep() {
         console.log(`[Workflow] Attempting to advance from step ${this.currentStep}`);
+        console.log(`[Workflow] Max steps: ${this.maxSteps}, Current step: ${this.currentStep}`);
+        
         if (this.currentStep < this.maxSteps) {
             // Add completion indicator to current step
             const currentStepElement = this.steps[this.currentStep - 1];
@@ -242,13 +274,25 @@ class HorizontalWorkflowManager {
             
             this.currentStep++;
             this.updateStepStates();
-            this.scrollToStep(this.currentStep);
             this.triggerStepChange();
             
             console.log(`[Workflow] Advanced to step ${this.currentStep}`);
         } else {
-            console.log(`[Workflow] Cannot advance beyond step ${this.maxSteps}`);
+            console.log(`[Workflow] Reached max step ${this.maxSteps}, advancing to step 6 (Start Analysis)`);
+            // Advance to step 6 (Start Analysis) when step 5 is completed
+            this.currentStep = 6;
+            this.triggerStepChange();
+            console.log(`[Workflow] Advanced to step 6 - workflow complete`);
         }
+    }
+    
+    triggerStep6() {
+        console.log('[Workflow] Triggering step 6 (Start Analysis)');
+        // Dispatch custom event for step 6 (Start Analysis)
+        window.dispatchEvent(new CustomEvent('workflowStepChanged', {
+            detail: { currentStep: 6 }
+        }));
+        console.log('[Workflow] Step 6 event dispatched');
     }
 
     previousStep() {
@@ -269,15 +313,9 @@ class HorizontalWorkflowManager {
         }
     }
 
+    // Grid layout doesn't need scrolling, but keep method for compatibility
     scrollToStep(stepNumber) {
-        const step = document.querySelector(`[data-step="${stepNumber}"]`);
-        if (step) {
-            step.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'nearest', 
-                inline: 'center' 
-            });
-        }
+        console.log(`[Workflow] Grid layout - no scrolling needed for step ${stepNumber}`);
     }
 
     triggerStepChange() {
@@ -298,6 +336,7 @@ class HorizontalWorkflowManager {
     }
 
     getCurrentStep() {
+        console.log(`[Workflow] getCurrentStep() called, returning: ${this.currentStep}`);
         return this.currentStep;
     }
 
@@ -313,6 +352,12 @@ class HorizontalWorkflowManager {
         if (isValid && stepNumber === this.currentStep) {
             console.log(`[Workflow] Manually advancing from step ${stepNumber}`);
             this.nextStep();
+            return true;
+        } else if (isValid && stepNumber === 6) {
+            // Special case for step 6 - allow validation even if it's not the "current" step
+            console.log(`[Workflow] Step 6 validation requested, treating as workflow complete`);
+            this.currentStep = 6;
+            this.triggerStepChange();
             return true;
         }
         return false;
@@ -336,8 +381,11 @@ class HorizontalWorkflowManager {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    if (document.querySelector('.workflow-horizontal-container')) {
-        window.horizontalWorkflow = new HorizontalWorkflowManager();
+    console.log('[Workflow] DOMContentLoaded - Checking for workflow grid container');
+    
+    if (document.querySelector('.workflow-grid-container')) {
+        console.log('[Workflow] Found workflow grid container, initializing workflow manager');
+        window.horizontalWorkflow = new GridWorkflowManager();
         
         // Expose API globally for other scripts
         window.workflowAPI = {
@@ -350,14 +398,16 @@ document.addEventListener('DOMContentLoaded', () => {
             isStepValid: (step) => window.horizontalWorkflow?.isStepValid(step)
         };
         
-        console.log('Horizontal Workflow API available at window.workflowAPI');
+        console.log('[Workflow] Grid Workflow API available at window.workflowAPI');
+        console.log('[Workflow] Initial workflow step:', window.horizontalWorkflow?.getCurrentStep());
+    } else {
+        console.log('[Workflow] No workflow grid container found');
     }
 });
 
-// Handle window resize to maintain horizontal scroll position
+// Handle window resize - grid layout doesn't need scroll position maintenance
 window.addEventListener('resize', () => {
     if (window.horizontalWorkflow) {
-        const currentStep = window.horizontalWorkflow.getCurrentStep();
-        window.horizontalWorkflow.scrollToStep(currentStep);
+        console.log('[Workflow] Grid layout - resize handled automatically by CSS Grid');
     }
 });

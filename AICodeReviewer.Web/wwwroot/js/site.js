@@ -298,7 +298,7 @@ function startAnalysis() {
     const formData = {
         repositoryPath: repositoryPath,
         selectedDocuments: selectedDocuments,
-        language: document.getElementById('languageSelect')?.value || 'NET',
+        language: document.getElementById('language-dropdown')?.value || 'python',
         analysisType: analysisType,
         commitId: commitId,
         filePath: fullFilePath,
@@ -516,28 +516,75 @@ function updateProgress(status) {
         statusElement.textContent = status || 'Processing...';
     }
 }
+// ==================== DIRECTORY BROWSER FUNCTIONS ====================
 
-// Directory Browser Functions
+// Global variable to track current browse path
 let currentBrowsePath = '';
 
+// Open directory browser modal
 function openDirectoryBrowser() {
-    const modal = new bootstrap.Modal(document.getElementById('directoryBrowserModal'));
-    modal.show();
+    console.log('[Directory Browser] Opening directory browser...');
     
-    // Start browsing from current repository path or default
-    const currentPath = document.getElementById('repositoryPathInput').value || '';
-    browseDirectory(currentPath);
+    // Ensure Bootstrap is loaded
+    if (typeof bootstrap === 'undefined') {
+        console.error('[Directory Browser] Bootstrap is not loaded');
+        alert('UI framework not loaded. Please refresh the page.');
+        return;
+    }
+    
+    try {
+        // Get modal element
+        const modalElement = document.getElementById('directoryBrowserModal');
+        if (!modalElement) {
+            console.error('[Directory Browser] Modal element not found');
+            alert('Directory browser not available. Please refresh the page.');
+            return;
+        }
+        
+        // Create and show modal
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+        // Get current repository path from input
+        const currentPath = document.getElementById('repositoryPathInput')?.value || '';
+        console.log('[Directory Browser] Starting browse from path:', currentPath);
+        
+        // Small delay to ensure modal is fully rendered before loading content
+        setTimeout(() => {
+            browseDirectory(currentPath);
+        }, 100);
+        
+    } catch (error) {
+        console.error('[Directory Browser] Error opening modal:', error);
+        alert('Error opening directory browser: ' + error.message);
+    }
 }
 
+// Browse directory contents
 function browseDirectory(path) {
+    console.log('[Directory Browser] Browsing directory:', path);
+    
+    // Get UI elements
     const loadingDiv = document.getElementById('directoryBrowserLoading');
     const contentDiv = document.getElementById('directoryBrowserContent');
     const errorDiv = document.getElementById('directoryBrowserError');
+    const pathInput = document.getElementById('currentDirectoryPath');
+    
+    // Validate elements exist
+    if (!loadingDiv || !contentDiv || !errorDiv || !pathInput) {
+        console.error('[Directory Browser] Required DOM elements not found');
+        return;
+    }
     
     // Show loading state
     loadingDiv.style.display = 'block';
-    contentDiv.innerHTML = '';
+    contentDiv.style.display = 'none';
     errorDiv.style.display = 'none';
+    contentDiv.innerHTML = '';
+    
+    // Update path input
+    pathInput.value = path;
+    currentBrowsePath = path;
     
     // Make API call to browse directory
     fetch('/Home/BrowseDirectory', {
@@ -547,32 +594,64 @@ function browseDirectory(path) {
         },
         body: JSON.stringify({ currentPath: path })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('[Directory Browser] Directory data received:', data);
+        
+        // Hide loading
         loadingDiv.style.display = 'none';
         
+        // Handle errors from server
         if (data.error) {
-            errorDiv.textContent = data.error;
+            console.warn('[Directory Browser] Server returned error:', data.error);
+            errorDiv.innerHTML = `
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i> ${data.error}
+                </div>
+            `;
             errorDiv.style.display = 'block';
             return;
         }
         
-        // Update current path display
+        // Update current path
         currentBrowsePath = data.currentPath;
-        document.getElementById('currentDirectoryPath').value = data.currentPath;
+        pathInput.value = data.currentPath;
         
         // Render directory contents
         renderDirectoryContents(data);
+        
+        // Show content
+        contentDiv.style.display = 'block';
     })
     .catch(error => {
+        console.error('[Directory Browser] Error browsing directory:', error);
+        
+        // Hide loading
         loadingDiv.style.display = 'none';
-        errorDiv.textContent = 'Error browsing directory: ' + error.message;
+        
+        // Show error
+        errorDiv.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-circle"></i> Error browsing directory: ${error.message}
+            </div>
+        `;
         errorDiv.style.display = 'block';
     });
 }
 
+// Render directory contents in the modal
 function renderDirectoryContents(data) {
     const contentDiv = document.getElementById('directoryBrowserContent');
+    if (!contentDiv) {
+        console.error('[Directory Browser] Content div not found');
+        return;
+    }
+    
     let html = '';
     
     // Add parent directory navigation (if not at root)
@@ -580,8 +659,8 @@ function renderDirectoryContents(data) {
         html += `
             <div class="directory-item" onclick="browseDirectory('${escapeHtml(data.parentPath)}')">
                 <div class="d-flex align-items-center p-2 hover-bg-light cursor-pointer">
-                    <span class="me-2">⬆️</span>
-                    <span><em>.. (Parent Directory)</em></span>
+                    <i class="fas fa-level-up-alt me-2"></i>
+                    <span class="text-muted">.. (Parent Directory)</span>
                 </div>
             </div>
         `;
@@ -589,50 +668,46 @@ function renderDirectoryContents(data) {
     
     // Add directories
     if (data.directories && data.directories.length > 0) {
-        html += '<div class="directories-section">';
         data.directories.forEach(dir => {
-            const icon = dir.isGitRepository ? '📁🌿' : '📁';
+            const icon = dir.isGitRepository ? 'fab fa-git-alt text-success' : 'fas fa-folder text-warning';
             const gitBadge = dir.isGitRepository ? '<span class="badge bg-success ms-2">Git</span>' : '';
             
             html += `
                 <div class="directory-item" onclick="browseDirectory('${escapeHtml(dir.fullPath)}')">
                     <div class="d-flex align-items-center p-2 hover-bg-light cursor-pointer">
-                        <span class="me-2">${icon}</span>
+                        <i class="${icon} me-2"></i>
                         <span>${escapeHtml(dir.name)}${gitBadge}</span>
                         <small class="text-muted ms-auto">${formatDate(dir.lastModified)}</small>
                     </div>
                 </div>
             `;
         });
-        html += '</div>';
     }
     
-    // Add files
+    // Add files (for display only, not clickable)
     if (data.files && data.files.length > 0) {
-        html += '<div class="files-section mt-3">';
-        html += '<h6 class="text-muted mb-2">Files</h6>';
+        html += '<div class="mt-3"><h6 class="text-muted border-bottom pb-1">Files</h6></div>';
         data.files.forEach(file => {
             const icon = getFileIcon(file.name);
-            const sizeText = formatFileSize(file.size);
             
             html += `
                 <div class="file-item">
                     <div class="d-flex align-items-center p-2 text-muted">
-                        <span class="me-2">${icon}</span>
+                        <i class="${icon} me-2"></i>
                         <span>${escapeHtml(file.name)}</span>
-                        <small class="text-muted ms-auto">${sizeText} • ${formatDate(file.lastModified)}</small>
+                        <small class="text-muted ms-auto">${formatFileSize(file.size)} • ${formatDate(file.lastModified)}</small>
                     </div>
                 </div>
             `;
         });
-        html += '</div>';
     }
     
     // Add empty state
-    if ((!data.directories || data.directories.length === 0) &&
+    if ((!data.directories || data.directories.length === 0) && 
         (!data.files || data.files.length === 0)) {
         html += `
             <div class="text-center text-muted p-4">
+                <i class="fas fa-inbox fa-2x mb-2"></i>
                 <p>This directory is empty</p>
             </div>
         `;
@@ -642,70 +717,75 @@ function renderDirectoryContents(data) {
     if (data.isGitRepository) {
         html = `
             <div class="alert alert-success mb-3">
-                <strong>🌿 Git Repository Detected!</strong> This directory contains a .git folder.
+                <i class="fab fa-git-alt"></i> <strong>Git Repository Detected!</strong> This directory contains a .git folder.
             </div>
         ` + html;
     }
     
     contentDiv.innerHTML = html;
-    
-    // Add some CSS for hover effects
-    const style = document.createElement('style');
-    style.textContent = `
-        .hover-bg-light:hover {
-            background-color: #f8f9fa;
-        }
-        .cursor-pointer {
-            cursor: pointer;
-        }
-        .directory-item, .file-item {
-            border-bottom: 1px solid #e9ecef;
-        }
-        .directory-item:last-child, .file-item:last-child {
-            border-bottom: none;
-        }
-    `;
-    if (!document.getElementById('directory-browser-styles')) {
-        style.id = 'directory-browser-styles';
-        document.head.appendChild(style);
+}
+
+// Navigate to path entered in the input field
+function navigateToPath() {
+    const pathInput = document.getElementById('currentDirectoryPath');
+    if (pathInput && pathInput.value.trim() !== '') {
+        const newPath = pathInput.value.trim();
+        console.log('[Directory Browser] Navigating to path:', newPath);
+        browseDirectory(newPath);
     }
 }
 
-function navigateToParent() {
-    if (currentBrowsePath) {
-        browseDirectory(currentBrowsePath); // This will handle parent navigation
-    }
-}
-
+// Select current directory and close modal
 function selectCurrentDirectory() {
     if (currentBrowsePath) {
-        document.getElementById('repositoryPathInput').value = currentBrowsePath;
+        // Update repository path input
+        const repoPathInput = document.getElementById('repositoryPathInput');
+        if (repoPathInput) {
+            repoPathInput.value = currentBrowsePath;
+        }
         
         // Close the modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('directoryBrowserModal'));
-        modal.hide();
+        const modalElement = document.getElementById('directoryBrowserModal');
+        if (modalElement) {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+        }
         
-        console.log('Selected repository path:', currentBrowsePath);
+        console.log('[Directory Browser] Selected repository path:', currentBrowsePath);
+        
+        // Trigger workflow validation for step 3 (repository selection)
+        // This mimics the behavior of the "Set Repository" button
+        if (window.workflowAPI) {
+            console.log('[Directory Browser] Validating step 3 after directory selection');
+            // Small delay to ensure DOM is updated before validation
+            setTimeout(function() {
+                window.workflowAPI.validateAndAdvanceStep(3);
+            }, 100);
+        }
     }
 }
 
+// Get appropriate icon for file based on extension
 function getFileIcon(filename) {
     const ext = filename.toLowerCase().split('.').pop();
     const iconMap = {
-        'cs': '📝',
-        'js': '📜',
-        'py': '🐍',
-        'json': '📋',
-        'xml': '📄',
-        'config': '⚙️',
-        'md': '📖',
-        'txt': '📃',
-        'yml': '🔧',
-        'yaml': '🔧'
+        'cs': 'fas fa-file-code',
+        'js': 'fab fa-js',
+        'py': 'fab fa-python',
+        'json': 'fas fa-file-code',
+        'xml': 'fas fa-file-code',
+        'config': 'fas fa-cog',
+        'md': 'fab fa-markdown',
+        'txt': 'fas fa-file-alt',
+        'yml': 'fas fa-file-code',
+        'yaml': 'fas fa-file-code'
     };
-    return iconMap[ext] || '📄';
+    return iconMap[ext] || 'fas fa-file';
 }
 
+// Format file size for display
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -714,6 +794,7 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
+// Format date for display
 function formatDate(dateString) {
     const date = new Date(dateString);
     const now = new Date();
@@ -731,77 +812,17 @@ function formatDate(dateString) {
     }
 }
 
+// Escape HTML to prevent XSS
 function escapeHtml(text) {
     const map = {
-        '&': '&',
-        '<': '<',
-        '>': '>',
-        '"': '"',
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
         "'": '&#039;'
     };
     return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-// Function to reset UI for new analysis
-function resetAnalysisUI() {
-    console.log('[resetAnalysisUI] Resetting analysis UI');
-    
-    // Hide analysis results section
-    const analysisResultsSection = document.getElementById('analysisResultsSection');
-    if (analysisResultsSection) {
-        analysisResultsSection.style.display = 'none';
-        analysisResultsSection.classList.add('hidden-analysis');
-    }
-    
-    // Show workflow container again
-    const workflowContainer = document.querySelector('.workflow-horizontal-container');
-    if (workflowContainer) {
-        workflowContainer.style.display = 'flex';
-    }
-    
-    // Reset progress message
-    const progressMessage = document.getElementById('progressMessage');
-    if (progressMessage) {
-        progressMessage.style.display = 'none';
-        progressMessage.textContent = '';
-    }
-    
-    // Hide bottom panel view
-    const bottomPanelView = document.getElementById('bottomPanelView');
-    if (bottomPanelView) {
-        bottomPanelView.style.display = 'none';
-    }
-    
-    // Hide "New Analysis" button
-    const newAnalysisBtn = document.getElementById('newAnalysisBtn');
-    if (newAnalysisBtn) {
-        newAnalysisBtn.style.display = 'none';
-    }
-    
-    // Clear current analysis ID
-    currentAnalysisId = null;
-    if (typeof window !== 'undefined') {
-        window.currentAnalysisId = null;
-    }
-    
-    console.log('[resetAnalysisUI] Analysis UI reset complete');
-}
+// ==================== END DIRECTORY BROWSER FUNCTIONS ====================
 
-// Initialize directory browser on modal show
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('directoryBrowserModal');
-    if (modal) {
-        modal.addEventListener('shown.bs.modal', function() {
-            // Focus on the current path input
-            document.getElementById('currentDirectoryPath').focus();
-        });
-        
-        modal.addEventListener('hidden.bs.modal', function() {
-            // Clean up any temporary styles
-            const style = document.getElementById('directory-browser-styles');
-            if (style) {
-                style.remove();
-            }
-        });
-    }
-});
