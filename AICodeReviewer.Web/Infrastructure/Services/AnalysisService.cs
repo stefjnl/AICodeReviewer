@@ -52,7 +52,7 @@ public class AnalysisService : IAnalysisService
             var selectedDocuments = request.SelectedDocuments ?? session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
             var documentsFolder = !string.IsNullOrEmpty(request.DocumentsFolder) ? request.DocumentsFolder : session.GetString("DocumentsFolder") ?? Path.Combine(environment.ContentRootPath, "..", "Documents");
             var language = request.Language ?? session.GetString("Language") ?? "NET";
-            var analysisType = request.AnalysisType ?? "uncommitted";
+            var analysisType = request.AnalysisType ?? AnalysisType.Uncommitted;
             var commitId = request.CommitId;
             var filePath = request.FilePath;
             
@@ -82,7 +82,7 @@ public class AnalysisService : IAnalysisService
             }
 
             // Validate based on analysis type
-            if (analysisType == "singlefile")
+            if (analysisType == AnalysisType.SingleFile)
             {
                 _logger.LogInformation("[RunAnalysis] Single file analysis requested with filePath: {FilePath}", filePath);
                 
@@ -113,11 +113,21 @@ public class AnalysisService : IAnalysisService
                 }
 
                 // Validate commit ID if commit analysis requested
-                if (analysisType == "commit")
+                if (analysisType == AnalysisType.Commit)
                 {
                     if (string.IsNullOrEmpty(commitId))
                     {
                         return ("", false, "Commit ID is required for commit analysis");
+                    }
+                }
+
+                // Validate staged changes if staged analysis requested
+                if (analysisType == AnalysisType.Staged)
+                {
+                    var (hasStaged, stagedError) = _repositoryService.HasStagedChanges(repositoryPath);
+                    if (!hasStaged)
+                    {
+                        return ("", false, "No staged changes found. Use 'git add' to stage files for analysis.");
                     }
                 }
             }
@@ -231,7 +241,7 @@ public class AnalysisService : IAnalysisService
         string model,
         string fallbackModel,
         string language,
-        string analysisType = "uncommitted",
+        AnalysisType analysisType = AnalysisType.Uncommitted,
         string? commitId = null,
         string? filePath = null,
         ISession? session = null)
@@ -281,7 +291,7 @@ public class AnalysisService : IAnalysisService
             bool contentError;
             bool isFileContent = false;
             
-            if (analysisType == "singlefile" && !string.IsNullOrEmpty(filePath))
+            if (analysisType == AnalysisType.SingleFile && !string.IsNullOrEmpty(filePath))
             {
                 _logger.LogInformation($"[Analysis {analysisId}] Reading single file: {filePath}");
                 try
@@ -298,10 +308,15 @@ public class AnalysisService : IAnalysisService
                     _logger.LogError(ex, $"[Analysis {analysisId}] Failed to read file: {filePath}");
                 }
             }
-            else if (analysisType == "commit" && !string.IsNullOrEmpty(commitId))
+            else if (analysisType == AnalysisType.Commit && !string.IsNullOrEmpty(commitId))
             {
                 _logger.LogInformation($"[Analysis {analysisId}] Extracting commit diff for commit: {commitId}");
                 (content, contentError) = _repositoryService.GetCommitDiff(repositoryPath, commitId);
+            }
+            else if (analysisType == AnalysisType.Staged)
+            {
+                _logger.LogInformation($"[Analysis {analysisId}] Extracting staged changes only");
+                (content, contentError) = _repositoryService.ExtractStagedDiff(repositoryPath);
             }
             else
             {

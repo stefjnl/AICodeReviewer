@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using System.Runtime.Serialization;
+
 namespace AICodeReviewer.Web.Models;
 
 /// <summary>
@@ -60,4 +63,35 @@ public enum SupportedLanguage
 {
     NET,
     Python
+}
+
+/// <summary>
+/// Types of analysis that can be performed
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum AnalysisType
+{
+    /// <summary>
+    /// Analyze all uncommitted changes (staged and unstaged)
+    /// </summary>
+    [EnumMember(Value = "uncommitted")]
+    Uncommitted,
+    
+    /// <summary>
+    /// Analyze only staged changes (files added with git add)
+    /// </summary>
+    [EnumMember(Value = "staged")]
+    Staged,
+    
+    /// <summary>
+    /// Analyze changes in a specific commit
+    /// </summary>
+    [EnumMember(Value = "commit")]
+    Commit,
+    
+    /// <summary>
+    /// Analyze a single file
+    /// </summary>
+    [EnumMember(Value = "singlefile")]
+    SingleFile
 }
