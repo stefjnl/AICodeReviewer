@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI Code Reviewer - Intelligent code analysis and review">
+    <title>AI Code Reviewer</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js CDN -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- SignalR CDN -->
+    <script src="https://unpkg.com/@microsoft/signalr@latest/dist/browser/signalr.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/app.css">
+    
+    <!-- Custom JS -->
+    <script defer src="../js/app.js"></script>
+    
+    <!-- Configure Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                        accent: '#06b6d4',
+                        surface: '#f8fafc',
+                        muted: '#94a3b8'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-surface text-gray-900">
+    <!-- Main Application Container -->
+    <div id="app" class="min-h-full">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-bold text-gray-900">AI Code Reviewer</h1>
+                        <span class="ml-3 px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full">
+                            Beta
+                        </span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-500">Ready for analysis</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1">
+            <!-- Alpine.js Test Component -->
+            <div x-data="testComponent()" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Welcome Section -->
+                <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Welcome to AI Code Reviewer</h2>
+                    <p class="text-gray-600 mb-4">
+                        This foundation template includes all required dependencies and is ready for development.
+                    </p>
+                    
+                    <!-- Test Interactive Component -->
+                    <div class="border-t pt-4">
+                        <h3 class="text-md font-medium text-gray-900 mb-3">Test Component</h3>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm font-medium text-gray-700">
+                                    Counter: <span x-text="count" class="text-primary font-bold"></span>
+                                </span>
+                                <button 
+                                    @click="increment()" 
+                                    class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+                                >
+                                    Increment
+                                </button>
+                            </div>
+                            
+                            <div x-show="showMessage" 
+                                 x-transition
+                                 class="bg-green-50 border border-green-200 rounded-md p-3">
+                                <p class="text-sm text-green-800" x-text="message"></p>
+                            </div>
+                            
+                            <button 
+                                @click="toggleMessage()" 
+                                class="text-sm text-primary hover:text-primary/80 underline"
+                            >
+                                <span x-text="showMessage ? 'Hide' : 'Show'"></span> message
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workflow Container (for future components) -->
+                <div id="workflow-container" class="space-y-6">
+                    <!-- Step 1: Repository Selection -->
+                    <div id="repository-selection" class="bg-white rounded-lg shadow-sm border p-6">
+                        <h3 class="text-md font-semibold text-gray-900 mb-2">Step 1: Repository Selection</h3>
+                        <p class="text-sm text-gray-600">This area will contain repository browsing and selection functionality</p>
+                    </div>
+
+                    <!-- Step 2: Requirements Document -->
+                    <div id="requirements-selection" class="bg-white rounded-lg shadow-sm border p-6">
+                        <h3 class="text-md font-semibold text-gray-900 mb-2">Step 2: Requirements Document</h3>
+                        <p class="text-sm text-gray-600">This area will contain requirements document selection and validation</p>
+                    </div>
+
+                    <!-- Step 3: Analysis Progress -->
+                    <div id="analysis-progress" class="bg-white rounded-lg shadow-sm border p-6">
+                        <h3 class="text-md font-semibold text-gray-900 mb-2">Step 3: Analysis Progress</h3>
+                        <p class="text-sm text-gray-600">This area will show real-time analysis progress via SignalR</p>
+                    </div>
+
+                    <!-- Step 4: Results Display -->
+                    <div id="results-display" class="bg-white rounded-lg shadow-sm border p-6">
+                        <h3 class="text-md font-semibold text-gray-900 mb-2">Step 4: Results Display</h3>
+                        <p class="text-sm text-gray-600">This area will display the analysis results with filtering and navigation</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-auto">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-500">
+                        AI Code Reviewer &copy; 2025
+                    </p>
+                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                        <span>Alpine.js <span x-text="$version" class="text-xs"></span></span>
+                        <span>SignalR Connected: <span id="signalr-status" class="text-xs text-gray-400">Initializing...</span></span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Alpine.js Test Component Script -->
+    <script>
+        function testComponent() {
+            return {
+                count: 0,
+                showMessage: false,
+                message: 'Alpine.js is working correctly! 🎉',
+                
+                increment() {
+                    this.count++;
+                    if (this.count > 5) {
+                        this.message = `Count is now ${this.count}! Keep going!`;
+                    }
+                },
+                
+                toggleMessage() {
+                    this.showMessage = !this.showMessage;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
