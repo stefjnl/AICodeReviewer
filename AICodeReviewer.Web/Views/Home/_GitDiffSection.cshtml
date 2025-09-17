@@ -1,0 +1,31 @@
+@*
+    Git Diff Display (Outside workflow-container)
+*@
+<div id="gitDiffSection" class="git-diff-section">
+    @if (ViewBag.GitDiff != null)
+    {
+        @if (ViewBag.GitDiffError)
+        {
+            <div class="workflow-alert workflow-alert-warning">
+                ⚠️ @ViewBag.GitDiff
+            </div>
+        }
+        else
+        {
+            <div class="workflow-card">
+                <div class="workflow-card-header">
+                    <h6 class="mb-0">
+                        <button class="workflow-btn workflow-btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#gitDiffCollapse">
+                            📊 Git Changes (Click to expand/collapse)
+                        </button>
+                    </h6>
+                </div>
+                <div class="collapse" id="gitDiffCollapse">
+                    <div class="workflow-card-body">
+                        <pre class="git-diff-text workflow-pre" style="white-space: pre-wrap; font-family: monospace; font-size: 0.8em; max-height: 300px; overflow-y: auto;">@ViewBag.GitDiff</pre>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

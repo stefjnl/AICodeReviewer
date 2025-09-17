@@ -1,0 +1,35 @@
+@*
+    Analysis Info Sections (Commit, Staged, Single File)
+*@
+<!-- Commit Analysis Info (shown when specific commit is selected) -->
+<div id="commitAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
+    <div class="d-flex align-items-center">
+        <div class="me-2">🔍</div>
+        <div>
+            <strong>Commit Analysis Mode</strong><br>
+            <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
+        </div>
+    </div>
+</div>
+
+<!-- Staged Changes Analysis Info (shown when staged changes is selected) -->
+<div id="stagedAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
+    <div class="d-flex align-items-center">
+        <div class="me-2">📝</div>
+        <div>
+            <strong>Staged Changes Only Mode</strong><br>
+            <small>Analyze only the changes that have been staged for commit using 'git add'. No unstaged changes will be included.</small>
+        </div>
+    </div>
+</div>
+
+<!-- Single File Analysis Info (shown when single file is selected) -->
+<div id="singleFileAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
+    <div class="d-flex align-items-center">
+        <div class="me-2">📄</div>
+        <div>
+            <strong>Single File Analysis Mode</strong><br>
+            <small>Enter a file path above (.cs, .js, .py files) or click "Browse" to select a file for analysis.</small>
+        </div>
+    </div>
+</div>

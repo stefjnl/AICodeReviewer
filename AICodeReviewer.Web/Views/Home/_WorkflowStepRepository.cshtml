@@ -1,0 +1,26 @@
+@*
+    Repository Step (Step 3) - Workflow Grid Item
+*@
+<div class="workflow-grid-item" data-step="3">
+    <div class="workflow-grid-item-header">
+        <span>📁</span>
+        Repository
+    </div>
+    <div class="workflow-grid-item-content">
+        <!-- Repository Path Configuration -->
+        <div class="mb-3">
+            <form asp-action="SetRepositoryPath" method="post" id="repositoryPathForm">
+                <div class="workflow-input-group">
+                    <input type="text" class="workflow-form-control" name="repositoryPath"
+                           placeholder="Repository path"
+                           value="@ViewBag.RepositoryPath"
+                           id="repositoryPathInput">
+                    <button class="workflow-btn workflow-btn-secondary" type="button" onclick="openDirectoryBrowser()">
+                        📁 Browse
+                    </button>
+                    <button class="workflow-btn workflow-btn-primary" type="submit" onclick="handleRepositoryPath(event)">Set Repository</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
