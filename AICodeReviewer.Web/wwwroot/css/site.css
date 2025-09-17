@@ -1040,6 +1040,67 @@ small.text-muted {
     border-radius: 8px;
 }
 
+/* Enhanced modal animations for seamless opening */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    transform: scale(0.95);
+    opacity: 0;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Smooth loading states for directory browser */
+.directory-browser-container {
+    transition: opacity 0.2s ease-in-out;
+}
+
+#directoryBrowserLoading {
+    transition: opacity 0.2s ease-in-out;
+}
+
+#directoryBrowserContent {
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Ensure modal backdrop is properly styled */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+/* Enhanced directory item hover effects */
+.directory-item:hover,
+.file-item:hover {
+    background-color: rgba(49, 130, 206, 0.1);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+/* Loading spinner enhancements */
+.spinner-border {
+    animation-duration: 0.8s;
+}
+
+/* Ensure modal is properly positioned */
+.modal {
+    z-index: 1055 !important;
+}
+
+.modal-dialog {
+    margin: 1.75rem auto;
+    max-width: 800px;
+    z-index: 1056 !important;
+}
+
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+}
+
 .workflow-modal-header {
     background-color: #2d3748;
     color: #e2e8f0;

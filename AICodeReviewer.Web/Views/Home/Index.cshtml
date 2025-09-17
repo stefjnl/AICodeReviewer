@@ -465,51 +465,6 @@
                     </script>
                 </div>
                 
-                <!-- Directory Browser Modal -->
-                <div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
-                        <div class="workflow-modal-content">
-                            <div class="workflow-modal-header">
-                                <h5 class="workflow-modal-title">📁 Select Repository Directory</h5>
-                                <button type="button" class="workflow-btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="workflow-modal-body">
-                                <div class="mb-3">
-                                    <div class="workflow-input-group">
-                                        <input type="text" class="workflow-form-control" id="currentDirectoryPath" readonly>
-                                        <button class="workflow-btn workflow-btn-secondary" type="button" onclick="navigateToParent()">
-                                            ⬆️ Up
-                                        </button>
-                                        <button class="workflow-btn workflow-btn-primary" type="button" onclick="selectCurrentDirectory()">
-                                            ✅ Select This Folder
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div class="directory-browser-container" style="max-height: 400px; overflow-y: auto;">
-                                    <div id="directoryBrowserLoading" class="text-center p-4" style="display: none;">
-                                        <div class="spinner-border" role="status">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                        <p class="mt-2">Loading directories...</p>
-                                    </div>
-                                    
-                                    <div id="directoryBrowserContent">
-                                        <!-- Directory content will be loaded here -->
-                                    </div>
-                                    
-                                    <div id="directoryBrowserError" class="workflow-alert workflow-alert-danger" style="display: none;">
-                                        <!-- Error messages will appear here -->
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="workflow-modal-footer">
-                                <button type="button" class="workflow-btn workflow-btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="workflow-btn workflow-btn-primary" onclick="selectCurrentDirectory()">Select Folder</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         
@@ -842,15 +797,6 @@
                     </div>
                     <div class="workflow-card-body">
                         <pre class="analysis-text workflow-pre" style="white-space: pre-wrap; font-family: monospace;">@analysisResult</pre>
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="workflow-alert workflow-alert-info">
-                    <div class="d-flex align-items-center">
-                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                        <span>Analysis results will appear here...</span>
                     </div>
                 </div>
             }
@@ -1561,3 +1507,42 @@
         }
     });
 </script>
+
+<!-- Directory Browser Modal -->
+<div class="modal fade" id="directoryBrowserModal" tabindex="-1" aria-labelledby="directoryBrowserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="directoryBrowserModalLabel">📁 Select Repository Directory</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="currentDirectoryPath" class="form-label">Current Path:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="currentDirectoryPath">
+                        <button class="btn btn-outline-secondary" type="button" onclick="navigateToPath()">Go</button>
+                        <button class="btn btn-outline-secondary" type="button" onclick="selectCurrentDirectory()">Select</button>
+                    </div>
+                </div>
+                
+                <div id="directoryBrowserLoading" class="text-center" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading directories...</p>
+                </div>
+                
+                <div id="directoryBrowserError" style="display: none;"></div>
+                
+                <div id="directoryBrowserContent" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Directory content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="selectCurrentDirectory()">Select Directory</button>
+            </div>
+        </div>
+    </div>
+</div>
