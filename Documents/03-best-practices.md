@@ -1,5 +1,3 @@
-Always follow the following best practices when coding:
-
 1.  **Prioritize Simplicity and Readability**: Reduce ambiguities, clarify processes, and use descriptive names for classes, methods, and variables to make code self-documenting.
 2.  **Adhere to SOLID Principles**: Respect Single Responsibility, Open/Close, Liskov Substitution, Interface Segregation, and Dependency Inversion principles to organize functions and data structures effectively.
 3.  **Ensure High Maintainability**: Refactor code to improve its maintainability index (a score from 0 to 100, where higher indicates easier maintenance), focusing on writing classes and methods with single responsibilities.
