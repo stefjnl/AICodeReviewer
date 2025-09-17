@@ -32,6 +32,12 @@ builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService
 builder.Services.AddScoped<IPathValidationService, PathValidationService>();
 builder.Services.AddScoped<ISignalRBroadcastService, SignalRBroadcastService>();
 builder.Services.AddScoped<IDirectoryBrowsingService, DirectoryBrowsingService>();
+builder.Services.AddScoped<IResourceService, ResourceService>();
+builder.Services.AddHttpClient<IAIService, AIService>(client =>
+{
+    client.BaseAddress = new Uri("https://openrouter.ai/api/v1/");
+    client.Timeout = TimeSpan.FromSeconds(120);
+});
 
 // In service registration section
 builder.Services.AddSignalR();

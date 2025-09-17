@@ -19,6 +19,7 @@ public class AnalysisService : IAnalysisService
     private readonly ISignalRBroadcastService _signalRService;
     private readonly IHubContext<ProgressHub> _hubContext;
     private readonly IMemoryCache _cache;
+    private readonly IAIService _aiService;
 
     public AnalysisService(
         ILogger<AnalysisService> logger,
@@ -27,7 +28,8 @@ public class AnalysisService : IAnalysisService
         IPathValidationService pathService,
         ISignalRBroadcastService signalRService,
         IHubContext<ProgressHub> hubContext,
-        IMemoryCache cache)
+        IMemoryCache cache,
+        IAIService aiService)
     {
         _logger = logger;
         _repositoryService = repositoryService;
@@ -36,6 +38,7 @@ public class AnalysisService : IAnalysisService
         _signalRService = signalRService;
         _hubContext = hubContext;
         _cache = cache;
+        _aiService = aiService;
     }
 
     public async Task<(string analysisId, bool success, string? error)> StartAnalysisAsync(
@@ -427,7 +430,7 @@ public class AnalysisService : IAnalysisService
                 
                 // Call AI service with timeout
                 var (analysisResult, isError, errorMsg) = await Task.Run(async () =>
-                    await AIService.AnalyzeCodeAsync(content ?? "", codingStandards, requirements, apiKey, model, language, isFileContent),
+                    await _aiService.AnalyzeCodeAsync(content ?? "", codingStandards, requirements, apiKey, model, language, isFileContent),
                     cts.Token);
                 
                 analysis = analysisResult;
@@ -448,7 +451,7 @@ public class AnalysisService : IAnalysisService
                         
                         // Retry with fallback model
                         (analysisResult, isError, errorMsg) = await Task.Run(async () =>
-                            await AIService.AnalyzeCodeAsync(content ?? "", codingStandards, requirements, apiKey, fallbackModel, language, isFileContent),
+                            await _aiService.AnalyzeCodeAsync(content ?? "", codingStandards, requirements, apiKey, fallbackModel, language, isFileContent),
                             cts.Token);
                         
                         analysis = analysisResult;
