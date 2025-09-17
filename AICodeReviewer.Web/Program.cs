@@ -10,6 +10,11 @@ builder.Services.AddControllersWithViews(options =>
 {
     // Disable antiforgery validation for AJAX endpoints
     options.Filters.Add(new Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryTokenAttribute());
+})
+.AddJsonOptions(options =>
+{
+    // Configure JSON serialization to use string enum conversion
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
 builder.Services.AddMemoryCache(options =>

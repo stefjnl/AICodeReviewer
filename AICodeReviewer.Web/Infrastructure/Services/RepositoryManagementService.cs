@@ -219,4 +219,71 @@ public class RepositoryManagementService : IRepositoryManagementService
             return (false, $"Repository validation error: {ex.Message}");
         }
     }
+
+    public (string diff, bool isError) ExtractStagedDiff(string repositoryPath)
+    {
+        try
+        {
+            using var repo = new Repository(repositoryPath);
+            
+            // Get only staged changes (HEAD vs Index)
+            var diff = repo.Diff.Compare<Patch>(
+                repo.Head.Tip?.Tree,
+                DiffTargets.Index);
+            
+            var diffContent = diff.Content;
+            
+            // Simple size check - 100KB limit
+            if (diffContent.Length > 102400)
+            {
+                _logger.LogWarning("Staged diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
+                return ($"Staged diff too large ({diffContent.Length} bytes > 100KB).", true);
+            }
+            
+            // Include current branch information
+            var branchInfo = $"Branch: {repo.Head.FriendlyName}\n\n";
+            
+            return string.IsNullOrEmpty(diffContent)
+                ? (branchInfo + "No staged changes detected.", false)  // No staged changes graceful handling
+                : (branchInfo + diffContent, false);
+        }
+        catch (RepositoryNotFoundException)
+        {
+            _logger.LogWarning("Not a git repository at path: {Path}", repositoryPath);
+            return ("Not a git repository.", true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Git error while extracting staged diff from: {Path}", repositoryPath);
+            return ($"Git error: {ex.Message}", true);
+        }
+    }
+
+    public (bool hasStaged, string? error) HasStagedChanges(string repositoryPath)
+    {
+        try
+        {
+            using var repo = new Repository(repositoryPath);
+            
+            // Check if there are any staged changes by comparing HEAD tree with index
+            var diff = repo.Diff.Compare<Patch>(
+                repo.Head.Tip?.Tree,
+                DiffTargets.Index);
+            
+            var hasStaged = !string.IsNullOrEmpty(diff.Content);
+            
+            _logger.LogInformation("Checked for staged changes in repository: {Path} - Has staged: {HasStaged}", repositoryPath, hasStaged);
+            return (hasStaged, null);
+        }
+        catch (RepositoryNotFoundException)
+        {
+            _logger.LogError("Repository not found at path: {Path}", repositoryPath);
+            return (false, "Not a git repository");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking for staged changes in repository: {Path}", repositoryPath);
+            return (false, $"Error checking staged changes: {ex.Message}");
+        }
+    }
 }
