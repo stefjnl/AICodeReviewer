@@ -19,8 +19,30 @@ class GridWorkflowManager {
     }
 
     setupInitialState() {
-        // Start with only first step active and fully visible
+        // Start with first step active
         this.currentStep = 1;
+        
+        // Check if steps are already valid and advance accordingly
+        for (let step = 1; step <= this.maxSteps; step++) {
+            if (this.validateStep(step)) {
+                console.log(`[Workflow] Step ${step} is already valid`);
+                // If this is the last step, enable the Start Analysis button (step 6)
+                if (step === this.maxSteps) {
+                    this.currentStep = step + 1; // Enable Start Analysis button
+                } else {
+                    this.currentStep = step + 1; // Move to next step
+                }
+            } else {
+                this.currentStep = step; // Stay at the first invalid step
+                break;
+            }
+        }
+        
+        // Cap at maxSteps + 1 (for Start Analysis button)
+        if (this.currentStep > this.maxSteps + 1) {
+            this.currentStep = this.maxSteps + 1;
+        }
+        
         this.updateStepStates();
         
         // Ensure first step is properly configured

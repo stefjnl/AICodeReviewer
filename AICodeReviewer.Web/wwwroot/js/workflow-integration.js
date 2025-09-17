@@ -81,6 +81,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+        
+        // Auto-validate steps on page load if they're already valid
+        setTimeout(function() {
+            if (window.workflowAPI && window.horizontalWorkflow) {
+                const currentStep = window.horizontalWorkflow.getCurrentStep();
+                
+                // If we're past step 1, auto-validate subsequent steps with defaults
+                if (currentStep > 1 && window.workflowAPI) {
+                    // Chain the validations with appropriate delays
+                    setTimeout(() => {
+                        if (window.workflowAPI) {
+                            // Ensure repository path is set to default if empty
+                            const repoInput = document.getElementById('repositoryPathInput');
+                            if (repoInput && !repoInput.value.trim()) {
+                                repoInput.value = window.repositoryPath || 'C:\\git\\AICodeReviewer\\AICodeReviewer';
+                            }
+                            
+                            // Auto-validate steps 2-6 if we're past step 1
+                            for (let step = Math.max(2, currentStep); step <= 6; step++) {
+                                window.workflowAPI.validateAndAdvanceStep(step);
+                            }
+                        }
+                    }, 200);
+                }
+            }
+        }, 500); // Small delay to ensure everything is loaded
     }
 });
 
