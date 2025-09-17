@@ -43,4 +43,18 @@ public interface IRepositoryManagementService
     /// <param name="repositoryPath">Repository path to validate</param>
     /// <returns>Validation result and error message</returns>
     (bool isValid, string? error) ValidateRepositoryForAnalysis(string repositoryPath);
+    
+    /// <summary>
+    /// Extract git diff for staged changes only
+    /// </summary>
+    /// <param name="repositoryPath">Path to the git repository</param>
+    /// <returns>Staged diff content and error status</returns>
+    (string diff, bool isError) ExtractStagedDiff(string repositoryPath);
+    
+    /// <summary>
+    /// Check if repository has staged changes
+    /// </summary>
+    /// <param name="repositoryPath">Path to the git repository</param>
+    /// <returns>Validation result and error message</returns>
+    (bool hasStaged, string? error) HasStagedChanges(string repositoryPath);
 }

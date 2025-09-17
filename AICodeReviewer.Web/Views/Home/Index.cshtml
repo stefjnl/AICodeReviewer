@@ -442,6 +442,12 @@
                     </label>
                 </div>
                 <div class="workflow-form-check">
+                    <input class="workflow-form-check-input" type="radio" name="analysisType" id="stagedChanges" value="staged">
+                    <label class="workflow-form-check-label" for="stagedChanges">
+                        Staged Changes Only
+                    </label>
+                </div>
+                <div class="workflow-form-check">
                     <input class="workflow-form-check-input" type="radio" name="analysisType" id="specificCommit" value="commit">
                     <label class="workflow-form-check-label" for="specificCommit">
                         Specific Commit
@@ -528,7 +534,7 @@
                             commitIdInput.addEventListener('input', function() {
                                 setTimeout(function() {
                                     const currentAnalysisType = document.querySelector('input[name="analysisType"]:checked');
-                                    if (currentAnalysisType && currentAnalysisType.value === 'commit' && window.workflowAPI) {
+                                    if (currentAnalysisType && currentAnalysisType.value === '2' && window.workflowAPI) {
                                         console.log('[Index] Validating step 4 after commit ID input');
                                         window.workflowAPI.validateAndAdvanceStep(4);
                                     }
@@ -541,7 +547,7 @@
                             filePathInput.addEventListener('input', function() {
                                 setTimeout(function() {
                                     const currentAnalysisType = document.querySelector('input[name="analysisType"]:checked');
-                                    if (currentAnalysisType && currentAnalysisType.value === 'singlefile' && window.workflowAPI) {
+                                    if (currentAnalysisType && currentAnalysisType.value === '3' && window.workflowAPI) {
                                         console.log('[Index] Validating step 4 after file path input');
                                         window.workflowAPI.validateAndAdvanceStep(4);
                                     }
@@ -710,6 +716,17 @@
             <div>
                 <strong>Commit Analysis Mode</strong><br>
                 <small>Enter a commit ID above and click "Validate" to analyze a specific commit.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staged Changes Analysis Info (shown when staged changes is selected) -->
+    <div id="stagedAnalysisInfo" class="workflow-alert workflow-alert-info mt-3" style="display: none;">
+        <div class="d-flex align-items-center">
+            <div class="me-2">📝</div>
+            <div>
+                <strong>Staged Changes Only Mode</strong><br>
+                <small>Analyze only the changes that have been staged for commit using 'git add'. No unstaged changes will be included.</small>
             </div>
         </div>
     </div>
@@ -1034,6 +1051,7 @@
     // Radio button change handler for analysis type
     document.addEventListener('DOMContentLoaded', function() {
         const uncommittedRadio = document.getElementById('uncommittedChanges');
+        const stagedRadio = document.getElementById('stagedChanges');
         const commitRadio = document.getElementById('specificCommit');
         const singleFileRadio = document.getElementById('singleFile');
         const commitIdContainer = document.getElementById('commitIdContainer');
@@ -1043,11 +1061,12 @@
         
         function toggleAnalysisTypeFields() {
             const gitDiffSection = document.getElementById('gitDiffSection');
+            const stagedAnalysisInfo = document.getElementById('stagedAnalysisInfo');
             const commitAnalysisInfo = document.getElementById('commitAnalysisInfo');
             const singleFileAnalysisInfo = document.getElementById('singleFileAnalysisInfo');
             
             // Initialize on first call
-            if (!gitDiffSection || !commitAnalysisInfo || !singleFileAnalysisInfo) {
+            if (!gitDiffSection || !stagedAnalysisInfo || !commitAnalysisInfo || !singleFileAnalysisInfo) {
                 console.log('Elements not found, skipping toggle');
                 return;
             }
@@ -1060,6 +1079,7 @@
                 
                 // Hide git diff section and show commit analysis info
                 gitDiffSection.style.display = 'none';
+                stagedAnalysisInfo.style.display = 'none';
                 commitAnalysisInfo.style.display = 'block';
                 singleFileAnalysisInfo.style.display = 'none';
             } else if (singleFileRadio.checked) {
@@ -1072,8 +1092,24 @@
                 
                 // Hide git diff section and show single file analysis info
                 gitDiffSection.style.display = 'none';
+                stagedAnalysisInfo.style.display = 'none';
                 commitAnalysisInfo.style.display = 'none';
                 singleFileAnalysisInfo.style.display = 'block';
+            } else if (stagedRadio.checked) {
+                commitIdContainer.style.display = 'none';
+                commitIdInput.required = false;
+                commitIdInput.value = '';
+                document.getElementById('commitValidationResult').innerHTML = '';
+                filePickerContainer.style.display = 'none';
+                filePathInput.required = false;
+                filePathInput.value = '';
+                document.getElementById('fileValidationResult').innerHTML = '';
+                
+                // Hide git diff section and show staged analysis info
+                gitDiffSection.style.display = 'none';
+                stagedAnalysisInfo.style.display = 'block';
+                commitAnalysisInfo.style.display = 'none';
+                singleFileAnalysisInfo.style.display = 'none';
             } else {
                 commitIdContainer.style.display = 'none';
                 commitIdInput.required = false;
@@ -1086,6 +1122,7 @@
                 
                 // Show git diff section and hide analysis info
                 gitDiffSection.style.display = 'block';
+                stagedAnalysisInfo.style.display = 'none';
                 commitAnalysisInfo.style.display = 'none';
                 singleFileAnalysisInfo.style.display = 'none';
             }
@@ -1095,6 +1132,7 @@
         toggleAnalysisTypeFields();
         
         uncommittedRadio.addEventListener('change', toggleAnalysisTypeFields);
+        stagedRadio.addEventListener('change', toggleAnalysisTypeFields);
         commitRadio.addEventListener('change', toggleAnalysisTypeFields);
         singleFileRadio.addEventListener('change', toggleAnalysisTypeFields);
         
