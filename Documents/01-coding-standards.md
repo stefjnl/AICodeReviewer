@@ -1,5 +1,3 @@
-Important .NET coding standards:
-
 *   **Strive for Simplicity and Clarity:** Code should be simple, clear, and self-documented, using good names for methods and variables, and respecting SOLID principles.
 *   **Follow Naming Conventions:** Use PascalCasing for all public member, type, and namespace names, and camelCasing for parameter names.
 *   **Provide Meaningful Comments:** Public classes, methods, and properties should be commented to explain their external usage.
