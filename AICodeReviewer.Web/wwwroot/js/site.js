@@ -754,6 +754,16 @@ function selectCurrentDirectory() {
         }
         
         console.log('[Directory Browser] Selected repository path:', currentBrowsePath);
+        
+        // Trigger workflow validation for step 3 (repository selection)
+        // This mimics the behavior of the "Set Repository" button
+        if (window.workflowAPI) {
+            console.log('[Directory Browser] Validating step 3 after directory selection');
+            // Small delay to ensure DOM is updated before validation
+            setTimeout(function() {
+                window.workflowAPI.validateAndAdvanceStep(3);
+            }, 100);
+        }
     }
 }
 
