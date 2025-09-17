@@ -60,8 +60,7 @@
 
         <!-- Main Content Area -->
         <main class="flex-1">
-            <!-- Alpine.js Test Component -->
-            <div x-data="testComponent()" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <!-- Welcome Section -->
                 <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
                     <h2 class="text-lg font-semibold text-gray-900 mb-4">Welcome to AI Code Reviewer</h2>
@@ -69,35 +68,202 @@
                         This foundation template includes all required dependencies and is ready for development.
                     </p>
                     
-                    <!-- Test Interactive Component -->
-                    <div class="border-t pt-4">
-                        <h3 class="text-md font-medium text-gray-900 mb-3">Test Component</h3>
+                    <!-- Document Management Component -->
+                    <div x-data="{
+                        documents: [],
+                        loading: false,
+                        error: null,
+                        selectedDocument: null,
+                        documentContent: '',
                         
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="text-sm font-medium text-gray-700">
-                                    Counter: <span x-text="count" class="text-primary font-bold"></span>
-                                </span>
-                                <button 
-                                    @click="increment()" 
-                                    class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+                        async loadDocuments() {
+                            try {
+                                this.loading = true;
+                                this.error = null;
+                                
+                                console.log('🔄 Loading documents...');
+                                const response = await fetch('http://localhost:8097/api/documentapi/scan');
+                                
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                
+                                const data = await response.json();
+                                console.log('✅ Documents fetched successfully:', data);
+                                
+                                if (data.success) {
+                                    this.documents = data.documents;
+                                    console.log(`✅ Loaded ${this.documents.length} documents`);
+                                } else {
+                                    this.error = data.error || 'Failed to load documents';
+                                    console.error('❌ Error loading documents:', this.error);
+                                }
+                                
+                            } catch (error) {
+                                this.error = error.message || 'An unexpected error occurred';
+                                console.error('❌ API call failed:', error);
+                            } finally {
+                                this.loading = false;
+                            }
+                        },
+                        
+                        async loadDocumentContent(documentName) {
+                            try {
+                                this.loading = true;
+                                this.error = null;
+                                
+                                console.log(`🔄 Loading content for: ${documentName}`);
+                                const response = await fetch(`http://localhost:8097/api/documentapi/content/${documentName}`);
+                                
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                
+                                const data = await response.json();
+                                console.log(`✅ Loaded content for ${documentName}`);
+                                
+                                if (data.success) {
+                                    this.selectedDocument = documentName;
+                                    this.documentContent = data.content;
+                                } else {
+                                    this.error = data.error || 'Failed to load document content';
+                                }
+                                
+                            } catch (error) {
+                                this.error = error.message || 'An unexpected error occurred';
+                                console.error('❌ API call failed:', error);
+                            } finally {
+                                this.loading = false;
+                            }
+                        },
+                        
+                        clearError() {
+                            this.error = null;
+                        },
+                        
+                        clearSelection() {
+                            this.selectedDocument = null;
+                            this.documentContent = '';
+                        }
+                    }" class="border-t pt-6">
+                        <h3 class="text-md font-medium text-gray-900 mb-4">Available Documents</h3>
+                        
+                        <!-- Load Documents Button -->
+                        <div class="mb-4">
+                            <button 
+                                @click="loadDocuments()" 
+                                :disabled="loading"
+                                class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <svg 
+                                    x-show="loading" 
+                                    class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24"
                                 >
-                                    Increment
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span x-text="loading ? 'Loading...' : 'Load Documents'"></span>
+                            </button>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div x-show="error" 
+                             x-transition
+                             class="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800">Error Loading Documents</h3>
+                                    <div class="mt-2 text-sm text-red-700">
+                                        <p x-text="error"></p>
+                                    </div>
+                                </div>
+                                <div class="ml-auto pl-3">
+                                    <button @click="clearError()" class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100">
+                                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div x-show="loading && !error" 
+                             x-transition
+                             class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4">
+                            <div class="flex items-center">
+                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <p class="text-sm text-blue-800">Loading documents...</p>
+                            </div>
+                        </div>
+
+                        <!-- Document List -->
+                        <div x-show="!loading && documents.length > 0 && !error" 
+                             x-transition
+                             class="space-y-2">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Found <span x-text="documents.length"></span> documents:</h4>
+                            
+                            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                <template x-for="document in documents" :key="document">
+                                    <div class="bg-gray-50 rounded-md p-3 hover:bg-gray-100 transition-colors">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h5 class="text-sm font-medium text-gray-900" x-text="document"></h5>
+                                                <p class="text-xs text-gray-500">Markdown document</p>
+                                            </div>
+                                            <button 
+                                                @click="loadDocumentContent(document)"
+                                                class="text-xs text-primary hover:text-primary/80 font-medium"
+                                                :disabled="loading"
+                                            >
+                                                View
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div x-show="!loading && documents.length === 0 && !error" 
+                             x-transition
+                             class="text-center py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <h4 class="mt-2 text-sm font-medium text-gray-900">No documents found</h4>
+                            <p class="mt-1 text-sm text-gray-500">Click "Load Documents" to scan for available files.</p>
+                        </div>
+
+                        <!-- Document Content Viewer -->
+                        <div x-show="selectedDocument && documentContent" 
+                             x-transition
+                             class="mt-6 border-t pt-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-sm font-medium text-gray-900">
+                                    Document: <span x-text="selectedDocument"></span>
+                                </h4>
+                                <button 
+                                    @click="clearSelection()"
+                                    class="text-xs text-gray-500 hover:text-gray-700"
+                                >
+                                    Close
                                 </button>
                             </div>
-                            
-                            <div x-show="showMessage" 
-                                 x-transition
-                                 class="bg-green-50 border border-green-200 rounded-md p-3">
-                                <p class="text-sm text-green-800" x-text="message"></p>
+                            <div class="bg-gray-50 rounded-md p-4">
+                                <pre class="text-sm text-gray-800 whitespace-pre-wrap" x-text="documentContent"></pre>
                             </div>
-                            
-                            <button 
-                                @click="toggleMessage()" 
-                                class="text-sm text-primary hover:text-primary/80 underline"
-                            >
-                                <span x-text="showMessage ? 'Hide' : 'Show'"></span> message
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -147,24 +313,57 @@
         </footer>
     </div>
 
-    <!-- Alpine.js Test Component Script -->
+    <!-- Inline script for SignalR and API calls -->
     <script>
-        function testComponent() {
-            return {
-                count: 0,
-                showMessage: false,
-                message: 'Alpine.js is working correctly! 🎉',
-                
-                increment() {
-                    this.count++;
-                    if (this.count > 5) {
-                        this.message = `Count is now ${this.count}! Keep going!`;
-                    }
-                },
-                
-                toggleMessage() {
-                    this.showMessage = !this.showMessage;
+        // Simple console logging
+        console.log('🚀 AI Code Reviewer - Inline script loaded');
+        
+        // Skip SignalR when running from file:// protocol
+        if (window.location.protocol !== 'file:') {
+            // SignalR initialization
+            function initializeSignalR() {
+                try {
+                    console.log('🔗 Initializing SignalR connection...');
+                    
+                    const connection = new signalR.HubConnectionBuilder()
+                        .withUrl("/progressHub")
+                        .withAutomaticReconnect([0, 2000, 10000, 30000])
+                        .configureLogging(signalR.LogLevel.Information)
+                        .build();
+                    
+                    connection.start()
+                        .then(() => {
+                            console.log('✅ SignalR connected successfully');
+                            updateSignalRStatus('Connected', true);
+                        })
+                        .catch(err => {
+                            console.error('❌ SignalR connection failed:', err);
+                            updateSignalRStatus('Connection failed', false);
+                        });
+                    
+                    window.signalRConnection = connection;
+                    
+                } catch (error) {
+                    console.error('❌ SignalR initialization error:', error);
+                    updateSignalRStatus('Initialization error', false);
                 }
+            }
+            
+            function updateSignalRStatus(status, isConnected) {
+                const statusElement = document.getElementById('signalr-status');
+                if (statusElement) {
+                    statusElement.textContent = status;
+                    statusElement.className = `text-xs ${isConnected ? 'text-green-600' : 'text-red-600'}`;
+                }
+            }
+            
+            initializeSignalR();
+        } else {
+            console.log('ℹ️ Running from file:// protocol, skipping SignalR');
+            const statusElement = document.getElementById('signalr-status');
+            if (statusElement) {
+                statusElement.textContent = 'Not available';
+                statusElement.className = 'text-xs text-gray-400';
             }
         }
     </script>

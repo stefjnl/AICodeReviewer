@@ -26,7 +26,9 @@ document.addEventListener('alpine:init', () => {
             progressHub: '/progressHub',
             repositoryBrowse: '/api/repository/browse',
             analysisStart: '/api/analysis/start',
-            analysisResults: '/api/analysis/results'
+            analysisResults: '/api/analysis/results',
+            documentsScan: '/api/documentapi/scan',
+            documentsContent: '/api/documentapi/content'
         },
         
         // Utility methods
@@ -142,6 +144,47 @@ function handleError(error) {
     document.dispatchEvent(event);
 }
 
+// Document API client functionality
+window.documentApi = {
+    async fetchDocuments() {
+        try {
+            console.log('📁 Fetching documents from API...');
+            const response = await fetch(Alpine.store('app').endpoints.documentsScan);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('✅ Documents fetched successfully:', data);
+            return data;
+            
+        } catch (error) {
+            console.error('❌ Error fetching documents:', error);
+            throw error;
+        }
+    },
+    
+    async fetchDocumentContent(documentName) {
+        try {
+            console.log(`📄 Fetching document content: ${documentName}`);
+            const response = await fetch(`${Alpine.store('app').endpoints.documentsContent}/${documentName}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('✅ Document content fetched successfully:', data);
+            return data;
+            
+        } catch (error) {
+            console.error('❌ Error fetching document content:', error);
+            throw error;
+        }
+    }
+};
+
 // Utility functions for API calls
 window.api = {
     async get(endpoint, options = {}) {
@@ -198,4 +241,73 @@ window.addEventListener('error', (event) => {
 // Global unhandled promise rejection handler
 window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason);
+});
+
+// Alpine.js document management component
+document.addEventListener('alpine:init', () => {
+    Alpine.data('documentManager', () => ({
+        documents: [],
+        loading: false,
+        error: null,
+        selectedDocument: null,
+        documentContent: '',
+        
+        async loadDocuments() {
+            try {
+                this.loading = true;
+                this.error = null;
+                
+                console.log('🔄 Loading documents...');
+                const response = await window.documentApi.fetchDocuments();
+                
+                if (response.success) {
+                    this.documents = response.documents;
+                    console.log(`✅ Loaded ${this.documents.length} documents`);
+                } else {
+                    this.error = response.error || 'Failed to load documents';
+                    console.error('❌ Error loading documents:', this.error);
+                }
+                
+            } catch (error) {
+                this.error = error.message || 'An unexpected error occurred';
+                console.error('❌ API call failed:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async loadDocumentContent(documentName) {
+            try {
+                this.loading = true;
+                this.error = null;
+                
+                console.log(`🔄 Loading content for: ${documentName}`);
+                const response = await window.documentApi.fetchDocumentContent(documentName);
+                
+                if (response.success) {
+                    this.selectedDocument = documentName;
+                    this.documentContent = response.content;
+                    console.log(`✅ Loaded content for ${documentName}`);
+                } else {
+                    this.error = response.error || 'Failed to load document content';
+                    console.error('❌ Error loading document content:', this.error);
+                }
+                
+            } catch (error) {
+                this.error = error.message || 'An unexpected error occurred';
+                console.error('❌ API call failed:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        clearError() {
+            this.error = null;
+        },
+        
+        clearSelection() {
+            this.selectedDocument = null;
+            this.documentContent = '';
+        }
+    }));
 });
