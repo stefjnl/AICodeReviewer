@@ -23,6 +23,26 @@
             console.log('🆔 Set window.currentAnalysisId to:', window.currentAnalysisId);
             </text>
         }
+        
+        // Debug toggleStandardsSelector function availability
+        console.log('🔍 Debug: Checking toggleStandardsSelector availability at page load');
+        console.log('🔍 window.toggleStandardsSelector exists:', typeof window.toggleStandardsSelector !== 'undefined');
+        console.log('🔍 window.toggleStandardsSelector type:', typeof window.toggleStandardsSelector);
+        
+        // Safety mechanism: Define a fallback toggleStandardsSelector function
+        // This ensures the function exists even if the main definition fails
+        window.safeToggleStandardsSelector = function() {
+            console.log('🛡️ Safe toggleStandardsSelector called');
+            const dropdown = document.getElementById('standardsDropdown') || document.querySelector('[data-step="1"] #standardsDropdown');
+            if (dropdown) {
+                console.log('🛡️ Safe mode: Found dropdown, toggling display');
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            } else {
+                console.error('🛡️ Safe mode: Could not find standardsDropdown element');
+            }
+        };
+        
+        console.log('🛡️ Safe toggleStandardsSelector function defined');
     </script>
     
     @if (ViewBag.BranchInfo != null)
@@ -66,7 +86,7 @@
                 </div>
                 
                 <!-- Document Selection -->
-                <div class="flow-item" onclick="toggleStandardsSelector()" tabindex="0">
+                <div class="flow-item" onclick="console.log('🖱️ Requirements flow-item clicked, calling toggleStandardsSelector...'); (window.toggleStandardsSelector || window.safeToggleStandardsSelector)();" tabindex="0">
                     <span class="icon">📄</span>
                     <span class="value" id="standardsValue">
                         @if (ViewBag.SelectedDocuments != null && ViewBag.SelectedDocuments.Count > 0)
@@ -275,23 +295,25 @@
                 Language
             </div>
             <div class="workflow-grid-item-content">
-                <div class="flow-item" onclick="toggleLanguageSelector()" tabindex="0">
-                    <span class="icon">⚙️</span>
-                    <span class="value" id="languageValue">C# (.NET)</span>
+                <div class="selected-item">
+                    <span class="icon">🐍</span>
+                    <span class="value" id="languageValue">Python</span>
                     <span class="edit-icon">✏️</span>
                 </div>
 
-                <!-- Hidden dropdown that appears on click -->
-                <div id="languageDropdown" class="workflow-dropdown" style="display: none;">
-                    <select class="workflow-form-select" id="languageSelect" name="language">
-                        <option value="NET" selected>.NET</option>
-                        <option value="Python">Python</option>
+                <!-- Language selection dropdown inside white content area -->
+                <div class="language-selection">
+                    <label for="language-dropdown">Select Language:</label>
+                    <select id="language-dropdown" class="form-select">
+                        <option value="csharp">.NET (C#)</option>
+                        <option value="python" selected>Python</option>
+                        <option value="javascript">JavaScript</option>
                     </select>
                 </div>
                 <script>
                     // Add validation for language selection
                     document.addEventListener('DOMContentLoaded', function() {
-                        const languageSelect = document.getElementById('languageSelect');
+                        const languageDropdown = document.getElementById('language-dropdown');
                         
                         // Auto-validate step 2 when workflow reaches it (language has default value)
                         function autoValidateStep2() {
@@ -300,7 +322,7 @@
                                 // Auto-validate if we're at step 2 and it has valid default
                                 if (currentStep === 2) {
                                     console.log('[Index] Auto-validating step 2 - checking default language');
-                                    // Step 2 should be valid by default since .NET is pre-selected
+                                    // Step 2 should be valid by default since Python is pre-selected
                                     const isValid = window.workflowAPI.isStepValid(2);
                                     if (isValid) {
                                         console.log('[Index] Step 2 auto-validation successful, advancing');
@@ -321,8 +343,11 @@
                         // Also try on page load in case workflow is already at step 2
                         setTimeout(autoValidateStep2, 500);
                         
-                        if (languageSelect) {
-                            languageSelect.addEventListener('change', function() {
+                        if (languageDropdown) {
+                            languageDropdown.addEventListener('change', function() {
+                                // Update the display with the selected language
+                                updateLanguageDisplay(this.value);
+                                
                                 setTimeout(function() {
                                     if (window.workflowAPI) {
                                         console.log('[Index] Validating step 2 after language selection');
@@ -332,6 +357,32 @@
                             });
                         }
                     });
+                    
+                    // Function to update language display
+                    function updateLanguageDisplay(languageValue) {
+                        const languageValueElement = document.getElementById('languageValue');
+                        const languageIcon = document.querySelector('.selected-item .icon');
+                        
+                        if (languageValueElement && languageIcon) {
+                            switch(languageValue) {
+                                case 'csharp':
+                                    languageValueElement.textContent = '.NET (C#)';
+                                    languageIcon.textContent = '🔷';
+                                    break;
+                                case 'python':
+                                    languageValueElement.textContent = 'Python';
+                                    languageIcon.textContent = '🐍';
+                                    break;
+                                case 'javascript':
+                                    languageValueElement.textContent = 'JavaScript';
+                                    languageIcon.textContent = '📜';
+                                    break;
+                                default:
+                                    languageValueElement.textContent = 'Python';
+                                    languageIcon.textContent = '🐍';
+                            }
+                        }
+                    }
                 </script>
             </div>
         </div>
@@ -1264,16 +1315,18 @@
         });
     });
 
-    // Function to toggle language selector
-    function toggleLanguageSelector() {
-        const dropdown = document.getElementById('languageDropdown');
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-    }
 
     // Function to toggle standards selector (document management)
     function toggleStandardsSelector() {
+        console.log('🎯 toggleStandardsSelector called - original function');
         const dropdown = document.getElementById('standardsDropdown');
+        if (!dropdown) {
+            console.error('❌ toggleStandardsSelector: standardsDropdown element not found');
+            return;
+        }
+        console.log('📋 toggleStandardsSelector: dropdown found, current display:', dropdown.style.display);
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        console.log('✅ toggleStandardsSelector: dropdown display changed to:', dropdown.style.display);
     }
 
     // Function to toggle model selector
@@ -1282,12 +1335,6 @@
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
     }
 
-    // Update display when selection changes
-    document.getElementById('languageSelect').addEventListener('change', function() {
-        document.getElementById('languageValue').textContent =
-            this.value === 'NET' ? 'C# (.NET)' : 'Python';
-        document.getElementById('languageDropdown').style.display = 'none';
-    });
 
     // Update model display when selection changes
     document.getElementById('modelSelect').addEventListener('change', function() {
@@ -1297,27 +1344,43 @@
 
     // Initialize horizontal workflow manager
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔄 DOMContentLoaded fired - initializing workflow');
+        
         if (window.horizontalWorkflow) {
             console.log('Horizontal workflow manager initialized');
             
             // Override dropdown functions to work with new structure
+            console.log('🔧 Workflow: Overriding dropdown functions');
+            console.log('🔧 Workflow: Original toggleStandardsSelector exists:', typeof window.toggleStandardsSelector !== 'undefined');
+            
             window.originalToggleStandardsSelector = window.toggleStandardsSelector;
             window.originalToggleLanguageSelector = window.toggleLanguageSelector;
             window.originalToggleModelSelector = window.toggleModelSelector;
             
             window.toggleStandardsSelector = function() {
+                console.log('🎯 toggleStandardsSelector called - overridden function');
                 const dropdown = document.querySelector('[data-step="1"] #standardsDropdown');
-                if (dropdown) {
-                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                if (!dropdown) {
+                    console.error('❌ Overridden toggleStandardsSelector: standardsDropdown element not found');
+                    // Fallback to original function if override fails
+                    if (window.originalToggleStandardsSelector) {
+                        console.log('🔄 Falling back to original toggleStandardsSelector');
+                        return window.originalToggleStandardsSelector();
+                    }
+                    return;
                 }
+                console.log('📋 Overridden toggleStandardsSelector: dropdown found, current display:', dropdown.style.display);
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                console.log('✅ Overridden toggleStandardsSelector: dropdown display changed to:', dropdown.style.display);
             };
             
-            window.toggleLanguageSelector = function() {
-                const dropdown = document.querySelector('[data-step="2"] #languageDropdown');
-                if (dropdown) {
-                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-                }
-            };
+            console.log('✅ Workflow: Dropdown functions overridden successfully');
+            
+            // Log final state after override
+            console.log('🔍 Final check: window.toggleStandardsSelector exists:', typeof window.toggleStandardsSelector !== 'undefined');
+            console.log('🔍 Final check: window.toggleStandardsSelector type:', typeof window.toggleStandardsSelector);
+            
+            // No toggle needed for language selector - dropdown is always visible
             
             window.toggleModelSelector = function() {
                 const dropdown = document.querySelector('[data-step="5"] #modelDropdown');

@@ -298,7 +298,7 @@ function startAnalysis() {
     const formData = {
         repositoryPath: repositoryPath,
         selectedDocuments: selectedDocuments,
-        language: document.getElementById('languageSelect')?.value || 'NET',
+        language: document.getElementById('language-dropdown')?.value || 'python',
         analysisType: analysisType,
         commitId: commitId,
         filePath: fullFilePath,
