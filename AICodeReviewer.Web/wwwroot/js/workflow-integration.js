@@ -280,3 +280,173 @@ function handleRepositoryPath(event) {
 
 // Make handleRepositoryPath globally available
 window.handleRepositoryPath = handleRepositoryPath;
+
+// Manual toggle for Git Diff section (fallback if Bootstrap collapse doesn't work)
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleButton = document.querySelector('[data-bs-target="#gitDiffCollapse"]');
+    const collapseElement = document.getElementById('gitDiffCollapse');
+    
+    if (toggleButton && collapseElement) {
+        // Remove Bootstrap data attributes to prevent conflicts
+        toggleButton.removeAttribute('data-bs-toggle');
+        toggleButton.removeAttribute('data-bs-target');
+        
+        // Add manual click handler
+        toggleButton.addEventListener('click', function() {
+            const isCollapsed = collapseElement.classList.contains('show');
+            
+            if (isCollapsed) {
+                // Collapse the element
+                collapseElement.classList.remove('show');
+                toggleButton.classList.remove('collapsed');
+                toggleButton.setAttribute('aria-expanded', 'false');
+            } else {
+                // Expand the element
+                collapseElement.classList.add('show');
+                toggleButton.classList.add('collapsed');
+                toggleButton.setAttribute('aria-expanded', 'true');
+            }
+        });
+    }
+});
+
+// Manual implementation for directory browser modal (fallback if Bootstrap modal doesn't work)
+document.addEventListener('DOMContentLoaded', function() {
+    // Create a custom modal overlay if it doesn't exist
+    if (!document.getElementById('customModalOverlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'customModalOverlay';
+        overlay.style.cssText = `
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        `;
+        document.body.appendChild(overlay);
+    }
+    
+    // Override the openDirectoryBrowser function to use custom modal
+    const originalOpenDirectoryBrowser = window.openDirectoryBrowser;
+    window.openDirectoryBrowser = function() {
+        console.log('[Custom Modal] Opening directory browser with custom modal...');
+        
+        // Try to get the Bootstrap modal first
+        const modalElement = document.getElementById('directoryBrowserModal');
+        if (modalElement) {
+            // Try Bootstrap modal first
+            if (typeof bootstrap !== 'undefined') {
+                try {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                    console.log('[Custom Modal] Bootstrap modal shown successfully');
+                    
+                    // Get current repository path from input
+                    const currentPath = document.getElementById('repositoryPathInput')?.value || '';
+                    console.log('[Custom Modal] Starting browse from path:', currentPath);
+                    
+                    // Small delay to ensure modal is fully rendered before loading content
+                    setTimeout(() => {
+                        if (typeof browseDirectory === 'function') {
+                            browseDirectory(currentPath);
+                        }
+                    }, 100);
+                    return;
+                } catch (error) {
+                    console.error('[Custom Modal] Error with Bootstrap modal:', error);
+                }
+            }
+            
+            // Fallback to custom modal implementation
+            console.log('[Custom Modal] Falling back to custom modal implementation');
+            showCustomModal(modalElement);
+            
+            // Get current repository path from input
+            const currentPath = document.getElementById('repositoryPathInput')?.value || '';
+            console.log('[Custom Modal] Starting browse from path:', currentPath);
+            
+            // Small delay to ensure modal is fully rendered before loading content
+            setTimeout(() => {
+                if (typeof browseDirectory === 'function') {
+                    browseDirectory(currentPath);
+                }
+            }, 100);
+        } else {
+            console.error('[Custom Modal] Directory browser modal element not found');
+            alert('Directory browser not available. Please refresh the page.');
+        }
+    };
+    
+    // Function to show custom modal
+    function showCustomModal(modalElement) {
+        const overlay = document.getElementById('customModalOverlay');
+        if (!overlay) return;
+        
+        // Clone the modal content to avoid removing it from the DOM
+        const modalClone = modalElement.cloneNode(true);
+        modalClone.style.display = 'block';
+        modalClone.style.position = 'relative';
+        modalClone.style.margin = '0';
+        modalClone.style.maxHeight = '90vh';
+        modalClone.style.overflowY = 'auto';
+        
+        // Add close functionality to the cloned modal
+        const closeButtons = modalClone.querySelectorAll('[data-bs-dismiss="modal"], .btn-close');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                hideCustomModal();
+            });
+        });
+        
+        // Add keyboard support
+        modalClone.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideCustomModal();
+            }
+        });
+        
+        overlay.innerHTML = '';
+        overlay.appendChild(modalClone);
+        overlay.style.display = 'flex';
+        
+        // Prevent background scrolling
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // Function to hide custom modal
+    function hideCustomModal() {
+        const overlay = document.getElementById('customModalOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+        // Restore background scrolling
+        document.body.style.overflow = '';
+    }
+    
+    // Override the selectCurrentDirectory function to work with custom modal
+    const originalSelectCurrentDirectory = window.selectCurrentDirectory;
+    window.selectCurrentDirectory = function() {
+        // Call the original function first
+        if (originalSelectCurrentDirectory) {
+            originalSelectCurrentDirectory();
+        }
+        
+        // Hide custom modal if it's open
+        hideCustomModal();
+    };
+    
+    // Also hide modal when clicking on the overlay background
+    const overlay = document.getElementById('customModalOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                hideCustomModal();
+            }
+        });
+    }
+});
