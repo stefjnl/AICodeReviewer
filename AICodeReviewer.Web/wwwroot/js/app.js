@@ -1464,7 +1464,11 @@ function displayChangesSummary() {
 
 // Model management functions
 async function loadAvailableModels() {
+    console.log('🔍 loadAvailableModels() called');
+    console.log('Repository path:', repositoryState.path);
+    
     if (!repositoryState.path) {
+        console.warn('⚠️ No repository path available');
         modelState.error = 'No repository path available';
         updateModelUI('error');
         return;
@@ -1498,6 +1502,7 @@ async function loadAvailableModels() {
         
         if (data.success) {
             modelState.availableModels = data.models || [];
+            console.log(`📋 Loaded ${modelState.availableModels.length} models`);
             updateModelUI('loaded');
             
             // Auto-select first model if available
@@ -1579,7 +1584,7 @@ function updateModelUI(state) {
     const loadingEl = document.getElementById('model-loading');
     const errorEl = document.getElementById('model-error');
     const contentEl = document.getElementById('model-content');
-    const dropdownEl = document.getElementById('model-dropdown');
+    const modelSelectEl = document.getElementById('model-select');
     const selectedEl = document.getElementById('model-selected');
     const errorMessageEl = document.getElementById('model-error-message');
 
@@ -1589,8 +1594,6 @@ function updateModelUI(state) {
     loadingEl.classList.add('hidden');
     errorEl.classList.add('hidden');
     contentEl.classList.add('hidden');
-    if (dropdownEl) dropdownEl.classList.add('hidden');
-    if (selectedEl) selectedEl.classList.add('hidden');
 
     switch (state) {
         case 'loading':
@@ -1605,8 +1608,7 @@ function updateModelUI(state) {
             contentEl.classList.remove('hidden');
             
             // Show dropdown if models available
-            if (modelState.availableModels.length > 0 && dropdownEl) {
-                dropdownEl.classList.remove('hidden');
+            if (modelState.availableModels.length > 0 && modelSelectEl) {
                 populateModelDropdown();
             }
             
