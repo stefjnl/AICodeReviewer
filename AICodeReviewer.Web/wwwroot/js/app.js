@@ -1476,7 +1476,7 @@ async function loadAvailableModels() {
 
     try {
         console.log('🔄 Loading models from API...');
-        const response = await fetch('/api/model/available');
+        const response = await fetch('/api/modelapi/available');
         
         console.log('📡 API Response Status:', response.status, response.statusText);
         

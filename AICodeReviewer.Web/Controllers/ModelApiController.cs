@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using AICodeReviewer.Web.Models;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.Logging;
 
 namespace AICodeReviewer.Web.Controllers
 {
@@ -15,12 +14,10 @@ namespace AICodeReviewer.Web.Controllers
     public class ModelApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly ILogger<ModelApiController> _logger;
 
-        public ModelApiController(IConfiguration configuration, ILogger<ModelApiController> logger)
+        public ModelApiController(IConfiguration configuration)
         {
             _configuration = configuration;
-            _logger = logger;
         }
 
         /// <summary>
@@ -32,21 +29,21 @@ namespace AICodeReviewer.Web.Controllers
         {
             try
             {
-                _logger.LogInformation("🎯 ModelApiController.GetAvailableModels() called");
+                Console.WriteLine("🎯 ModelApiController.GetAvailableModels() called");
                 
                 // Get available models from configuration
                 var availableModels = _configuration.GetSection("AvailableModels").Get<string[]>() ?? new string[0];
-                _logger.LogInformation($"📋 Found {availableModels.Length} models in configuration");
+                Console.WriteLine($"📋 Found {availableModels.Length} models in configuration");
                 
                 // Transform to display-friendly models
                 var models = availableModels.Select(modelId => MapToDisplayModel(modelId)).ToList();
                 
-                _logger.LogInformation($"✅ Returning {models.Count} models");
+                Console.WriteLine($"✅ Returning {models.Count} models");
                 return Ok(new { success = true, models });
             }
             catch (System.Exception ex)
             {
-                _logger.LogError(ex, "❌ Error in GetAvailableModels");
+                Console.WriteLine($"❌ Error in GetAvailableModels: {ex.Message}");
                 return StatusCode(500, new { success = false, error = $"Error loading models: {ex.Message}" });
             }
         }
