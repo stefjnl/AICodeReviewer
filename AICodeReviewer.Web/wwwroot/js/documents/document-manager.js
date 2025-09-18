@@ -5,5 +5,6 @@ export const documentManager = {
     loading: false,
     error: null,
     selectedDocument: null,
-    documentContent: ''
+    documentContent: '',
+    selectedDocuments: [] // Add this to track selected documents
 };

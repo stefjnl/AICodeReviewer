@@ -13,5 +13,6 @@ export const apiEndpoints = {
     analysisPreview: '/api/analysis/preview',
     languageSupported: '/api/languageapi/supported',
     languageDetect: '/api/languageapi/detect',
-    modelAvailable: '/api/modelapi/available'
+    modelAvailable: '/api/modelapi/available',
+    executionStart: '/api/execution/start'
 };

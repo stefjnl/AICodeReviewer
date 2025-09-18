@@ -5,8 +5,8 @@ using System.Text.Json;
 
 namespace AICodeReviewer.Web.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/execution")]
     public class ExecutionApiController : ControllerBase
     {
         private readonly IAnalysisService _analysisService;
@@ -32,7 +32,8 @@ namespace AICodeReviewer.Web.Controllers
         /// <param name="request">Analysis configuration from frontend</param>
         /// <returns>Analysis ID and success status</returns>
         [HttpPost("start")]
-        public async Task<IActionResult> RunAnalysis([FromBody] StartAnalysisRequest request)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> StartAnalysis([FromBody] RunAnalysisRequest request)
         {
             try
             {
@@ -45,25 +46,14 @@ namespace AICodeReviewer.Web.Controllers
                     return BadRequest(new { success = false, error = "Repository path is required" });
                 }
 
-                if (string.IsNullOrWhiteSpace(request.SelectedModel))
+                if (string.IsNullOrWhiteSpace(request.Model))
                 {
                     return BadRequest(new { success = false, error = "AI model selection is required" });
                 }
 
-                if (string.IsNullOrWhiteSpace(request.AnalysisType))
-                {
-                    return BadRequest(new { success = false, error = "Analysis type is required" });
-                }
-
-                // Map frontend request to AnalysisService format
-                var runAnalysisRequest = MapToRunAnalysisRequest(request);
-                
                 // Start the analysis
                 var (analysisId, success, error) = await _analysisService.StartAnalysisAsync(
-                    runAnalysisRequest, 
-                    HttpContext.Session, 
-                    _environment, 
-                    _configuration);
+                    request, HttpContext.Session, _environment, _configuration);
 
                 if (success)
                 {
@@ -81,28 +71,6 @@ namespace AICodeReviewer.Web.Controllers
                 _logger.LogError(ex, "Error starting analysis execution");
                 return StatusCode(500, new { success = false, error = "Internal server error occurred" });
             }
-        }
-
-        /// <summary>
-        /// Maps frontend request format to AnalysisService expected format
-        /// </summary>
-        private RunAnalysisRequest MapToRunAnalysisRequest(StartAnalysisRequest request)
-        {
-            var analysisType = Enum.TryParse<AnalysisType>(request.AnalysisType, out var type) 
-                ? type 
-                : AnalysisType.Commit;
-
-            return new RunAnalysisRequest
-            {
-                RepositoryPath = request.RepositoryPath,
-                SelectedDocuments = request.SelectedDocuments,
-                DocumentsFolder = request.DocumentsFolder,
-                Language = request.SelectedLanguage,
-                AnalysisType = analysisType,
-                CommitId = request.TargetCommit,
-                FilePath = request.TargetFile,
-                Model = request.SelectedModel
-            };
         }
     }
 }

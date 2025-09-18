@@ -6,6 +6,8 @@ import { selectLanguage } from '../language/language-detector.js';
 import { selectModel } from '../models/model-selector.js';
 import { languageState } from '../language/language-state.js';
 import { modelState } from '../models/model-state.js';
+import { executionService } from '../execution/execution-service.js';
+import { resultsDisplay } from '../execution/results-display.js';
 
 // Workflow navigation functions
 export function canNavigateToStep(targetStep) {
@@ -224,14 +226,24 @@ export function initializeWorkflowNavigation() {
     // Run Analysis button
     const runBtn = document.getElementById('run-analysis-btn');
     if (runBtn) {
-        runBtn.addEventListener('click', () => {
+        runBtn.addEventListener('click', async () => {
             console.log('Run analysis button clicked - checking prerequisites...');
             if (canNavigateToStep(5)) {
                 console.log('All prerequisites met - starting analysis');
-                // Add analysis logic here
+                
+                try {
+                    await executionService.startAnalysis();
+                } catch (error) {
+                    console.error('Error starting analysis:', error);
+                    executionService.showErrorState(error.message || 'Failed to start analysis');
+                }
             } else {
                 console.log('Prerequisites not met - cannot start analysis');
                 console.log('Step completion status:', workflowState.steps);
+                
+                // Show user-friendly error
+                const errorMessage = this.getPrerequisitesError();
+                executionService.showErrorState(errorMessage);
             }
         });
     }
@@ -271,4 +283,20 @@ export function initializeWorkflowNavigation() {
             }
         });
     }
+
+    // Initialize results display
+    resultsDisplay.initialize();
+    
+    // Add prerequisites error helper
+    window.getPrerequisitesError = function() {
+        const missing = [];
+        
+        if (!workflowState.steps[1].completed) missing.push('Step 1: Repository validation');
+        if (!workflowState.steps[2].completed) missing.push('Step 2: Requirements documents');
+        if (!workflowState.steps[3].completed) missing.push('Step 3: Language selection');
+        if (!workflowState.steps[4].completed) missing.push('Step 4: Analysis configuration');
+        if (!workflowState.steps[5].completed) missing.push('Step 5: AI model selection');
+        
+        return `Please complete the following steps before running analysis: ${missing.join(', ')}`;
+    };
 }

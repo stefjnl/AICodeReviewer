@@ -29,6 +29,13 @@ builder.Services.AddCors(options =>
         });
 });
 
+// set routing to be case-insensitive:
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.LowercaseUrls = true;
+    options.LowercaseQueryStrings = true;
+});
+
 builder.Services.AddMemoryCache(options =>
 {
     options.SizeLimit = 1000; // Max 1000 entries (prevents memory bloat)
