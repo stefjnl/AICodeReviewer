@@ -34,8 +34,8 @@ public class ResultsController : Controller
         }
 
         _logger.LogInformation($"Displaying results for analysis {analysisId}");
-        ViewBag.AnalysisId = analysisId;
-        return View();
+        // Redirect to main page - JavaScript will handle displaying results
+        return RedirectToAction("Index", "Home");
     }
 
     /// <summary>

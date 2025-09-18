@@ -36,10 +36,14 @@ builder.Services.Configure<RouteOptions>(options =>
     options.LowercaseQueryStrings = true;
 });
 
+// Add memory cache for session and other services
 builder.Services.AddMemoryCache(options =>
 {
     options.SizeLimit = 1000; // Max 1000 entries (prevents memory bloat)
 });
+
+// Add distributed cache for session services
+builder.Services.AddDistributedMemoryCache();
 
 // Register custom services
 builder.Services.AddScoped<AIPromptResponseService>();
@@ -58,7 +62,7 @@ builder.Services.AddHttpClient<IAIService, AIService>(client =>
     client.Timeout = TimeSpan.FromSeconds(120);
 });
 
-// In service registration section
+// Add SignalR
 builder.Services.AddSignalR();
 
 builder.Logging.ClearProviders();
@@ -92,12 +96,15 @@ app.UseSession(); // Enable session middleware
 
 app.UseAuthorization();
 
-app.MapStaticAssets();
+// Configure default files (index.html, etc.)
+app.UseDefaultFiles();
+
+// Serve static files
+app.UseStaticFiles();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllers(); // Map API controllers
 
