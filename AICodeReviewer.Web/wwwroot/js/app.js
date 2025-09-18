@@ -1,54 +1,243 @@
 // AI Code Reviewer - Main Application JavaScript
-// This file initializes Alpine.js components and sets up global functionality
+// Vanilla JavaScript implementation - Alpine.js removed
 
 console.log('🚀 AI Code Reviewer - App.js loaded successfully');
 
-// Document ready check
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM fully loaded and parsed');
-    
-    // Initialize SignalR connection
-    initializeSignalR();
-});
+// Document manager state
+const documentManager = {
+    documents: [],
+    loading: false,
+    error: null,
+    selectedDocument: null,
+    documentContent: ''
+};
 
-// Global Alpine.js store for application state
-document.addEventListener('alpine:init', () => {
-    console.log('🎯 Alpine.js initialized');
+// API endpoints configuration
+const apiEndpoints = {
+    progressHub: '/hubs/progress',
+    repositoryBrowse: '/api/repository/browse',
+    analysisStart: '/api/analysis/start',
+    analysisResults: '/api/analysis/results',
+    documentsScan: '/api/documentapi/scan',
+    documentsContent: '/api/documentapi/content'
+};
+
+// Utility methods
+const utils = {
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
     
-    // Register global store
-    Alpine.store('app', {
-        version: '1.0.0',
-        isLoading: false,
-        currentStep: 1,
-        
-        // API endpoints
-        endpoints: {
-            progressHub: '/hubs/progress',
-            repositoryBrowse: '/api/repository/browse',
-            analysisStart: '/api/analysis/start',
-            analysisResults: '/api/analysis/results',
-            documentsScan: '/api/documentapi/scan',
-            documentsContent: '/api/documentapi/content'
-        },
-        
-        // Utility methods
-        utils: {
-            formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            },
-            
-            formatDuration(ms) {
-                if (ms < 1000) return ms + 'ms';
-                if (ms < 60000) return (ms / 1000).toFixed(1) + 's';
-                return Math.floor(ms / 60000) + 'm ' + Math.floor((ms % 60000) / 1000) + 's';
-            }
+    formatDuration(ms) {
+        if (ms < 1000) return ms + 'ms';
+        if (ms < 60000) return (ms / 1000).toFixed(1) + 's';
+        return Math.floor(ms / 60000) + 'm ' + Math.floor((ms % 60000) / 1000) + 's';
+    }
+};
+
+// UI State Management Functions
+function showElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.classList.remove('hidden');
+    }
+}
+
+function hideElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.classList.add('hidden');
+    }
+}
+
+function updateElementContent(elementId, content) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = content;
+    }
+}
+
+function updateElementHtml(elementId, html) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = html;
+    }
+}
+
+function setButtonState(buttonId, loading) {
+    const button = document.getElementById(buttonId);
+    if (button) {
+        button.disabled = loading;
+        if (loading) {
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            button.classList.remove('opacity-50', 'cursor-not-allowed');
         }
-    });
-});
+    }
+}
+
+// Document Management Functions
+async function loadDocuments() {
+    try {
+        documentManager.loading = true;
+        documentManager.error = null;
+        
+        console.log('🔄 Loading documents...');
+        
+        // Update UI state
+        showElement('loading-spinner');
+        hideElement('error-container');
+        hideElement('document-list-container');
+        hideElement('empty-state');
+        updateElementContent('loading-text', 'Loading...');
+        setButtonState('load-documents-btn', true);
+        
+        const response = await fetch(apiEndpoints.documentsScan);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ Documents fetched successfully:', data);
+        
+        if (data.success) {
+            documentManager.documents = data.documents;
+            console.log(`✅ Loaded ${documentManager.documents.length} documents`);
+            
+            // Update UI
+            updateDocumentList(documentManager.documents);
+            
+            if (documentManager.documents.length > 0) {
+                showElement('document-list-container');
+            } else {
+                showElement('empty-state');
+            }
+        } else {
+            documentManager.error = data.error || 'Failed to load documents';
+            console.error('❌ Error loading documents:', documentManager.error);
+            showError(documentManager.error);
+        }
+        
+    } catch (error) {
+        documentManager.error = error.message || 'An unexpected error occurred';
+        console.error('❌ API call failed:', error);
+        showError(documentManager.error);
+    } finally {
+        documentManager.loading = false;
+        hideElement('loading-spinner');
+        updateElementContent('loading-text', 'Load Documents');
+        setButtonState('load-documents-btn', false);
+    }
+}
+
+async function loadDocumentContent(documentName) {
+    try {
+        documentManager.loading = true;
+        documentManager.error = null;
+        
+        console.log(`🔄 Loading content for: ${documentName}`);
+        
+        // Update UI state
+        showElement('loading-state');
+        setButtonState('load-documents-btn', true);
+        
+        const response = await fetch(`${apiEndpoints.documentsContent}/${documentName}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log(`✅ Loaded content for ${documentName}`);
+        
+        if (data.success) {
+            documentManager.selectedDocument = documentName;
+            documentManager.documentContent = data.content;
+            
+            // Update UI
+            showDocumentContent(data.content, documentName);
+        } else {
+            documentManager.error = data.error || 'Failed to load document content';
+            console.error('❌ Error loading document content:', documentManager.error);
+            showError(documentManager.error);
+        }
+        
+    } catch (error) {
+        documentManager.error = error.message || 'An unexpected error occurred';
+        console.error('❌ API call failed:', error);
+        showError(documentManager.error);
+    } finally {
+        documentManager.loading = false;
+        hideElement('loading-state');
+        setButtonState('load-documents-btn', false);
+    }
+}
+
+function clearError() {
+    documentManager.error = null;
+    hideElement('error-container');
+}
+
+function clearSelection() {
+    documentManager.selectedDocument = null;
+    documentManager.documentContent = '';
+    hideElement('document-viewer');
+}
+
+function showDocumentContent(content, title) {
+    updateElementContent('selected-document-name', title);
+    updateElementContent('document-content', content);
+    showElement('document-viewer');
+}
+
+function updateDocumentList(documents) {
+    const documentGrid = document.getElementById('document-grid');
+    const documentCount = document.getElementById('document-count');
+    
+    if (documentGrid && documentCount) {
+        documentCount.textContent = documents.length;
+        
+        documentGrid.innerHTML = '';
+        
+        documents.forEach(doc => {
+            const documentDiv = window.document.createElement('div');
+            documentDiv.className = 'bg-gray-50 rounded-md p-3 hover:bg-gray-100 transition-colors';
+            documentDiv.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h5 class="text-sm font-medium text-gray-900">${doc}</h5>
+                        <p class="text-xs text-gray-500">Markdown document</p>
+                    </div>
+                    <button
+                        class="text-xs text-primary hover:text-primary/80 font-medium view-document-btn"
+                        data-document="${doc}"
+                    >
+                        View
+                    </button>
+                </div>
+            `;
+            documentGrid.appendChild(documentDiv);
+        });
+        
+        // Add event listeners to new view buttons
+        document.querySelectorAll('.view-document-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const documentName = e.target.dataset.document;
+                loadDocumentContent(documentName);
+            });
+        });
+    }
+}
+
+function showError(message) {
+    updateElementContent('error-message', message);
+    showElement('error-container');
+}
 
 // SignalR initialization
 function initializeSignalR() {
@@ -57,7 +246,7 @@ function initializeSignalR() {
         
         // Create SignalR connection
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/hubs/progress")
+            .withUrl(apiEndpoints.progressHub)
             .withAutomaticReconnect([0, 2000, 10000, 30000])
             .configureLogging(signalR.LogLevel.Information)
             .build();
@@ -144,12 +333,12 @@ function handleError(error) {
     document.dispatchEvent(event);
 }
 
-// Document API client functionality
+// Document API client functionality - updated without Alpine.js dependencies
 window.documentApi = {
     async fetchDocuments() {
         try {
             console.log('📁 Fetching documents from API...');
-            const response = await fetch(Alpine.store('app').endpoints.documentsScan);
+            const response = await fetch(apiEndpoints.documentsScan);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -168,7 +357,7 @@ window.documentApi = {
     async fetchDocumentContent(documentName) {
         try {
             console.log(`📄 Fetching document content: ${documentName}`);
-            const response = await fetch(`${Alpine.store('app').endpoints.documentsContent}/${documentName}`);
+            const response = await fetch(`${apiEndpoints.documentsContent}/${documentName}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -185,7 +374,7 @@ window.documentApi = {
     }
 };
 
-// Utility functions for API calls
+// Utility functions for API calls - updated without Alpine.js dependencies
 window.api = {
     async get(endpoint, options = {}) {
         try {
@@ -233,81 +422,45 @@ window.api = {
     }
 };
 
-// Global error handler
+// Event listeners initialization
+function initializeEventListeners() {
+    // Load documents button
+    const loadButton = document.getElementById('load-documents-btn');
+    if (loadButton) {
+        loadButton.addEventListener('click', loadDocuments);
+    }
+    
+    // Close error button
+    const closeErrorBtn = document.getElementById('close-error-btn');
+    if (closeErrorBtn) {
+        closeErrorBtn.addEventListener('click', clearError);
+    }
+    
+    // Close document button
+    const closeDocumentBtn = document.getElementById('close-document-btn');
+    if (closeDocumentBtn) {
+        closeDocumentBtn.addEventListener('click', clearSelection);
+    }
+}
+
+// Global error handlers
 window.addEventListener('error', (event) => {
     console.error('Global error:', event.error);
 });
 
-// Global unhandled promise rejection handler
 window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason);
 });
 
-// Alpine.js document management component
-document.addEventListener('alpine:init', () => {
-    Alpine.data('documentManager', () => ({
-        documents: [],
-        loading: false,
-        error: null,
-        selectedDocument: null,
-        documentContent: '',
-        
-        async loadDocuments() {
-            try {
-                this.loading = true;
-                this.error = null;
-                
-                console.log('🔄 Loading documents...');
-                const response = await window.documentApi.fetchDocuments();
-                
-                if (response.success) {
-                    this.documents = response.documents;
-                    console.log(`✅ Loaded ${this.documents.length} documents`);
-                } else {
-                    this.error = response.error || 'Failed to load documents';
-                    console.error('❌ Error loading documents:', this.error);
-                }
-                
-            } catch (error) {
-                this.error = error.message || 'An unexpected error occurred';
-                console.error('❌ API call failed:', error);
-            } finally {
-                this.loading = false;
-            }
-        },
-        
-        async loadDocumentContent(documentName) {
-            try {
-                this.loading = true;
-                this.error = null;
-                
-                console.log(`🔄 Loading content for: ${documentName}`);
-                const response = await window.documentApi.fetchDocumentContent(documentName);
-                
-                if (response.success) {
-                    this.selectedDocument = documentName;
-                    this.documentContent = response.content;
-                    console.log(`✅ Loaded content for ${documentName}`);
-                } else {
-                    this.error = response.error || 'Failed to load document content';
-                    console.error('❌ Error loading document content:', this.error);
-                }
-                
-            } catch (error) {
-                this.error = error.message || 'An unexpected error occurred';
-                console.error('❌ API call failed:', error);
-            } finally {
-                this.loading = false;
-            }
-        },
-        
-        clearError() {
-            this.error = null;
-        },
-        
-        clearSelection() {
-            this.selectedDocument = null;
-            this.documentContent = '';
-        }
-    }));
+// Document ready check
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM fully loaded and parsed');
+    
+    // Initialize SignalR connection
+    initializeSignalR();
+    
+    // Initialize event listeners
+    initializeEventListeners();
+    
+    console.log('✅ Application initialized successfully');
 });
