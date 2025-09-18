@@ -1,3 +1,4 @@
+
 // AI Code Reviewer - Main Application JavaScript
 // Vanilla JavaScript implementation - Alpine.js removed
 
@@ -29,7 +30,9 @@ const apiEndpoints = {
     analysisResults: '/api/analysis/results',
     documentsScan: '/api/documentapi/scan',
     documentsContent: '/api/documentapi/content',
-    validateRepository: '/api/GitApi/validate'
+    validateRepository: '/api/GitApi/validate',
+    analysisOptions: '/api/analysis/options',
+    analysisPreview: '/api/analysis/preview'
 };
 
 // Utility methods
@@ -537,8 +540,21 @@ function updateRepositoryUI(state, result = null) {
 }
 
 function showValidationError(message) {
+    repositoryState.error = message;
     updateElementContent('validation-error-message', message);
     updateRepositoryUI('error');
+    
+    // Show error indicators
+    const pathInput = document.getElementById('repository-path');
+    const validIcon = document.getElementById('path-valid-icon');
+    const invalidIcon = document.getElementById('path-invalid-icon');
+    
+    if (pathInput) {
+        pathInput.classList.remove('border-green-500', 'focus:border-green-500');
+        pathInput.classList.add('border-red-500', 'focus:border-red-500');
+    }
+    if (validIcon) validIcon.classList.add('hidden');
+    if (invalidIcon) invalidIcon.classList.remove('hidden');
 }
 
 function displayRepositoryInfo(info) {
@@ -698,6 +714,21 @@ const languageState = {
     error: null
 };
 
+// Analysis state management
+const analysisState = {
+    analysisType: null,
+    availableOptions: {
+        commits: [],
+        branches: [],
+        modifiedFiles: [],
+        stagedFiles: []
+    },
+    selectedCommit: null,
+    changesSummary: null,
+    loading: false,
+    error: null
+};
+
 // Workflow state management
 const workflowState = {
     currentStep: 1,
@@ -726,8 +757,8 @@ const stepCompletionCriteria = {
         return languageState.selectedLanguage !== null;
     },
     4: function() {
-        // Step 4: Analysis - placeholder, always completed for now
-        return true;
+        // Step 4: Analysis - completed when analysis type is selected
+        return analysisState.analysisType !== null;
     },
     5: function() {
         // Step 5: Results - placeholder, always completed for now
@@ -736,6 +767,22 @@ const stepCompletionCriteria = {
 };
 
 // Workflow navigation functions
+function canNavigateToStep(targetStep) {
+    if (targetStep < 1 || targetStep > 5) return false;
+    
+    // Always allow navigation to completed or current steps
+    if (targetStep <= workflowState.currentStep) return true;
+    
+    // Check if all required previous steps are completed
+    for (let step = 1; step < targetStep; step++) {
+        if (workflowState.steps[step].required && !workflowState.steps[step].completed) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 function showStep(stepNumber) {
     // Validate step number
     if (stepNumber < 1 || stepNumber > 5) return;
@@ -792,25 +839,8 @@ function updateProgressIndicators(currentStep) {
         if (stepNum < currentStep) {
             // Completed connections
             connection.classList.add('active', 'completed');
-        } else if (stepNum < currentStep) {
-            // Active connection leading to current step
-            connection.classList.add('active');
         }
     });
-}
-
-function canNavigateToStep(stepNumber) {
-    // Can navigate to any step that's already completed or the current step
-    console.log(`Checking navigation to step ${stepNumber}:`);
-    for (let i = 1; i < stepNumber; i++) {
-        console.log(`  Step ${i}: completed=${workflowState.steps[i].completed}, required=${workflowState.steps[i].required}`);
-        if (!workflowState.steps[i].completed && workflowState.steps[i].required) {
-            console.log(`  Cannot navigate - step ${i} is required but not completed`);
-            return false;
-        }
-    }
-    console.log(`  Navigation to step ${stepNumber} is allowed`);
-    return true;
 }
 
 function markStepCompleted(stepNumber) {
@@ -1181,6 +1211,240 @@ function updateLanguageUI(state) {
     }
 }
 
+// Analysis management functions
+async function loadAnalysisOptions() {
+    if (!repositoryState.path) {
+        analysisState.error = 'No repository path available';
+        updateAnalysisUI('error');
+        return;
+    }
+
+    analysisState.loading = true;
+    analysisState.error = null;
+    updateAnalysisUI('loading');
+
+    try {
+        const response = await fetch('/api/analysis/options', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ repositoryPath: repositoryState.path })
+        });
+
+        if (!response.ok) throw new Error('Failed to load analysis options');
+
+        const data = await response.json();
+        if (data.success) {
+            analysisState.availableOptions = {
+                commits: data.commits || [],
+                branches: data.branches || [],
+                modifiedFiles: data.modifiedFiles || [],
+                stagedFiles: data.stagedFiles || []
+            };
+            
+            // Auto-select uncommitted if there are changes
+            if (data.modifiedFiles && data.modifiedFiles.length > 0) {
+                analysisState.analysisType = 'uncommitted';
+            } else if (data.stagedFiles && data.stagedFiles.length > 0) {
+                analysisState.analysisType = 'staged';
+            }
+
+            updateAnalysisUI('loaded');
+            
+            // Auto-preview default selection
+            if (analysisState.analysisType) {
+                await previewChanges();
+            }
+        } else {
+            analysisState.error = data.error || 'Failed to load options';
+            updateAnalysisUI('error');
+        }
+    } catch (error) {
+        console.error('Error loading analysis options:', error);
+        analysisState.error = error.message;
+        updateAnalysisUI('error');
+    } finally {
+        analysisState.loading = false;
+    }
+}
+
+async function previewChanges() {
+    if (!repositoryState.path || !analysisState.analysisType) {
+        analysisState.changesSummary = null;
+        updateAnalysisUI('loaded');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/analysis/preview', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                repositoryPath: repositoryState.path,
+                analysisType: analysisState.analysisType,
+                targetCommit: analysisState.selectedCommit
+            })
+        });
+
+        if (!response.ok) throw new Error('Failed to preview changes');
+
+        const data = await response.json();
+        if (data.success) {
+            analysisState.changesSummary = data.changesSummary;
+            updateAnalysisUI('loaded');
+            
+            // Enable Step 4 completion
+            markStepCompleted(4);
+        } else {
+            analysisState.error = data.error || 'Failed to preview changes';
+            updateAnalysisUI('error');
+        }
+    } catch (error) {
+        console.error('Error previewing changes:', error);
+        analysisState.error = error.message;
+        updateAnalysisUI('error');
+    }
+}
+
+function selectAnalysisType(type) {
+    const validTypes = ['uncommitted', 'staged', 'commit'];
+    if (!validTypes.includes(type)) return;
+
+    analysisState.analysisType = type;
+    analysisState.selectedCommit = null; // Reset commit selection
+    
+    // Update UI to show relevant options
+    updateAnalysisUI('loaded');
+    
+    // Auto-preview changes
+    previewChanges();
+}
+
+function selectCommit(commitId) {
+    if (!commitId) return;
+    
+    analysisState.selectedCommit = commitId;
+    updateAnalysisUI('loaded');
+    
+    // Auto-preview for commit analysis
+    if (analysisState.analysisType === 'commit') {
+        previewChanges();
+    }
+}
+
+function updateAnalysisUI(state) {
+    const loadingEl = document.getElementById('analysis-loading');
+    const errorEl = document.getElementById('analysis-error');
+    const contentEl = document.getElementById('analysis-content');
+    const optionsEl = document.getElementById('analysis-options');
+    const previewEl = document.getElementById('changes-preview');
+    const typeSelectionEl = document.getElementById('analysis-type-selection');
+    const commitSelectionEl = document.getElementById('commit-selection');
+    const errorMessageEl = document.getElementById('analysis-error-message');
+
+    if (!loadingEl || !errorEl || !contentEl) return;
+
+    // Reset all states
+    loadingEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+    contentEl.classList.add('hidden');
+    if (optionsEl) optionsEl.classList.add('hidden');
+    if (previewEl) previewEl.classList.add('hidden');
+    if (typeSelectionEl) typeSelectionEl.classList.add('hidden');
+    if (commitSelectionEl) commitSelectionEl.classList.add('hidden');
+
+    switch (state) {
+        case 'loading':
+            loadingEl.classList.remove('hidden');
+            break;
+        case 'error':
+            errorEl.classList.remove('hidden');
+            if (errorMessageEl) errorMessageEl.textContent = analysisState.error || 'An error occurred';
+            contentEl.classList.remove('hidden');
+            break;
+        case 'loaded':
+            contentEl.classList.remove('hidden');
+            
+            // Show type selection
+            if (typeSelectionEl) typeSelectionEl.classList.remove('hidden');
+            
+            // Show commit selection if needed
+            if (analysisState.analysisType === 'commit' && commitSelectionEl) {
+                commitSelectionEl.classList.remove('hidden');
+            }
+            
+            // Show options if available
+            if ((analysisState.availableOptions.commits.length > 0 || 
+                 analysisState.availableOptions.modifiedFiles.length > 0 ||
+                 analysisState.availableOptions.stagedFiles.length > 0) && 
+                optionsEl) {
+                optionsEl.classList.remove('hidden');
+            }
+            
+            // Show preview if available
+            if (analysisState.changesSummary && previewEl) {
+                previewEl.classList.remove('hidden');
+            }
+            break;
+        default:
+            contentEl.classList.remove('hidden');
+            break;
+    }
+}
+
+// Analysis state initialization
+function initializeAnalysisState() {
+    console.log('🔧 Initializing analysis state');
+    // Reset analysis state
+    analysisState.analysisType = null;
+    analysisState.selectedCommit = null;
+    analysisState.changesSummary = null;
+    analysisState.availableOptions = {
+        commits: [],
+        branches: [],
+        modifiedFiles: [],
+        stagedFiles: []
+    };
+}
+
+// Analysis event listeners
+function initializeAnalysisEventListeners() {
+    // Analysis type selection
+    document.addEventListener('change', (e) => {
+        if (e.target.name === 'analysis-type') {
+            selectAnalysisType(e.target.value);
+        }
+    });
+
+    // Commit selection
+    const commitDropdown = document.getElementById('commit-dropdown');
+    if (commitDropdown) {
+        commitDropdown.addEventListener('change', (e) => {
+            selectCommit(e.target.value);
+        });
+    }
+
+    // Auto-load analysis options when Step 4 becomes visible
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                const step4Content = document.getElementById('step-4-content');
+                if (step4Content && step4Content.classList.contains('active')) {
+                    loadAnalysisOptions();
+                }
+            }
+        });
+    });
+
+    const step4Content = document.getElementById('step-4-content');
+    if (step4Content) {
+        observer.observe(step4Content, { attributes: true });
+    }
+}
+
 // Document ready check
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM fully loaded and parsed');
@@ -1194,6 +1458,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize workflow navigation
     initializeWorkflowNavigation();
     
+    // Initialize analysis event listeners
+    initializeAnalysisEventListeners();
+    
     // Load supported languages
     loadSupportedLanguages();
     
@@ -1204,4 +1471,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize repository validation UI state
     updateRepositoryUI('clear');
+    
+    // Initialize analysis state
+    initializeAnalysisState();
 });

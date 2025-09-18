@@ -286,4 +286,167 @@ public class RepositoryManagementService : IRepositoryManagementService
             return (false, $"Error checking staged changes: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Get analysis options for a repository
+    /// </summary>
+    public (List<object> commits, List<object> branches, List<string> modifiedFiles, List<string> stagedFiles) GetAnalysisOptions(string repositoryPath)
+    {
+        try
+        {
+            using var repo = new Repository(repositoryPath);
+            
+            // Get last 10 commits
+            var commits = repo.Commits.Take(10).Select(c => new
+            {
+                id = c.Sha.Substring(0, 7),
+                message = c.MessageShort,
+                author = c.Author.Name,
+                date = c.Author.When.ToString("yyyy-MM-dd HH:mm")
+            }).ToList<object>();
+
+            // Get branches
+            var branches = repo.Branches.Where(b => !b.IsRemote).Select(b => new
+            {
+                name = b.FriendlyName,
+                isCurrent = b.IsCurrentRepositoryHead
+            }).ToList<object>();
+
+            // Get modified/untracked files
+            var status = repo.RetrieveStatus();
+            var modifiedFiles = status.Where(s => s.State != FileStatus.Unaltered)
+                                    .Select(s => s.FilePath)
+                                    .ToList();
+
+            // Get staged files - any files with changes
+            var stagedFiles = status.Where(s => s.State != FileStatus.Unaltered)
+                                  .Select(s => s.FilePath)
+                                  .ToList();
+
+            _logger.LogInformation("Retrieved analysis options for repository: {Path}", repositoryPath);
+            return (commits, branches, modifiedFiles, stagedFiles);
+        }
+        catch (RepositoryNotFoundException)
+        {
+            _logger.LogWarning("Repository not found at path: {Path}", repositoryPath);
+            return (new List<object>(), new List<object>(), new List<string>(), new List<string>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting analysis options for repository: {Path}", repositoryPath);
+            return (new List<object>(), new List<object>(), new List<string>(), new List<string>());
+        }
+    }
+
+    /// <summary>
+    /// Preview changes for analysis configuration
+    /// </summary>
+    public (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, string analysisType, string? targetCommit = null)
+    {
+        try
+        {
+            using var repo = new Repository(repositoryPath);
+            string diffContent;
+            int totalAdditions = 0;
+            int totalDeletions = 0;
+            List<string> files = new List<string>();
+
+            switch (analysisType.ToLower())
+            {
+                case "uncommitted":
+                    var uncommittedDiff = repo.Diff.Compare<Patch>(
+                        repo.Head.Tip?.Tree,
+                        DiffTargets.Index | DiffTargets.WorkingDirectory);
+                    diffContent = uncommittedDiff.Content;
+                    ExtractFileStats(uncommittedDiff, ref totalAdditions, ref totalDeletions, files);
+                    break;
+
+                case "staged":
+                    var stagedDiff = repo.Diff.Compare<Patch>(
+                        repo.Head.Tip?.Tree,
+                        DiffTargets.Index);
+                    diffContent = stagedDiff.Content;
+                    ExtractFileStats(stagedDiff, ref totalAdditions, ref totalDeletions, files);
+                    break;
+
+                case "commit":
+                    if (string.IsNullOrEmpty(targetCommit))
+                    {
+                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Commit ID is required for commit analysis");
+                    }
+
+                    var commit = repo.Lookup<Commit>(targetCommit);
+                    if (commit == null)
+                    {
+                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Commit not found");
+                    }
+
+                    var commitDiff = GetCommitDiff(repositoryPath, targetCommit);
+                    diffContent = commitDiff.diff;
+                    if (!commitDiff.isError)
+                    {
+                        // Parse commit diff for basic stats
+                        var lines = diffContent.Split('\n');
+                        foreach (var line in lines)
+                        {
+                            if (line.StartsWith("+") && !line.StartsWith("+++")) totalAdditions++;
+                            else if (line.StartsWith("-") && !line.StartsWith("---")) totalDeletions++;
+                        }
+                    }
+                    break;
+
+                default:
+                    return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Invalid analysis type");
+            }
+
+            if (string.IsNullOrEmpty(diffContent))
+            {
+                return (new
+                {
+                    filesModified = 0,
+                    additions = 0,
+                    deletions = 0,
+                    fileList = new List<string>()
+                }, true, null);
+            }
+
+            var changesSummary = new
+            {
+                filesModified = files.Count,
+                additions = totalAdditions,
+                deletions = totalDeletions,
+                fileList = files
+            };
+
+            return (changesSummary, true, null);
+        }
+        catch (RepositoryNotFoundException)
+        {
+            _logger.LogWarning("Repository not found at path: {Path}", repositoryPath);
+            return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Not a git repository");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error previewing changes for repository: {Path}", repositoryPath);
+            return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, $"Error: {ex.Message}");
+        }
+    }
+
+    private void ExtractFileStats(Patch diff, ref int additions, ref int deletions, List<string> files)
+    {
+        foreach (var patchEntry in diff)
+        {
+            files.Add(patchEntry.Path);
+            
+            // Count lines manually from patch content
+            var lines = patchEntry.Patch.Split('\n');
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("+") && !line.StartsWith("+++"))
+                    additions++;
+                else if (line.StartsWith("-") && !line.StartsWith("---"))
+                    deletions++;
+            }
+        }
+    }
 }
