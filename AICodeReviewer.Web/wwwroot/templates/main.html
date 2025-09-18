@@ -58,249 +58,402 @@
         <!-- Main Content Area -->
         <main class="flex-1">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <!-- Welcome Section -->
-                <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Welcome to AI Code Reviewer</h2>
-                    <p class="text-gray-600 mb-4">
-                        This foundation template includes all required dependencies and is ready for development.
-                    </p>
-                    
-                    <!-- Document Management Component -->
-                    <div id="document-manager" class="border-t pt-6">
-                        <h3 class="text-md font-medium text-gray-900 mb-4">Available Documents</h3>
-                        
-                        <!-- Load Documents Button -->
-                        <div class="mb-4">
-                            <button
-                                id="load-documents-btn"
-                                class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <svg
-                                    id="loading-spinner"
-                                    class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span id="loading-text">Load Documents</span>
-                            </button>
+                
+                <!-- Workflow Progress Indicator -->
+                <div class="workflow-progress-container mb-8">
+                    <div class="progress-steps flex items-center justify-center space-x-4">
+                        <!-- Step 1: Documents -->
+                        <div class="step-indicator active" data-step="1">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Documents</div>
                         </div>
+                        <div class="step-connection active"></div>
+                        
+                        <!-- Step 2: Repository -->
+                        <div class="step-indicator" data-step="2">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Repository</div>
+                        </div>
+                        <div class="step-connection"></div>
+                        
+                        <!-- Step 3: Language -->
+                        <div class="step-indicator" data-step="3">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Language</div>
+                        </div>
+                        <div class="step-connection"></div>
+                        
+                        <!-- Step 4: Analysis -->
+                        <div class="step-indicator" data-step="4">
+                            <div class="step-number">4</div>
+                            <div class="step-label">Analysis</div>
+                        </div>
+                        <div class="step-connection"></div>
+                        
+                        <!-- Step 5: Results -->
+                        <div class="step-indicator" data-step="5">
+                            <div class="step-number">5</div>
+                            <div class="step-label">Results</div>
+                        </div>
+                    </div>
+                </div>
 
-                        <!-- Error Message -->
-                        <div id="error-container" class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                    </svg>
+                <!-- Step Content Areas -->
+                <div class="workflow-content-container">
+                    <!-- Step 1: Document Selection -->
+                    <div class="step-content active" id="step-1-content">
+                        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 1: Document Selection</h3>
+                            
+                            <!-- Document Management Component -->
+                            <div id="document-manager" class="border-t pt-6">
+                                <h3 class="text-md font-medium text-gray-900 mb-4">Available Documents</h3>
+                                
+                                <!-- Load Documents Button -->
+                                <div class="mb-4">
+                                    <button
+                                        id="load-documents-btn"
+                                        class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <svg
+                                            id="loading-spinner"
+                                            class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span id="loading-text">Load Documents</span>
+                                    </button>
                                 </div>
-                                <div class="ml-3">
-                                    <h3 class="text-sm font-medium text-red-800">Error Loading Documents</h3>
-                                    <div class="mt-2 text-sm text-red-700">
-                                        <p id="error-message"></p>
+
+                                <!-- Error Message -->
+                                <div id="error-container" class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <h3 class="text-sm font-medium text-red-800">Error Loading Documents</h3>
+                                            <div class="mt-2 text-sm text-red-700">
+                                                <p id="error-message"></p>
+                                            </div>
+                                        </div>
+                                        <div class="ml-auto pl-3">
+                                            <button id="close-error-btn" class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100">
+                                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="ml-auto pl-3">
-                                    <button id="close-error-btn" class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100">
-                                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+
+                                <!-- Loading State -->
+                                <div id="loading-state" class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                                    <div class="flex items-center">
+                                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <p id="loading-state-text" class="text-sm text-blue-800">Loading documents...</p>
+                                    </div>
+                                </div>
+
+                                <!-- Document List -->
+                                <div id="document-list-container" class="space-y-2 hidden">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-2">
+                                        Found <span id="document-count">0</span> documents:
+                                    </h4>
+                                    
+                                    <div id="document-grid" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                        <!-- Document items will be dynamically added here -->
+                                    </div>
+                                </div>
+
+                                <!-- Empty State -->
+                                <div id="empty-state" class="text-center py-8 hidden">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <h4 class="mt-2 text-sm font-medium text-gray-900">No documents found</h4>
+                                    <p class="mt-1 text-sm text-gray-500">Click "Load Documents" to scan for available files.</p>
+                                </div>
+
+                                <!-- Document Content Viewer -->
+                                <div id="document-viewer" class="mt-6 border-t pt-6 hidden">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h4 class="text-sm font-medium text-gray-900">
+                                            Document: <span id="selected-document-name"></span>
+                                        </h4>
+                                        <button
+                                            id="close-document-btn"
+                                            class="text-xs text-gray-500 hover:text-gray-700"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-md p-4">
+                                        <pre id="document-content" class="text-sm text-gray-800 whitespace-pre-wrap"></pre>
+                                    </div>
+                                </div>
+
+                                <!-- Step Navigation -->
+                                <div class="mt-6 flex justify-between items-center pt-6 border-t">
+                                    <div>
+                                        <!-- Previous button (disabled for first step) -->
+                                        <button class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                            </svg>
+                                            Previous
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <button id="next-step-1-btn" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                            Next
+                                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Repository Selection -->
+                    <div class="step-content" id="step-2-content">
+                        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 2: Repository Selection</h3>
+                            
+                            <!-- Repository Path Input -->
+                            <div class="mb-4">
+                                <label for="repository-path" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Repository Path
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        type="text"
+                                        id="repository-path"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                        placeholder="/path/to/your/git/repository"
+                                    />
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <svg id="path-valid-icon" class="h-5 w-5 text-green-500 hidden" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <svg id="path-invalid-icon" class="h-5 w-5 text-red-500 hidden" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Validation Buttons -->
+                            <div class="mb-4 flex items-center space-x-2">
+                                <button
+                                    id="validate-repository-btn"
+                                    class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    disabled
+                                >
+                                    <svg id="validation-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span id="validation-text">Validate Repository</span>
+                                </button>
+                                <button
+                                    id="reset-repository-btn"
+                                    class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                                >
+                                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    Reset
+                                </button>
+                            </div>
+
+                            <!-- Validation Loading State -->
+                            <div id="validation-loading" class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                                <div class="flex items-center">
+                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <p id="validation-loading-text" class="text-sm text-blue-800">Validating repository...</p>
+                                </div>
+                            </div>
+
+                            <!-- Validation Error State -->
+                            <div id="validation-error" class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-red-800">Repository Validation Failed</h3>
+                                        <div class="mt-2 text-sm text-red-700">
+                                            <p id="validation-error-message"></p>
+                                        </div>
+                                    </div>
+                                    <div class="ml-auto pl-3">
+                                        <button id="close-validation-error-btn" class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100">
+                                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Validation Success State -->
+                            <div id="validation-success" class="mb-4 bg-green-50 border border-green-200 rounded-md p-4 hidden">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-green-800">Repository Validated Successfully</h3>
+                                        <div class="mt-2 text-sm text-green-700">
+                                            <p id="validation-success-message"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Repository Information Display -->
+                            <div id="repository-info" class="bg-gray-50 rounded-md p-4 hidden">
+                                <h4 class="text-sm font-medium text-gray-900 mb-2" id="repository-info-title">Repository Information</h4>
+                                <div class="space-y-1 text-sm text-gray-700" id="repository-info-details">
+                                    <!-- Dynamic content will be inserted here -->
+                                </div>
+                            </div>
+
+                            <!-- Step Navigation -->
+                            <div class="mt-6 flex justify-between items-center pt-6 border-t">
+                                <div>
+                                    <button id="previous-step-2-btn" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                        </svg>
+                                        Previous
+                                    </button>
+                                </div>
+                                <div>
+                                    <button id="next-step-2-btn" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                        Next
+                                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                         </svg>
                                     </button>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Loading State -->
-                        <div id="loading-state" class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
-                            <div class="flex items-center">
-                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <p id="loading-state-text" class="text-sm text-blue-800">Loading documents...</p>
+                    <!-- Step 3: Language Selection (Placeholder) -->
+                    <div class="step-content" id="step-3-content">
+                        <div class="bg-white rounded-lg shadow-sm border p-8 text-center">
+                            <div class="text-6xl mb-4">📝</div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Language Selection</h3>
+                            <p class="text-gray-600">Choose programming languages and coding standards for analysis</p>
+                            <div class="mt-4">
+                                <span class="inline-block px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">Coming Soon</span>
                             </div>
-                        </div>
-
-                        <!-- Document List -->
-                        <div id="document-list-container" class="space-y-2 hidden">
-                            <h4 class="text-sm font-medium text-gray-700 mb-2">
-                                Found <span id="document-count">0</span> documents:
-                            </h4>
                             
-                            <div id="document-grid" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                <!-- Document items will be dynamically added here -->
-                            </div>
-                        </div>
-
-                        <!-- Empty State -->
-                        <div id="empty-state" class="text-center py-8 hidden">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <h4 class="mt-2 text-sm font-medium text-gray-900">No documents found</h4>
-                            <p class="mt-1 text-sm text-gray-500">Click "Load Documents" to scan for available files.</p>
-                        </div>
-
-                        <!-- Document Content Viewer -->
-                        <div id="document-viewer" class="mt-6 border-t pt-6 hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h4 class="text-sm font-medium text-gray-900">
-                                    Document: <span id="selected-document-name"></span>
-                                </h4>
-                                <button
-                                    id="close-document-btn"
-                                    class="text-xs text-gray-500 hover:text-gray-700"
-                                >
-                                    Close
-                                </button>
-                            </div>
-                            <div class="bg-gray-50 rounded-md p-4">
-                                <pre id="document-content" class="text-sm text-gray-800 whitespace-pre-wrap"></pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Repository Selection Section -->
-                <div id="repository-selection-section" class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                    <h3 class="text-md font-semibold text-gray-900 mb-4">Step 1: Repository Selection</h3>
-                    
-                    <!-- Repository Path Input -->
-                    <div class="mb-4">
-                        <label for="repository-path" class="block text-sm font-medium text-gray-700 mb-2">
-                            Repository Path
-                        </label>
-                        <div class="relative">
-                            <input
-                                type="text"
-                                id="repository-path"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                placeholder="/path/to/your/git/repository"
-                            />
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                <svg id="path-valid-icon" class="h-5 w-5 text-green-500 hidden" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                                <svg id="path-invalid-icon" class="h-5 w-5 text-red-500 hidden" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Validation Buttons -->
-                    <div class="mb-4 flex items-center space-x-2">
-                        <button
-                            id="validate-repository-btn"
-                            class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            disabled
-                        >
-                            <svg id="validation-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span id="validation-text">Validate Repository</span>
-                        </button>
-                        <button
-                            id="reset-repository-btn"
-                            class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-                            onclick="clearRepositoryValidation()"
-                        >
-                            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                            </svg>
-                            Reset
-                        </button>
-                    </div>
-
-                    <!-- Validation Loading State -->
-                    <div id="validation-loading" class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
-                        <div class="flex items-center">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <p id="validation-loading-text" class="text-sm text-blue-800">Validating repository...</p>
-                        </div>
-                    </div>
-
-                    <!-- Validation Error State -->
-                    <div id="validation-error" class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-medium text-red-800">Repository Validation Failed</h3>
-                                <div class="mt-2 text-sm text-red-700">
-                                    <p id="validation-error-message"></p>
+                            <!-- Step Navigation -->
+                            <div class="mt-8 flex justify-between items-center">
+                                <div>
+                                    <button id="previous-step-3-btn" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                        </svg>
+                                        Previous
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="ml-auto pl-3">
-                                <button id="close-validation-error-btn" class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100">
-                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Validation Success State -->
-                    <div id="validation-success" class="mb-4 bg-green-50 border border-green-200 rounded-md p-4 hidden">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-medium text-green-800">Repository Validated Successfully</h3>
-                                <div class="mt-2 text-sm text-green-700">
-                                    <p id="validation-success-message"></p>
+                                <div>
+                                    <button id="next-step-3-btn" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                        Next
+                                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Repository Information Display -->
-                    <div id="repository-info" class="bg-gray-50 rounded-md p-4 hidden">
-                        <h4 class="text-sm font-medium text-gray-900 mb-2" id="repository-info-title">Repository Information</h4>
-                        <div class="space-y-1 text-sm text-gray-700" id="repository-info-details">
-                            <!-- Dynamic content will be inserted here -->
+                    <!-- Step 4: Analysis Options (Placeholder) -->
+                    <div class="step-content" id="step-4-content">
+                        <div class="bg-white rounded-lg shadow-sm border p-8 text-center">
+                            <div class="text-6xl mb-4">⚙️</div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Analysis Options</h3>
+                            <p class="text-gray-600">Configure git diff analysis and review settings</p>
+                            <div class="mt-4">
+                                <span class="inline-block px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">Coming Soon</span>
+                            </div>
+                            
+                            <!-- Step Navigation -->
+                            <div class="mt-8 flex justify-between items-center">
+                                <div>
+                                    <button id="previous-step-4-btn" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                        </svg>
+                                        Previous
+                                    </button>
+                                </div>
+                                <div>
+                                    <button id="next-step-4-btn" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                        Next
+                                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Workflow Container (for future components) -->
-                <div id="workflow-container" class="space-y-6">
-                    <!-- Step 1: Repository Selection -->
-                    <div id="repository-selection" class="bg-white rounded-lg shadow-sm border p-6">
-                        <h3 class="text-md font-semibold text-gray-900 mb-2">Step 1: Repository Selection</h3>
-                        <p class="text-sm text-gray-600">This area will contain repository browsing and selection functionality</p>
-                    </div>
-
-                    <!-- Step 2: Requirements Document -->
-                    <div id="requirements-selection" class="bg-white rounded-lg shadow-sm border p-6">
-                        <h3 class="text-md font-semibold text-gray-900 mb-2">Step 2: Requirements Document</h3>
-                        <p class="text-sm text-gray-600">This area will contain requirements document selection and validation</p>
-                    </div>
-
-                    <!-- Step 3: Analysis Progress -->
-                    <div id="analysis-progress" class="bg-white rounded-lg shadow-sm border p-6">
-                        <h3 class="text-md font-semibold text-gray-900 mb-2">Step 3: Analysis Progress</h3>
-                        <p class="text-sm text-gray-600">This area will show real-time analysis progress via SignalR</p>
-                    </div>
-
-                    <!-- Step 4: Results Display -->
-                    <div id="results-display" class="bg-white rounded-lg shadow-sm border p-6">
-                        <h3 class="text-md font-semibold text-gray-900 mb-2">Step 4: Results Display</h3>
-                        <p class="text-sm text-gray-600">This area will display the analysis results with filtering and navigation</p>
+                    <!-- Step 5: AI Model & Results (Placeholder) -->
+                    <div class="step-content" id="step-5-content">
+                        <div class="bg-white rounded-lg shadow-sm border p-8 text-center">
+                            <div class="text-6xl mb-4">🤖</div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">AI Model & Results</h3>
+                            <p class="text-gray-600">Select AI models and view analysis results</p>
+                            <div class="mt-4">
+                                <span class="inline-block px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">Coming Soon</span>
+                            </div>
+                            
+                            <!-- Step Navigation -->
+                            <div class="mt-8 flex justify-between items-center">
+                                <div>
+                                    <button id="previous-step-5-btn" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                        </svg>
+                                        Previous
+                                    </button>
+                                </div>
+                                <div>
+                                    <button id="run-analysis-btn" class="inline-flex items-center px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h1m4 0h1M3 5h18M3 19h18M3 12h18"/>
+                                        </svg>
+                                        Run Analysis
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

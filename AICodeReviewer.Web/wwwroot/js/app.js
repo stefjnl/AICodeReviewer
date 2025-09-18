@@ -685,6 +685,248 @@ window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason);
 });
 
+// Workflow state management
+const workflowState = {
+    currentStep: 1,
+    completedSteps: [],
+    steps: {
+        1: { name: 'documents', completed: false, required: false },
+        2: { name: 'repository', completed: false, required: true },
+        3: { name: 'language', completed: false, required: true },
+        4: { name: 'analysis', completed: false, required: true },
+        5: { name: 'results', completed: false, required: false }
+    }
+};
+
+// Step completion criteria
+const stepCompletionCriteria = {
+    1: function() {
+        // Step 1: Documents - completed when documents are loaded
+        return documentManager.documents.length > 0;
+    },
+    2: function() {
+        // Step 2: Repository - completed when repository is validated
+        return repositoryState.isValid === true;
+    },
+    3: function() {
+        // Step 3: Language - placeholder, always completed for now
+        return true;
+    },
+    4: function() {
+        // Step 4: Analysis - placeholder, always completed for now
+        return true;
+    },
+    5: function() {
+        // Step 5: Results - placeholder, always completed for now
+        return true;
+    }
+};
+
+// Workflow navigation functions
+function showStep(stepNumber) {
+    // Validate step number
+    if (stepNumber < 1 || stepNumber > 5) return;
+    
+    // Check if trying to navigate to a step that's not accessible
+    if (stepNumber > workflowState.currentStep && !canNavigateToStep(stepNumber)) {
+        console.log(`Cannot navigate to step ${stepNumber} - previous steps not completed`);
+        return;
+    }
+    
+    // Hide all step contents
+    document.querySelectorAll('.step-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Update progress indicators
+    updateProgressIndicators(stepNumber);
+    
+    // Show current step
+    const currentContent = document.getElementById(`step-${stepNumber}-content`);
+    if (currentContent) {
+        currentContent.classList.add('active');
+    }
+    
+    workflowState.currentStep = stepNumber;
+    updateNavigationButtons();
+    console.log(`Switched to step ${stepNumber}`);
+}
+
+function updateProgressIndicators(currentStep) {
+    // Update step indicators
+    document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+        const stepNum = index + 1;
+        
+        // Remove all state classes
+        indicator.classList.remove('active', 'completed');
+        
+        if (stepNum < currentStep) {
+            // Completed steps
+            indicator.classList.add('completed');
+        } else if (stepNum === currentStep) {
+            // Current step
+            indicator.classList.add('active');
+        }
+    });
+    
+    // Update step connections
+    document.querySelectorAll('.step-connection').forEach((connection, index) => {
+        const stepNum = index + 1;
+        
+        // Remove all state classes
+        connection.classList.remove('active', 'completed');
+        
+        if (stepNum < currentStep) {
+            // Completed connections
+            connection.classList.add('active', 'completed');
+        } else if (stepNum < currentStep) {
+            // Active connection leading to current step
+            connection.classList.add('active');
+        }
+    });
+}
+
+function canNavigateToStep(stepNumber) {
+    // Can navigate to any step that's already completed or the current step
+    for (let i = 1; i < stepNumber; i++) {
+        if (!workflowState.steps[i].completed && workflowState.steps[i].required) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function markStepCompleted(stepNumber) {
+    if (stepNumber < 1 || stepNumber > 5) return;
+    
+    // Check completion criteria
+    if (!stepCompletionCriteria[stepNumber] || !stepCompletionCriteria[stepNumber]()) {
+        return false;
+    }
+    
+    workflowState.steps[stepNumber].completed = true;
+    workflowState.completedSteps.push(stepNumber);
+    
+    // Update visual indicator
+    const indicator = document.querySelector(`[data-step="${stepNumber}"]`);
+    if (indicator) {
+        indicator.classList.add('completed');
+        indicator.classList.remove('active');
+    }
+    
+    // Update connection
+    const connection = document.querySelector(`.step-connection:nth-child(${stepNumber * 2})`);
+    if (connection) {
+        connection.classList.add('completed');
+    }
+    
+    console.log(`Step ${stepNumber} marked as completed`);
+    updateNavigationButtons();
+    return true;
+}
+
+function updateNavigationButtons() {
+    const currentStep = workflowState.currentStep;
+    
+    // Update Previous button
+    const prevBtn = document.getElementById(`previous-step-${currentStep}-btn`);
+    if (prevBtn) {
+        prevBtn.disabled = currentStep === 1;
+    }
+    
+    // Update Next button
+    const nextBtn = document.getElementById(`next-step-${currentStep}-btn`);
+    if (nextBtn) {
+        if (currentStep === 5) {
+            // Last step - show "Run Analysis" button
+            nextBtn.style.display = 'none';
+            const runBtn = document.getElementById('run-analysis-btn');
+            if (runBtn) {
+                runBtn.style.display = 'inline-flex';
+                runBtn.disabled = !canNavigateToStep(5);
+            }
+        } else {
+            nextBtn.disabled = !canNavigateToStep(currentStep + 1);
+        }
+    }
+    
+    // Update progress indicator clickability
+    document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+        const stepNum = index + 1;
+        indicator.classList.remove('clickable');
+        
+        if (stepNum <= currentStep || canNavigateToStep(stepNum)) {
+            indicator.classList.add('clickable');
+        }
+    });
+}
+
+function initializeWorkflowNavigation() {
+    // Add click handlers to step indicators
+    document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+        const stepNum = index + 1;
+        indicator.addEventListener('click', () => {
+            if (stepNum <= workflowState.currentStep || canNavigateToStep(stepNum)) {
+                showStep(stepNum);
+            }
+        });
+    });
+    
+    // Add click handlers to navigation buttons
+    for (let i = 1; i <= 5; i++) {
+        const prevBtn = document.getElementById(`previous-step-${i}-btn`);
+        const nextBtn = document.getElementById(`next-step-${i}-btn`);
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (i > 1) {
+                    showStep(i - 1);
+                }
+            });
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if (i < 5 && markStepCompleted(i)) {
+                    showStep(i + 1);
+                }
+            });
+        }
+    }
+    
+    // Run Analysis button
+    const runBtn = document.getElementById('run-analysis-btn');
+    if (runBtn) {
+        runBtn.addEventListener('click', () => {
+            if (canNavigateToStep(5)) {
+                console.log('Running analysis...');
+                // Add analysis logic here
+            }
+        });
+    }
+}
+
+// Enhanced completion tracking for existing functionality
+function onDocumentLoadSuccess() {
+    console.log('Documents loaded successfully');
+    markStepCompleted(1);
+}
+
+function onDocumentLoadError() {
+    console.log('Document loading failed');
+    // Don't mark as completed on error
+}
+
+function onRepositoryValidationSuccess() {
+    console.log('Repository validated successfully');
+    markStepCompleted(2);
+}
+
+function onRepositoryValidationError() {
+    console.log('Repository validation failed');
+    // Don't mark as completed on error
+}
+
 // Document ready check
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM fully loaded and parsed');
@@ -694,6 +936,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize event listeners
     initializeEventListeners();
+    
+    // Initialize workflow navigation
+    initializeWorkflowNavigation();
+    
+    // Initialize workflow UI
+    showStep(1);
     
     console.log('✅ Application initialized successfully');
     
