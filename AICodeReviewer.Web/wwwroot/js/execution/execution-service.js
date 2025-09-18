@@ -9,11 +9,46 @@ import { languageState } from '../language/language-state.js';
 import { modelState } from '../models/model-state.js';
 import { documentManager } from '../documents/document-manager.js';
 import { analysisState } from '../analysis/analysis-state.js';
+import { getSignalRConnection } from '../signalr/signalr-client.js';
 
 export class ExecutionService {
     constructor() {
         this.isRunning = false;
         this.analysisId = null;
+        this.pollingTimeoutId = null;
+        this.initialPollingTimeoutId = null;
+    }
+    
+    /**
+     * Joins the SignalR group for the current analysis
+     * @param {string} analysisId Analysis identifier
+     */
+    async joinAnalysisGroup(analysisId) {
+        try {
+            const connection = getSignalRConnection();
+            if (connection && connection.state === 'Connected') {
+                await connection.invoke('JoinAnalysisGroup', analysisId);
+                console.log(`✅ Joined SignalR group for analysis ${analysisId}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️ Failed to join SignalR group for analysis ${analysisId}:`, error);
+        }
+    }
+    
+    /**
+     * Leaves the SignalR group for the current analysis
+     * @param {string} analysisId Analysis identifier
+     */
+    async leaveAnalysisGroup(analysisId) {
+        try {
+            const connection = getSignalRConnection();
+            if (connection && connection.state === 'Connected') {
+                await connection.invoke('LeaveAnalysisGroup', analysisId);
+                console.log(`✅ Left SignalR group for analysis ${analysisId}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️ Failed to leave SignalR group for analysis ${analysisId}:`, error);
+        }
     }
 
     /**
@@ -105,6 +140,9 @@ export class ExecutionService {
         }
 
         try {
+            // Clear any previous polling timeouts before starting new analysis
+            this.clearPollingTimeouts();
+            
             this.isRunning = true;
             this.analysisId = null;
 
@@ -124,6 +162,9 @@ export class ExecutionService {
             if (response.success) {
                 this.analysisId = response.analysisId;
                 console.log(`✅ Analysis started successfully with ID: ${this.analysisId}`);
+                
+                // Join the SignalR group for this analysis
+                await this.joinAnalysisGroup(this.analysisId);
                 
                 // Start monitoring progress
                 this.startProgressMonitoring();
@@ -193,7 +234,7 @@ export class ExecutionService {
      * Shows error state in the UI
      * @param {string} errorMessage Error message to display
      */
-    showErrorState(errorMessage) {
+    async showErrorState(errorMessage) {
         const runBtn = document.getElementById('run-analysis-btn');
         const loadingState = document.getElementById('analysis-loading-state');
         const errorContainer = document.getElementById('analysis-error-container');
@@ -228,6 +269,14 @@ export class ExecutionService {
             `;
         }
 
+        // Clear polling timeouts to prevent race conditions
+        this.clearPollingTimeouts();
+
+        // Leave the SignalR group for this analysis
+        if (this.analysisId) {
+            await this.leaveAnalysisGroup(this.analysisId);
+        }
+
         this.isRunning = false;
     }
 
@@ -235,7 +284,7 @@ export class ExecutionService {
      * Shows success state with results
      * @param {Object} results Analysis results
      */
-    showResults(results) {
+    async showResults(results) {
         const runBtn = document.getElementById('run-analysis-btn');
         const loadingState = document.getElementById('analysis-loading-state');
         const resultsContainer = document.getElementById('analysis-results-container');
@@ -252,6 +301,14 @@ export class ExecutionService {
         if (resultsContainer) {
             resultsContainer.style.display = 'block';
             this.renderResults(results);
+        }
+
+        // Clear polling timeouts to prevent race conditions
+        this.clearPollingTimeouts();
+
+        // Leave the SignalR group for this analysis
+        if (this.analysisId) {
+            await this.leaveAnalysisGroup(this.analysisId);
         }
 
         this.isRunning = false;
@@ -394,11 +451,27 @@ export class ExecutionService {
     }
 
     /**
-     * Starts progress monitoring via SignalR
+     * Clears any active polling timeouts
+     */
+    clearPollingTimeouts() {
+        if (this.pollingTimeoutId) {
+            clearTimeout(this.pollingTimeoutId);
+            this.pollingTimeoutId = null;
+        }
+        if (this.initialPollingTimeoutId) {
+            clearTimeout(this.initialPollingTimeoutId);
+            this.initialPollingTimeoutId = null;
+        }
+    }
+
+    /**
+     * Starts progress monitoring via SignalR with polling fallback
      */
     startProgressMonitoring() {
-        // This will be handled by SignalR connection
         console.log('📊 Starting progress monitoring for analysis ID:', this.analysisId);
+        
+        // Clear any existing polling timeouts
+        this.clearPollingTimeouts();
         
         // Listen for progress updates
         document.addEventListener('progress-update', (event) => {
@@ -414,6 +487,94 @@ export class ExecutionService {
         document.addEventListener('signalr-error', (event) => {
             this.showErrorState(event.detail.message || 'Analysis failed');
         });
+
+        // Fallback polling mechanism in case SignalR fails
+        this.startPollingFallback();
+    }
+
+    /**
+     * Starts polling fallback for analysis status
+     */
+    startPollingFallback() {
+        console.log('🔍 Starting polling fallback for analysis status');
+        
+        let pollCount = 0;
+        const maxPolls = 120; // 10 minutes max (120 * 5 seconds)
+        
+        const pollStatus = async () => {
+            // Check if analysis is still running and this is the current analysis
+            if (!this.analysisId || pollCount >= maxPolls || !this.isRunning) {
+                this.clearPollingTimeouts();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/results/${this.analysisId}`);
+                if (response.ok) {
+                    const results = await response.json();
+                    
+                    if (results && results.isComplete && !results.error) {
+                        console.log('✅ Analysis completed via polling:', results);
+                        // Transform the results to match what the frontend expects
+                        const feedback = results.feedback || results.Feedback || [];
+                        
+                        // Transform feedback items to match frontend expectations
+                        const transformedFeedback = feedback.map(item => {
+                            // Convert numeric severity enum to string
+                            let severityString = 'Suggestion';
+                            if (typeof item.severity === 'number' || typeof item.Severity === 'number') {
+                                const severityValue = item.severity ?? item.Severity;
+                                switch (severityValue) {
+                                    case 0: severityString = 'Critical'; break;
+                                    case 1: severityString = 'Warning'; break;
+                                    case 2: severityString = 'Suggestion'; break;
+                                    case 3: severityString = 'Style'; break;
+                                    case 4: severityString = 'Info'; break;
+                                    default: severityString = 'Suggestion';
+                                }
+                            } else {
+                                severityString = item.severity || item.Severity || 'Suggestion';
+                            }
+                            
+                            return {
+                                title: item.message ? item.message.substring(0, 50) + (item.message.length > 50 ? '...' : '') : 'Untitled Issue',
+                                description: item.message || '',
+                                severity: severityString,
+                                suggestions: item.suggestion ? [item.suggestion] : [],
+                                file: item.filePath || item.FilePath || '',
+                                line: item.lineNumber || item.LineNumber || ''
+                            };
+                        });
+                        
+                        const transformedResults = {
+                            summary: {
+                                totalIssues: feedback.length,
+                                critical: feedback.filter(f => (f.severity || f.Severity) === 'Critical').length,
+                                warnings: feedback.filter(f => (f.severity || f.Severity) === 'Warning').length
+                            },
+                            feedback: transformedFeedback,
+                            detailedResults: results
+                        };
+                        this.showResults(transformedResults);
+                        this.clearPollingTimeouts();
+                        return;
+                    } else if (results && results.error) {
+                        console.error('❌ Analysis failed via polling:', results);
+                        this.showErrorState(results.error || 'Analysis failed');
+                        this.clearPollingTimeouts();
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Polling failed, continuing SignalR monitoring:', error);
+            }
+            
+            pollCount++;
+            this.pollingTimeoutId = setTimeout(pollStatus, 5000); // Poll every 5 seconds
+        };
+        
+        // Start polling after 10 seconds to give SignalR time
+        this.initialPollingTimeoutId = setTimeout(pollStatus, 10000);
     }
 }
 

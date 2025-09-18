@@ -150,10 +150,15 @@ export class ResultsDisplay {
 
     /**
      * Builds the HTML for displaying results
-     * @param {Object} results Analysis results
+     * @param {Object|string} results Analysis results
      * @returns {string} HTML string
      */
     buildResultsHTML(results) {
+        // Handle both string and object formats
+        if (typeof results === 'string') {
+            return this.buildStringResults(results);
+        }
+        
         return `
             <div class="bg-white shadow rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
@@ -176,12 +181,99 @@ export class ResultsDisplay {
     }
 
     /**
+     * Builds HTML for string results (when AI returns plain text)
+     * @param {string} resultText Analysis result text
+     * @returns {string} HTML string
+     */
+    buildStringResults(resultText) {
+        // Parse the text to extract structured data
+        const lines = resultText.split('\n');
+        const issues = [];
+        let recommendations = [];
+        
+        lines.forEach(line => {
+            if (line.includes('**Critical**')) {
+                issues.push({
+                    title: 'Critical Issue',
+                    severity: 'Critical',
+                    description: line.replace('**Critical**', '').trim(),
+                    file: this.extractFileFromLine(line),
+                    line: this.extractLineFromLine(line)
+                });
+            } else if (line.includes('**Warning**')) {
+                issues.push({
+                    title: 'Warning',
+                    severity: 'High',
+                    description: line.replace('**Warning**', '').trim(),
+                    file: this.extractFileFromLine(line),
+                    line: this.extractLineFromLine(line)
+                });
+            } else if (line.includes('**Suggestion**')) {
+                recommendations.push(line.replace('**Suggestion**', '').trim());
+            }
+        });
+
+        const summary = {
+            totalIssues: issues.length,
+            critical: issues.filter(i => i.severity === 'Critical').length,
+            high: issues.filter(i => i.severity === 'High').length,
+            medium: issues.filter(i => i.severity === 'Medium').length
+        };
+
+        return `
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            Analysis Results
+                        </h3>
+                        <button type="button" class="text-sm text-primary hover:text-primary/80">
+                            Export Results
+                        </button>
+                    </div>
+                    
+                    ${this.buildSummarySection(summary)}
+                    ${this.buildIssuesSection({ issues })}
+                    ${this.buildRecommendationsSection({ recommendations })}
+                    
+                    <div>
+                        <h4 class="text-md font-medium text-gray-900 mb-3">Raw Analysis</h4>
+                        <div class="bg-gray-50 rounded-md p-4">
+                            <pre class="text-sm text-gray-700 whitespace-pre-wrap">${resultText}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Extracts file name from a line of text
+     * @param {string} line Text line
+     * @returns {string} File name or empty string
+     */
+    extractFileFromLine(line) {
+        const match = line.match(/\*\*(.*?)\.cs\b/);
+        return match ? match[1] + '.cs' : '';
+    }
+
+    /**
+     * Extracts line number from a line of text
+     * @param {string} line Text line
+     * @returns {string} Line number or empty string
+     */
+    extractLineFromLine(line) {
+        const match = line.match(/Line (\d+)/);
+        return match ? match[1] : '';
+    }
+
+    /**
      * Builds the summary section
      * @param {Object} results Analysis results
      * @returns {string} HTML string
      */
     buildSummarySection(results) {
-        const summary = results.summary || {};
+        const summary = results.summary || { totalIssues: 0, critical: 0, high: 0, medium: 0 };
         
         return `
             <div class="mb-6">
@@ -214,9 +306,9 @@ export class ResultsDisplay {
      * @returns {string} HTML string
      */
     buildIssuesSection(results) {
-        const issues = results.issues || [];
+        const issues = results.issues || results.feedback || [];
         
-        if (issues.length === 0) {
+        if (!issues || issues.length === 0) {
             return `
                 <div class="mb-6">
                     <h4 class="text-md font-medium text-gray-900 mb-3">Issues Found</h4>
@@ -259,16 +351,16 @@ export class ResultsDisplay {
                 <div class="flex items-center justify-between">
                     <h5 class="text-sm font-medium text-gray-900">${issue.title || 'Untitled Issue'}</h5>
                     <span class="text-xs ${severityClass.text} font-medium">
-                        ${issue.severity || 'Unknown'}
+                        ${issue.severity || issue.priority || 'Unknown'}
                     </span>
                 </div>
-                <p class="mt-1 text-sm text-gray-600">${issue.description || ''}</p>
-                ${issue.file ? `<p class="text-xs text-gray-500 mt-1">File: ${issue.file}</p>` : ''}
-                ${issue.line ? `<p class="text-xs text-gray-500">Line: ${issue.line}</p>` : ''}
-                ${issue.suggestion ? `
+                <p class="mt-1 text-sm text-gray-600">${issue.description || issue.message || ''}</p>
+                ${issue.file || issue.filePath ? `<p class="text-xs text-gray-500 mt-1">File: ${issue.file || issue.filePath}</p>` : ''}
+                ${issue.line || issue.lineNumber ? `<p class="text-xs text-gray-500">Line: ${issue.line || issue.lineNumber}</p>` : ''}
+                ${issue.suggestion || issue.suggestions ? `
                     <div class="mt-2">
                         <p class="text-sm font-medium text-gray-700">Suggestion:</p>
-                        <p class="text-sm text-gray-600">${issue.suggestion}</p>
+                        <p class="text-sm text-gray-600">${issue.suggestion || issue.suggestions}</p>
                     </div>
                 ` : ''}
             </div>
