@@ -57,4 +57,20 @@ public interface IRepositoryManagementService
     /// <param name="repositoryPath">Path to the git repository</param>
     /// <returns>Validation result and error message</returns>
     (bool hasStaged, string? error) HasStagedChanges(string repositoryPath);
+
+    /// <summary>
+    /// Get analysis options for a repository
+    /// </summary>
+    /// <param name="repositoryPath">Path to the git repository</param>
+    /// <returns>Available analysis options</returns>
+    (List<object> commits, List<object> branches, List<string> modifiedFiles, List<string> stagedFiles) GetAnalysisOptions(string repositoryPath);
+
+    /// <summary>
+    /// Preview changes for analysis configuration
+    /// </summary>
+    /// <param name="repositoryPath">Path to the git repository</param>
+    /// <param name="analysisType">Type of analysis to perform</param>
+    /// <param name="targetCommit">Specific commit for commit analysis</param>
+    /// <returns>Changes summary and validation result</returns>
+    (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, string analysisType, string? targetCommit = null);
 }

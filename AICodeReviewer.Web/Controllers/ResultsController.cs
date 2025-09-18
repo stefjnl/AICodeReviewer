@@ -1,5 +1,5 @@
+using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Models;
-using AICodeReviewer.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -12,9 +12,9 @@ public class ResultsController : Controller
 {
     private readonly IMemoryCache _cache;
     private readonly ILogger<ResultsController> _logger;
-    private readonly AIPromptResponseService _aiPromptResponseService;
+    private readonly IAIPromptResponseService _aiPromptResponseService;
 
-    public ResultsController(IMemoryCache cache, ILogger<ResultsController> logger, AIPromptResponseService aiPromptResponseService)
+    public ResultsController(IMemoryCache cache, ILogger<ResultsController> logger, IAIPromptResponseService aiPromptResponseService)
     {
         _cache = cache;
         _logger = logger;
@@ -34,8 +34,8 @@ public class ResultsController : Controller
         }
 
         _logger.LogInformation($"Displaying results for analysis {analysisId}");
-        ViewBag.AnalysisId = analysisId;
-        return View();
+        // Redirect to main page - JavaScript will handle displaying results
+        return RedirectToAction("Index", "Home");
     }
 
     /// <summary>

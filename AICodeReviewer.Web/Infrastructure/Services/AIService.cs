@@ -1,10 +1,8 @@
+using AICodeReviewer.Web.Domain;
+using AICodeReviewer.Web.Domain.Interfaces;
+using AICodeReviewer.Web.Models;
 using System.Text;
 using System.Text.Json;
-using AICodeReviewer.Web.Models;
-using AICodeReviewer.Web.Domain.Interfaces;
-using Microsoft.Extensions.Logging;
-using System.Net.Http;
-using AICodeReviewer.Web.Domain;
 
 namespace AICodeReviewer.Web.Infrastructure.Services;
 

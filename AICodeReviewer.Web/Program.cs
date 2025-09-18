@@ -1,5 +1,4 @@
 using AICodeReviewer.Web.Hubs;
-using AICodeReviewer.Web.Services;
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Infrastructure.Services;
 
@@ -17,16 +16,46 @@ builder.Services.AddControllersWithViews(options =>
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
+// Add CORS services
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:8097") // frontend URL
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+});
+
+// set routing to be case-insensitive:
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.LowercaseUrls = true;
+    options.LowercaseQueryStrings = true;
+});
+
+// Add memory cache for session and other services
 builder.Services.AddMemoryCache(options =>
 {
     options.SizeLimit = 1000; // Max 1000 entries (prevents memory bloat)
 });
 
+// Add distributed cache for session services
+builder.Services.AddDistributedMemoryCache();
+
 // Register custom services
-builder.Services.AddScoped<AIPromptResponseService>();
+builder.Services.AddScoped<IAIPromptResponseService, AICodeReviewer.Web.Infrastructure.Services.AIPromptResponseService>();
+
+// Register new refactored services
+builder.Services.AddScoped<IValidationService, ValidationService>();
+builder.Services.AddScoped<IContentExtractionService, ContentExtractionService>();
+builder.Services.AddScoped<IDocumentRetrievalService, DocumentRetrievalService>();
+builder.Services.AddScoped<IAIAnalysisOrchestrator, AIAnalysisOrchestrator>();
+builder.Services.AddScoped<IResultProcessorService, ResultProcessorService>();
 
 // Register domain services
-builder.Services.AddScoped<IAnalysisService, AnalysisService>();
+builder.Services.AddScoped<IAnalysisService, AnalysisCoordinatorService>();
 builder.Services.AddScoped<IRepositoryManagementService, RepositoryManagementService>();
 builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService>();
 builder.Services.AddScoped<IPathValidationService, PathValidationService>();
@@ -39,7 +68,7 @@ builder.Services.AddHttpClient<IAIService, AIService>(client =>
     client.Timeout = TimeSpan.FromSeconds(120);
 });
 
-// In service registration section
+// Add SignalR
 builder.Services.AddSignalR();
 
 builder.Logging.ClearProviders();
@@ -73,12 +102,17 @@ app.UseSession(); // Enable session middleware
 
 app.UseAuthorization();
 
-app.MapStaticAssets();
+// Configure default files (index.html, etc.)
+app.UseDefaultFiles();
+
+// Serve static files
+app.UseStaticFiles();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapControllers(); // Map API controllers
 
 // After app.UseRouting()
 app.MapHub<ProgressHub>("/hubs/progress");

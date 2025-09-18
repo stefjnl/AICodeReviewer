@@ -1,5 +1,6 @@
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Hubs;
+using AICodeReviewer.Web.Infrastructure.Extensions;
 using AICodeReviewer.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -61,72 +62,8 @@ public class HomeController : Controller
     /// </summary>
     public IActionResult Index()
     {
-        try
-        {
-            // Git repository detection
-            var (branchInfo, isError) = _repositoryService.DetectRepository(_environment.ContentRootPath);
-            ViewBag.BranchInfo = branchInfo;
-            ViewBag.IsError = isError;
-
-            // Repository path management for Git diff extraction
-            var defaultRepositoryPath = Path.Combine(_environment.ContentRootPath, "..");
-            var repositoryPath = HttpContext.Session.GetString("RepositoryPath") ?? defaultRepositoryPath;
-            ViewBag.RepositoryPath = repositoryPath;
-            
-            _logger.LogInformation("Index method - Default path: {DefaultPath}", defaultRepositoryPath);
-            _logger.LogInformation("Index method - Session path: {SessionPath}", HttpContext.Session.GetString("RepositoryPath"));
-            _logger.LogInformation("Index method - Final path: {FinalPath}", repositoryPath);
-
-            // Extract Git diff if repository path is set
-            var (gitDiff, gitError) = _repositoryService.ExtractDiff(repositoryPath);
-            ViewBag.GitDiff = gitDiff;
-            ViewBag.GitDiffError = gitError;
-
-            // Document management
-            var documentsFolder = HttpContext.Session.GetString("DocumentsFolder") ?? Path.Combine(_environment.ContentRootPath, "..", "Documents");
-            ViewBag.DocumentsFolder = documentsFolder;
-
-            var (files, scanError) = _documentService.ScanDocumentsFolder(documentsFolder);
-            if (!scanError)
-            {
-                ViewBag.AvailableDocuments = files;
-                ViewBag.DocumentScanError = null;
-            }
-            else
-            {
-                ViewBag.AvailableDocuments = new List<string>();
-                ViewBag.DocumentScanError = "Unable to scan documents folder";
-            }
-
-            var selectedDocuments = HttpContext.Session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
-            ViewBag.SelectedDocuments = selectedDocuments;
-
-            // Load analysis results from cache if available
-            var analysisId = HttpContext.Session.GetString("AnalysisId");
-            if (!string.IsNullOrEmpty(analysisId) && _cache.TryGetValue($"analysis_{analysisId}", out AnalysisResult? cachedResult))
-            {
-                // Store the result in session for the view to display
-                if (cachedResult != null)
-                {
-                    HttpContext.Session.SetString("AnalysisResult", cachedResult.Result ?? "");
-                    HttpContext.Session.SetString("AnalysisError", cachedResult.Error ?? "");
-                    // AnalysisId is already in session
-                }
-            }
-
-            // Pass available models to view
-            var availableModels = _configuration.GetSection("AvailableModels").Get<List<string>>() ?? new List<string>();
-            ViewBag.AvailableModels = availableModels;
-
-            return View();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading Index page");
-            ViewBag.Error = "Error loading page data";
-            ViewBag.AvailableModels = new List<string>();
-            return View();
-        }
+        // Redirect to the static HTML page
+        return Redirect("~/index.html");
     }
 
     /// <summary>
@@ -396,6 +333,7 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        // Return a simple error response since we're not using Razor views
+        return StatusCode(500, new { error = "An error occurred", requestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }
