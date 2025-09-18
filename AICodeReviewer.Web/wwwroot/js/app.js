@@ -710,6 +710,14 @@ const analysisState = {
     error: null
 };
 
+// Model state management
+const modelState = {
+    availableModels: [],
+    selectedModel: null,
+    loading: false,
+    error: null
+};
+
 // Workflow state management
 const workflowState = {
     currentStep: 1,
@@ -742,8 +750,8 @@ const stepCompletionCriteria = {
         return analysisState.analysisType !== null;
     },
     5: function() {
-        // Step 5: Results - placeholder, always completed for now
-        return true;
+        // Step 5: Model Selection - completed when model is selected
+        return modelState.selectedModel !== null;
     }
 };
 
@@ -1454,6 +1462,214 @@ function displayChangesSummary() {
     `;
 }
 
+// Model management functions
+async function loadAvailableModels() {
+    if (!repositoryState.path) {
+        modelState.error = 'No repository path available';
+        updateModelUI('error');
+        return;
+    }
+
+    modelState.loading = true;
+    modelState.error = null;
+    updateModelUI('loading');
+
+    try {
+        console.log('🔄 Loading models from API...');
+        const response = await fetch('/api/model/available');
+        
+        console.log('📡 API Response Status:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            // If API returns 404, use fallback models
+            if (response.status === 404) {
+                console.warn('⚠️ Model API not available, using fallback models');
+                useFallbackModels();
+                return;
+            }
+            
+            const errorText = await response.text();
+            console.error('❌ API Error Response:', errorText);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ API Response Data:', data);
+        
+        if (data.success) {
+            modelState.availableModels = data.models || [];
+            updateModelUI('loaded');
+            
+            // Auto-select first model if available
+            if (modelState.availableModels.length > 0) {
+                selectModel(modelState.availableModels[0].id);
+            }
+        } else {
+            modelState.error = data.error || 'Failed to load models';
+            updateModelUI('error');
+        }
+    } catch (error) {
+        console.error('❌ Error loading models:', error);
+        
+        // Use fallback models on any error
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            console.warn('⚠️ Network error, using fallback models');
+            useFallbackModels();
+        } else {
+            modelState.error = error.message;
+            updateModelUI('error');
+        }
+    } finally {
+        modelState.loading = false;
+    }
+}
+
+// Fallback models for when API is not available
+function useFallbackModels() {
+    console.log('🛠️ Using fallback models...');
+    
+    modelState.availableModels = [
+        {
+            id: "qwen/qwen3-coder",
+            name: "Qwen3 Coder",
+            provider: "Qwen",
+            description: "Specialized for code analysis and review",
+            icon: "🔍"
+        },
+        {
+            id: "moonshotai/kimi-k2-0905",
+            name: "Kimi K2",
+            provider: "Moonshot AI",
+            description: "Advanced reasoning for complex code patterns",
+            icon: "🌙"
+        },
+        {
+            id: "qwen/qwen3-next-80b-a3b-instruct",
+            name: "Qwen3 Next 80B",
+            provider: "Qwen",
+            description: "Large model for comprehensive analysis",
+            icon: "🚀"
+        }
+    ];
+    
+    console.log('✅ Fallback models loaded:', modelState.availableModels.length);
+    updateModelUI('loaded');
+    
+    // Auto-select first model
+    if (modelState.availableModels.length > 0) {
+        console.log('🎯 Auto-selecting first model:', modelState.availableModels[0].name);
+        selectModel(modelState.availableModels[0].id);
+    }
+}
+
+function selectModel(modelId) {
+    const model = modelState.availableModels.find(m => m.id === modelId);
+    if (!model) return;
+
+    modelState.selectedModel = modelId;
+    updateModelUI('loaded');
+    
+    // Mark Step 5 as completed and enable analysis
+    markStepCompleted(5);
+    
+    console.log(`Model selected: ${model.name}`);
+}
+
+function updateModelUI(state) {
+    const loadingEl = document.getElementById('model-loading');
+    const errorEl = document.getElementById('model-error');
+    const contentEl = document.getElementById('model-content');
+    const dropdownEl = document.getElementById('model-dropdown');
+    const selectedEl = document.getElementById('model-selected');
+    const errorMessageEl = document.getElementById('model-error-message');
+
+    if (!loadingEl || !errorEl || !contentEl) return;
+
+    // Reset all states
+    loadingEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+    contentEl.classList.add('hidden');
+    if (dropdownEl) dropdownEl.classList.add('hidden');
+    if (selectedEl) selectedEl.classList.add('hidden');
+
+    switch (state) {
+        case 'loading':
+            loadingEl.classList.remove('hidden');
+            break;
+        case 'error':
+            errorEl.classList.remove('hidden');
+            if (errorMessageEl) errorMessageEl.textContent = modelState.error || 'An error occurred';
+            contentEl.classList.remove('hidden');
+            break;
+        case 'loaded':
+            contentEl.classList.remove('hidden');
+            
+            // Show dropdown if models available
+            if (modelState.availableModels.length > 0 && dropdownEl) {
+                dropdownEl.classList.remove('hidden');
+                populateModelDropdown();
+            }
+            
+            // Show selected model if any
+            if (modelState.selectedModel && selectedEl) {
+                selectedEl.classList.remove('hidden');
+                const selectedModel = modelState.availableModels.find(m => m.id === modelState.selectedModel);
+                if (selectedModel) {
+                    selectedEl.textContent = `Selected: ${selectedModel.icon} ${selectedModel.name}`;
+                }
+            }
+            break;
+        default:
+            contentEl.classList.remove('hidden');
+            break;
+    }
+}
+
+function populateModelDropdown() {
+    const modelDropdown = document.getElementById('model-select');
+    if (!modelDropdown || modelState.availableModels.length === 0) return;
+
+    modelDropdown.innerHTML = '<option value="">Choose a model...</option>';
+    
+    modelState.availableModels.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model.id;
+        option.textContent = `${model.icon} ${model.name}`;
+        option.selected = model.id === modelState.selectedModel;
+        modelDropdown.appendChild(option);
+    });
+}
+
+// Model event listeners
+function initializeModelEventListeners() {
+    // Model selection
+    const modelDropdown = document.getElementById('model-select');
+    if (modelDropdown) {
+        modelDropdown.addEventListener('change', (e) => {
+            if (e.target.value) {
+                selectModel(e.target.value);
+            }
+        });
+    }
+
+    // Auto-load models when Step 5 becomes visible
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                const step5Content = document.getElementById('step-5-content');
+                if (step5Content && step5Content.classList.contains('active')) {
+                    loadAvailableModels();
+                }
+            }
+        });
+    });
+
+    const step5Content = document.getElementById('step-5-content');
+    if (step5Content) {
+        observer.observe(step5Content, { attributes: true });
+    }
+}
+
 // Analysis event listeners
 function initializeAnalysisEventListeners() {
     // Analysis type selection
@@ -1505,6 +1721,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize analysis event listeners
     initializeAnalysisEventListeners();
     
+    // Initialize model event listeners
+    initializeModelEventListeners();
+    
     // Load supported languages
     loadSupportedLanguages();
     
@@ -1518,4 +1737,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize analysis state
     initializeAnalysisState();
+    
+    // Initialize model state
+    modelState.availableModels = [];
+    modelState.selectedModel = null;
+    modelState.loading = false;
+    modelState.error = null;
 });
