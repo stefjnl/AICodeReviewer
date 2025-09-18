@@ -23,7 +23,7 @@ document.addEventListener('alpine:init', () => {
         
         // API endpoints
         endpoints: {
-            progressHub: '/progressHub',
+            progressHub: '/hubs/progress',
             repositoryBrowse: '/api/repository/browse',
             analysisStart: '/api/analysis/start',
             analysisResults: '/api/analysis/results',
@@ -57,7 +57,7 @@ function initializeSignalR() {
         
         // Create SignalR connection
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/progressHub")
+            .withUrl("/hubs/progress")
             .withAutomaticReconnect([0, 2000, 10000, 30000])
             .configureLogging(signalR.LogLevel.Information)
             .build();

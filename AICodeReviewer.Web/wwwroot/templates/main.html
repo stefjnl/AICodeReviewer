@@ -313,53 +313,13 @@
         </footer>
     </div>
 
-    <!-- Inline script for SignalR and API calls -->
+    <!-- Simple inline script for basic functionality -->
     <script>
-        // Simple console logging
         console.log('🚀 AI Code Reviewer - Inline script loaded');
         
         // Skip SignalR when running from file:// protocol
-        if (window.location.protocol !== 'file:') {
-            // SignalR initialization
-            function initializeSignalR() {
-                try {
-                    console.log('🔗 Initializing SignalR connection...');
-                    
-                    const connection = new signalR.HubConnectionBuilder()
-                        .withUrl("/progressHub")
-                        .withAutomaticReconnect([0, 2000, 10000, 30000])
-                        .configureLogging(signalR.LogLevel.Information)
-                        .build();
-                    
-                    connection.start()
-                        .then(() => {
-                            console.log('✅ SignalR connected successfully');
-                            updateSignalRStatus('Connected', true);
-                        })
-                        .catch(err => {
-                            console.error('❌ SignalR connection failed:', err);
-                            updateSignalRStatus('Connection failed', false);
-                        });
-                    
-                    window.signalRConnection = connection;
-                    
-                } catch (error) {
-                    console.error('❌ SignalR initialization error:', error);
-                    updateSignalRStatus('Initialization error', false);
-                }
-            }
-            
-            function updateSignalRStatus(status, isConnected) {
-                const statusElement = document.getElementById('signalr-status');
-                if (statusElement) {
-                    statusElement.textContent = status;
-                    statusElement.className = `text-xs ${isConnected ? 'text-green-600' : 'text-red-600'}`;
-                }
-            }
-            
-            initializeSignalR();
-        } else {
-            console.log('ℹ️ Running from file:// protocol, skipping SignalR');
+        if (window.location.protocol === 'file:') {
+            console.log('ℹ️ Running from file:// protocol, SignalR will be skipped');
             const statusElement = document.getElementById('signalr-status');
             if (statusElement) {
                 statusElement.textContent = 'Not available';
