@@ -12,6 +12,15 @@ const documentManager = {
     documentContent: ''
 };
 
+// Repository state management
+const repositoryState = {
+    path: '',
+    isValid: false,
+    isValidating: false,
+    error: null,
+    info: null
+};
+
 // API endpoints configuration
 const apiEndpoints = {
     progressHub: '/hubs/progress',
@@ -19,7 +28,8 @@ const apiEndpoints = {
     analysisStart: '/api/analysis/start',
     analysisResults: '/api/analysis/results',
     documentsScan: '/api/documentapi/scan',
-    documentsContent: '/api/documentapi/content'
+    documentsContent: '/api/documentapi/content',
+    validateRepository: '/api/GitApi/validate'
 };
 
 // Utility methods
@@ -422,6 +432,166 @@ window.api = {
     }
 };
 
+// Repository validation functions
+async function validateRepository() {
+    const path = document.getElementById('repository-path').value.trim();
+    
+    if (!path) {
+        showValidationError('Please enter a repository path');
+        return;
+    }
+
+    repositoryState.path = path;
+    repositoryState.isValidating = true;
+    repositoryState.error = null;
+
+    try {
+        updateRepositoryUI('validating');
+        
+        const response = await fetch(apiEndpoints.validateRepository, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ repositoryPath: path })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success && result.isValidRepo) {
+            repositoryState.isValid = true;
+            repositoryState.info = result;
+            updateRepositoryUI('success', result);
+        } else {
+            repositoryState.isValid = false;
+            showValidationError(result.error || 'Invalid repository');
+        }
+    } catch (error) {
+        showValidationError(error.message || 'Failed to validate repository');
+    } finally {
+        repositoryState.isValidating = false;
+    }
+}
+
+function updateRepositoryUI(state, result = null) {
+    const loadingEl = document.getElementById('validation-loading');
+    const errorEl = document.getElementById('validation-error');
+    const successEl = document.getElementById('validation-success');
+    const infoEl = document.getElementById('repository-info');
+    const validateBtn = document.getElementById('validate-repository-btn');
+    const loadingSpinner = document.getElementById('validation-spinner');
+    const loadingText = document.getElementById('validation-text');
+
+    switch (state) {
+        case 'validating':
+            hideElement(errorEl);
+            hideElement(successEl);
+            hideElement(infoEl);
+            showElement(loadingEl);
+            if (validateBtn) validateBtn.disabled = true;
+            if (loadingSpinner) loadingSpinner.classList.remove('hidden');
+            if (loadingText) loadingText.textContent = 'Validating...';
+            break;
+        case 'success':
+            hideElement(loadingEl);
+            hideElement(errorEl);
+            showElement(successEl);
+            showElement(infoEl);
+            displayRepositoryInfo(result);
+            if (validateBtn) validateBtn.disabled = false;
+            if (loadingSpinner) loadingSpinner.classList.add('hidden');
+            if (loadingText) loadingText.textContent = 'Validate Repository';
+            break;
+        case 'error':
+            hideElement(loadingEl);
+            hideElement(successEl);
+            hideElement(infoEl);
+            showElement(errorEl);
+            if (validateBtn) validateBtn.disabled = false;
+            if (loadingSpinner) loadingSpinner.classList.add('hidden');
+            if (loadingText) loadingText.textContent = 'Validate Repository';
+            break;
+        case 'clear':
+            hideElement(loadingEl);
+            hideElement(errorEl);
+            hideElement(successEl);
+            hideElement(infoEl);
+            if (validateBtn) validateBtn.disabled = false;
+            if (loadingSpinner) loadingSpinner.classList.add('hidden');
+            if (loadingText) loadingText.textContent = 'Validate Repository';
+            break;
+    }
+}
+
+function showValidationError(message) {
+    updateElementContent('validation-error-message', message);
+    updateRepositoryUI('error');
+}
+
+function displayRepositoryInfo(info) {
+    updateElementContent('repository-info-title', `Repository: ${info.repositoryPath}`);
+    
+    const detailsHtml = `
+        <p><strong>Current Branch:</strong> ${info.currentBranch}</p>
+        <p><strong>Has Changes:</strong> ${info.hasChanges ? 'Yes' : 'No'}</p>
+        <p><strong>Unstaged Files:</strong> ${info.unstagedFiles}</p>
+        <p><strong>Staged Files:</strong> ${info.stagedFiles}</p>
+    `;
+    
+    updateElementHtml('repository-info-details', detailsHtml);
+}
+
+function clearRepositoryValidation() {
+    repositoryState.path = '';
+    repositoryState.isValid = false;
+    repositoryState.error = null;
+    repositoryState.info = null;
+    
+    const pathInput = document.getElementById('repository-path');
+    if (pathInput) pathInput.value = '';
+    
+    updateRepositoryUI('clear');
+}
+
+// Repository validation event handlers
+function initializeRepositoryValidation() {
+    const pathInput = document.getElementById('repository-path');
+    const validateBtn = document.getElementById('validate-repository-btn');
+    const closeErrorBtn = document.getElementById('close-validation-error-btn');
+
+    if (pathInput) {
+        pathInput.addEventListener('input', (e) => {
+            const path = e.target.value.trim();
+            if (validateBtn) validateBtn.disabled = !path;
+            
+            // Clear validation states on new input
+            if (path !== repositoryState.path) {
+                updateRepositoryUI('clear');
+            }
+        });
+        
+        pathInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.target.value.trim()) {
+                validateRepository();
+            }
+        });
+    }
+    
+    if (validateBtn) {
+        validateBtn.addEventListener('click', validateRepository);
+    }
+    
+    if (closeErrorBtn) {
+        closeErrorBtn.addEventListener('click', () => {
+            updateRepositoryUI('clear');
+        });
+    }
+}
+
 // Event listeners initialization
 function initializeEventListeners() {
     // Load documents button
@@ -441,6 +611,9 @@ function initializeEventListeners() {
     if (closeDocumentBtn) {
         closeDocumentBtn.addEventListener('click', clearSelection);
     }
+    
+    // Initialize repository validation
+    initializeRepositoryValidation();
 }
 
 // Global error handlers
@@ -463,4 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     
     console.log('✅ Application initialized successfully');
+    
+    // Initialize repository validation UI state
+    updateRepositoryUI('clear');
 });
