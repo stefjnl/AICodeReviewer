@@ -15,7 +15,7 @@ export const workflowState = {
         2: { name: 'repository', completed: false, required: true },
         3: { name: 'language', completed: false, required: true },
         4: { name: 'analysis', completed: false, required: true },
-        5: { name: 'results', completed: false, required: false }
+        5: { name: 'results', completed: false, required: true }
     }
 };
 

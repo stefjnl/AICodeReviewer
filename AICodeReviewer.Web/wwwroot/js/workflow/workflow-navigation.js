@@ -137,7 +137,12 @@ function updateNavigationButtons() {
             const runBtn = document.getElementById('run-analysis-btn');
             if (runBtn) {
                 runBtn.style.display = 'inline-flex';
-                runBtn.disabled = !canNavigateToStep(5);
+                const canNavigate = canNavigateToStep(5);
+                const step5Completed = workflowState.steps[5].completed;
+                const modelSelected = modelState.selectedModel !== null;
+                console.log(`Run button state - canNavigateToStep(5): ${canNavigate}, step5 completed: ${step5Completed}, model selected: ${modelSelected}`);
+                runBtn.disabled = false; // Enable when all steps are completed and model is selected
+                console.log('Run button disabled state:', runBtn.disabled);
             }
         } else {
             nextBtn.disabled = !canNavigateToStep(currentStep + 1);
@@ -220,9 +225,13 @@ export function initializeWorkflowNavigation() {
     const runBtn = document.getElementById('run-analysis-btn');
     if (runBtn) {
         runBtn.addEventListener('click', () => {
+            console.log('Run analysis button clicked - checking prerequisites...');
             if (canNavigateToStep(5)) {
-                console.log('Running analysis...');
+                console.log('All prerequisites met - starting analysis');
                 // Add analysis logic here
+            } else {
+                console.log('Prerequisites not met - cannot start analysis');
+                console.log('Step completion status:', workflowState.steps);
             }
         });
     }
@@ -248,8 +257,17 @@ export function initializeWorkflowNavigation() {
                 console.log('Model selected via dropdown:', e.target.value);
                 selectModel(e.target.value);
                 // Mark step 5 as completed
-                markStepCompleted(5);
-                console.log('Step 5 completion status after model selection:', workflowState.steps[5].completed);
+                const completed = markStepCompleted(5);
+                console.log('Step 5 completion status after model selection:', workflowState.steps[5].completed, 'markStepCompleted result:', completed);
+                
+                // Ensure the run button is updated immediately
+                if (workflowState.currentStep === 5) {
+                    const runBtn = document.getElementById('run-analysis-btn');
+                    if (runBtn) {
+                        runBtn.disabled = false;
+                        console.log('Run analysis button enabled immediately');
+                    }
+                }
             }
         });
     }
