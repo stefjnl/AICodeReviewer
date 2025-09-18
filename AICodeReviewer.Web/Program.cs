@@ -46,7 +46,7 @@ builder.Services.AddMemoryCache(options =>
 builder.Services.AddDistributedMemoryCache();
 
 // Register custom services
-builder.Services.AddScoped<AIPromptResponseService>();
+builder.Services.AddScoped<IAIPromptResponseService, AIPromptResponseService>();
 
 // Register domain services
 builder.Services.AddScoped<IAnalysisService, AnalysisService>();

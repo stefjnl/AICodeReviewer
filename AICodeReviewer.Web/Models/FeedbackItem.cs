@@ -49,14 +49,4 @@ public class FeedbackItem
     /// Get the category as a string for display purposes
     /// </summary>
     public string CategoryString => Category.ToString();
-
-    /// <summary>
-    /// Get the color associated with this severity
-    /// </summary>
-    public string SeverityColor => FeedbackConstants.SeverityColors.GetValueOrDefault(Severity, "#6c757d");
-
-    /// <summary>
-    /// Get the icon associated with this severity
-    /// </summary>
-    public string SeverityIcon => FeedbackConstants.SeverityIcons.GetValueOrDefault(Severity, "ℹ️");
 }

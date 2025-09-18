@@ -1,12 +1,13 @@
 using AICodeReviewer.Web.Models;
 using System.Text.RegularExpressions;
+using AICodeReviewer.Web.Domain.Interfaces;
 
 namespace AICodeReviewer.Web.Services;
 
 /// <summary>
 /// Service for parsing AI responses and extracting structured feedback
 /// </summary>
-public class AIPromptResponseService
+public class AIPromptResponseService : IAIPromptResponseService
 {
     private readonly ILogger<AIPromptResponseService> _logger;
 

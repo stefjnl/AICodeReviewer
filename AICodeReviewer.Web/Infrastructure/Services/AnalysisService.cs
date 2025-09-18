@@ -2,6 +2,7 @@ using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Infrastructure.Extensions;
 using AICodeReviewer.Web.Models;
 using AICodeReviewer.Web.Hubs;
+using AICodeReviewer.Web.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,16 @@ public class AnalysisService : IAnalysisService
     private readonly IHubContext<ProgressHub> _hubContext;
     private readonly IMemoryCache _cache;
     private readonly IAIService _aiService;
+    private readonly IAIPromptResponseService _aiPromptResponseService;
+    
+    private static readonly System.Text.Json.JsonSerializerOptions JsonSerializerOptions = new()
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+    };
+    
+    private static readonly MemoryCacheEntryOptions CacheEntryOptions = new MemoryCacheEntryOptions()
+        .SetAbsoluteExpiration(TimeSpan.FromMinutes(30))
+        .SetSize(1); // Size=1 for memory management
 
     public AnalysisService(
         ILogger<AnalysisService> logger,
@@ -30,7 +41,8 @@ public class AnalysisService : IAnalysisService
         ISignalRBroadcastService signalRService,
         IHubContext<ProgressHub> hubContext,
         IMemoryCache cache,
-        IAIService aiService)
+        IAIService aiService,
+        IAIPromptResponseService aiPromptResponseService)
     {
         _logger = logger;
         _repositoryService = repositoryService;
@@ -40,6 +52,7 @@ public class AnalysisService : IAnalysisService
         _hubContext = hubContext;
         _cache = cache;
         _aiService = aiService;
+        _aiPromptResponseService = aiPromptResponseService;
     }
 
     public async Task<(string analysisId, bool success, string? error)> StartAnalysisAsync(
@@ -139,12 +152,16 @@ public class AnalysisService : IAnalysisService
             // Generate unique analysis ID
             var analysisId = Guid.NewGuid().ToString();
 
-            // Create initial analysis result
+            // Create initial analysis result and store in cache
             var analysisResult = new AnalysisResult
             {
                 Status = "Starting",
                 CreatedAt = DateTime.UtcNow
             };
+            
+            // Store initial result in cache with 30-minute expiration and size
+            _cache.Set($"analysis_{analysisId}", analysisResult, CacheEntryOptions);
+            _logger.LogInformation($"[Analysis {analysisId}] Initial analysis result stored in cache");
 
             // Start background analysis with captured references
             var docsFolder = request.DocumentsFolder ?? session.GetString("DocumentsFolder") ?? Path.Combine(environment.ContentRootPath, "..", "Documents");
@@ -224,6 +241,65 @@ public class AnalysisService : IAnalysisService
                errorMessage.Contains("too many requests");
     }
 
+    /// <summary>
+    /// Helper method to update cache and broadcast final analysis result
+    /// </summary>
+    private async Task UpdateAndBroadcastResultAsync(
+        string analysisId,
+        AnalysisResult result,
+        string analysis,
+        string? errorMessage,
+        bool aiError,
+        string usedModel,
+        string fallbackModel,
+        ISession? session)
+    {
+        if (aiError)
+        {
+            result.Status = "Error";
+            result.Error = $"AI analysis failed: {errorMessage}";
+            result.CompletedAt = DateTime.UtcNow;
+            
+            await _signalRService.BroadcastErrorAsync(analysisId, $"AI analysis failed: {errorMessage}");
+        }
+        else
+        {
+            result.Status = "Complete";
+            result.Result = analysis;
+            result.CompletedAt = DateTime.UtcNow;
+            
+            // Parse the AI response into structured feedback items
+            var feedback = _aiPromptResponseService.ParseAIResponse(analysis);
+            _logger.LogInformation($"[Analysis {analysisId}] Parsed {feedback.Count} feedback items from AI response");
+            
+            // Get the raw content from cache (could be git diff or file content)
+            var rawContent = _cache.Get<string>($"content_{analysisId}") ?? string.Empty;
+            
+            // Create structured results object
+            var analysisResults = new AnalysisResults
+            {
+                AnalysisId = analysisId,
+                Feedback = feedback,
+                RawDiff = rawContent,
+                RawResponse = analysis,
+                CreatedAt = DateTime.UtcNow,
+                IsComplete = true,
+                Error = null
+            };
+            
+            // Serialize the structured results to JSON for SignalR transmission
+            var structuredResultsJson = System.Text.Json.JsonSerializer.Serialize(analysisResults, JsonSerializerOptions);
+            
+            await _signalRService.BroadcastCompleteWithModelAsync(analysisId, structuredResultsJson, session!, usedModel, fallbackModel);
+            
+            _logger.LogInformation($"[Analysis {analysisId}] Analysis completed successfully using model: {usedModel}");
+        }
+        
+        // Store final result in cache
+        _cache.Set($"analysis_{analysisId}", result, CacheEntryOptions);
+        _logger.LogInformation($"[Analysis {analysisId}] Final analysis result stored in cache");
+    }
+
     public void StoreAnalysisId(string analysisId, ISession session)
     {
         if (string.IsNullOrEmpty(analysisId))
@@ -266,13 +342,11 @@ public class AnalysisService : IAnalysisService
             AnalysisResult? result;
             try
             {
-                // Note: This would need to be passed in or accessed differently in a real implementation
-                // For now, we'll create a new result
-                result = new AnalysisResult
+                if (!_cache.TryGetValue($"analysis_{analysisId}", out result))
                 {
-                    Status = "Starting",
-                    CreatedAt = DateTime.UtcNow
-                };
+                    _logger.LogError($"[Analysis {analysisId}] Analysis result not found in cache - aborting");
+                    return;
+                }
             }
             catch (Exception ex)
             {
@@ -281,11 +355,12 @@ public class AnalysisService : IAnalysisService
             }
             _logger.LogInformation($"[Analysis {analysisId}] Found existing result in cache");
 
-            // Update status via SignalR
+            // Update status via SignalR and cache
             if (result != null)
             {
                 result.Status = "Reading git changes...";
                 await _signalRService.BroadcastProgressWithModelAsync(analysisId, "Reading git changes...", model, fallbackModel);
+                _cache.Set($"analysis_{analysisId}", result, CacheEntryOptions);
                 _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Reading git changes...'");
             }
 
@@ -328,6 +403,13 @@ public class AnalysisService : IAnalysisService
                 (content, contentError) = _repositoryService.ExtractDiff(repositoryPath);
             }
             
+            // Store the content in cache for later retrieval
+            if (!contentError && !string.IsNullOrEmpty(content))
+            {
+                _cache.Set($"content_{analysisId}", content, CacheEntryOptions);
+                _logger.LogInformation($"[Analysis {analysisId}] Content stored in cache with length: {content.Length}");
+            }
+            
             _logger.LogInformation($"[Analysis {analysisId}] Content extraction complete - Error: {contentError}, Content length: {content?.Length ?? 0}");
 
             if (contentError)
@@ -335,23 +417,27 @@ public class AnalysisService : IAnalysisService
                 _logger.LogError($"[Analysis {analysisId}] Content extraction failed: {content}");
                 if (result != null)
                 {
-                    result.Status = "Error";
-                    result.Error = isFileContent ? $"File reading error: {content}" : $"Git diff error: {content}";
-                    result.CompletedAt = DateTime.UtcNow;
-                    
-                    await _signalRService.BroadcastErrorAsync(analysisId, result.Error);
-                    _logger.LogInformation($"[Analysis {analysisId}] Set error status and completed");
+                    await UpdateAndBroadcastResultAsync(
+                        analysisId,
+                        result,
+                        "",
+                        isFileContent ? $"File reading error: {content}" : $"Git diff error: {content}",
+                        true,
+                        model,
+                        fallbackModel,
+                        null);
                 }
                 return;
             }
             _logger.LogInformation($"[Analysis {analysisId}] Content extracted successfully");
 
-            // Update status via SignalR
+            // Update status via SignalR and cache
             _logger.LogInformation($"[Analysis {analysisId}] Starting document loading phase");
             if (result != null)
             {
                 result.Status = "Loading documents...";
                 await _signalRService.BroadcastProgressWithModelAsync(analysisId, "Loading documents...", model, fallbackModel);
+                _cache.Set($"analysis_{analysisId}", result, CacheEntryOptions);
                 _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'Loading documents...'");
             }
             
@@ -395,12 +481,13 @@ public class AnalysisService : IAnalysisService
             _logger.LogInformation($"[Analysis {analysisId}] Document loading complete - loaded {codingStandards.Count} documents");
             _logger.LogInformation($"[Analysis {analysisId}] Final codingStandards count: {codingStandards.Count}");
 
-            // Update status via SignalR
+            // Update status via SignalR and cache
             _logger.LogInformation($"[Analysis {analysisId}] Starting AI analysis phase");
             if (result != null)
             {
                 result.Status = "AI analysis...";
                 await _signalRService.BroadcastProgressWithModelAsync(analysisId, $"AI analysis... (Using: {model})", model, fallbackModel);
+                _cache.Set($"analysis_{analysisId}", result, CacheEntryOptions);
                 _logger.LogInformation($"[Analysis {analysisId}] Updated status to 'AI analysis...' with model {model}");
             }
             
@@ -482,18 +569,19 @@ public class AnalysisService : IAnalysisService
                 errorMessage = $"Unexpected error calling AI service: {ex.Message}";
             }
 
-            // Broadcast completion
-            if (aiError)
+            // Broadcast completion and store final result
+            if (result != null)
             {
-                await _signalRService.BroadcastErrorAsync(analysisId, $"AI analysis failed: {errorMessage}");
-            }
-            else
-            {
-                // Determine which model was actually used and show it in the completion message
                 string usedModel = fallbackWasUsed ? fallbackModel : model;
-                await _signalRService.BroadcastCompleteWithModelAsync(analysisId, analysis, session!, usedModel, fallbackModel);
-                
-                _logger.LogInformation($"[Analysis {analysisId}] Analysis completed successfully using model: {usedModel}");
+                await UpdateAndBroadcastResultAsync(
+                    analysisId,
+                    result,
+                    analysis,
+                    errorMessage,
+                    aiError,
+                    usedModel,
+                    fallbackModel,
+                    session);
             }
 
             _logger.LogInformation($"[Analysis {analysisId}] Background analysis task completed");

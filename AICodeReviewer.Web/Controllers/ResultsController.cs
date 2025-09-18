@@ -1,3 +1,4 @@
+using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Models;
 using AICodeReviewer.Web.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -12,9 +13,9 @@ public class ResultsController : Controller
 {
     private readonly IMemoryCache _cache;
     private readonly ILogger<ResultsController> _logger;
-    private readonly AIPromptResponseService _aiPromptResponseService;
+    private readonly IAIPromptResponseService _aiPromptResponseService;
 
-    public ResultsController(IMemoryCache cache, ILogger<ResultsController> logger, AIPromptResponseService aiPromptResponseService)
+    public ResultsController(IMemoryCache cache, ILogger<ResultsController> logger, IAIPromptResponseService aiPromptResponseService)
     {
         _cache = cache;
         _logger = logger;
