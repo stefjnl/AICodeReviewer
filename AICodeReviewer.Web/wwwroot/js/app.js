@@ -1,4 +1,3 @@
-
 // AI Code Reviewer - Main Application JavaScript
 // Vanilla JavaScript implementation - Alpine.js removed
 
@@ -618,24 +617,6 @@ function clearRepositoryValidation() {
     updateRepositoryUI('clear');
 }
 
-function showValidationError(message) {
-    repositoryState.error = message;
-    updateElementContent('validation-error-message', message);
-    updateRepositoryUI('error');
-    
-    // Show error indicators
-    const pathInput = document.getElementById('repository-path');
-    const validIcon = document.getElementById('path-valid-icon');
-    const invalidIcon = document.getElementById('path-invalid-icon');
-    
-    if (pathInput) {
-        pathInput.classList.remove('border-green-500', 'focus:border-green-500');
-        pathInput.classList.add('border-red-500', 'focus:border-red-500');
-    }
-    if (validIcon) validIcon.classList.add('hidden');
-    if (invalidIcon) invalidIcon.classList.remove('hidden');
-}
-
 // Repository validation event handlers
 function initializeRepositoryValidation() {
     const pathInput = document.getElementById('repository-path');
@@ -1168,49 +1149,6 @@ function updateLanguageUI(state) {
     }
 }
 
-function updateLanguageUI(state) {
-    const loadingEl = document.getElementById('language-loading');
-    const errorEl = document.getElementById('language-error');
-    const contentEl = document.getElementById('language-content');
-    const selectedEl = document.getElementById('language-selected');
-    
-    if (!loadingEl || !errorEl || !contentEl || !selectedEl) return;
-    
-    // Reset all states
-    loadingEl.classList.add('hidden');
-    errorEl.classList.add('hidden');
-    contentEl.classList.add('hidden');
-    selectedEl.classList.add('hidden');
-    
-    switch (state) {
-        case 'loading':
-            loadingEl.classList.remove('hidden');
-            break;
-        case 'error':
-            errorEl.classList.remove('hidden');
-            errorEl.textContent = languageState.error || 'An error occurred';
-            break;
-        case 'selected':
-            selectedEl.classList.remove('hidden');
-            const selectedLanguage = languageState.supportedLanguages.find(l => l.id === languageState.selectedLanguage);
-            if (selectedLanguage) {
-                selectedEl.textContent = `Selected: ${selectedLanguage.icon} ${selectedLanguage.name}`;
-            }
-            // Fall through to show content too
-            contentEl.classList.remove('hidden');
-            break;
-        default:
-            contentEl.classList.remove('hidden');
-            break;
-    }
-    
-    // Update dropdown selection
-    const dropdown = document.getElementById('language-select');
-    if (dropdown) {
-        dropdown.value = languageState.selectedLanguage || '';
-    }
-}
-
 // Analysis management functions
 async function loadAnalysisOptions() {
     if (!repositoryState.path) {
@@ -1374,19 +1312,22 @@ function updateAnalysisUI(state) {
             // Show commit selection if needed
             if (analysisState.analysisType === 'commit' && commitSelectionEl) {
                 commitSelectionEl.classList.remove('hidden');
+                populateCommitDropdown();
             }
             
             // Show options if available
-            if ((analysisState.availableOptions.commits.length > 0 || 
+            if ((analysisState.availableOptions.commits.length > 0 ||
                  analysisState.availableOptions.modifiedFiles.length > 0 ||
-                 analysisState.availableOptions.stagedFiles.length > 0) && 
+                 analysisState.availableOptions.stagedFiles.length > 0) &&
                 optionsEl) {
                 optionsEl.classList.remove('hidden');
+                populateAnalysisOptions();
             }
             
             // Show preview if available
             if (analysisState.changesSummary && previewEl) {
                 previewEl.classList.remove('hidden');
+                displayChangesSummary();
             }
             break;
         default:
@@ -1408,6 +1349,109 @@ function initializeAnalysisState() {
         modifiedFiles: [],
         stagedFiles: []
     };
+}
+
+// Analysis options population
+function populateAnalysisOptions() {
+    // Populate commits list (always shown)
+    const commitsList = document.getElementById('commits-list');
+    if (commitsList && analysisState.availableOptions.commits.length > 0) {
+        commitsList.innerHTML = '';
+        analysisState.availableOptions.commits.forEach(commit => {
+            const commitDiv = document.createElement('div');
+            commitDiv.className = 'text-xs text-gray-600 mb-1';
+            commitDiv.textContent = `${commit.id} - ${commit.message} (${commit.date})`;
+            commitsList.appendChild(commitDiv);
+        });
+    } else if (commitsList) {
+        commitsList.innerHTML = '<div class="text-xs text-gray-500">No recent commits</div>';
+    }
+
+    // Populate files list (always shown)
+    const filesList = document.getElementById('files-list');
+    if (filesList) {
+        filesList.innerHTML = '';
+        
+        // Show modified files
+        if (analysisState.availableOptions.modifiedFiles.length > 0) {
+            const modifiedDiv = document.createElement('div');
+            modifiedDiv.className = 'mb-2';
+            modifiedDiv.innerHTML = '<div class="font-medium text-gray-700">Modified:</div>';
+            analysisState.availableOptions.modifiedFiles.forEach(file => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'text-xs text-gray-600 ml-2';
+                fileDiv.textContent = `• ${file}`;
+                modifiedDiv.appendChild(fileDiv);
+            });
+            filesList.appendChild(modifiedDiv);
+        }
+
+        // Show staged files
+        if (analysisState.availableOptions.stagedFiles.length > 0) {
+            const stagedDiv = document.createElement('div');
+            stagedDiv.className = 'mb-2';
+            stagedDiv.innerHTML = '<div class="font-medium text-gray-700">Staged:</div>';
+            analysisState.availableOptions.stagedFiles.forEach(file => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'text-xs text-gray-600 ml-2';
+                fileDiv.textContent = `• ${file}`;
+                stagedDiv.appendChild(fileDiv);
+            });
+            filesList.appendChild(stagedDiv);
+        }
+
+        if (filesList.innerHTML === '') {
+            filesList.innerHTML = '<div class="text-xs text-gray-500">No files detected</div>';
+        }
+    }
+}
+
+// Commit dropdown population
+function populateCommitDropdown() {
+    const commitDropdown = document.getElementById('commit-dropdown');
+    if (commitDropdown && analysisState.availableOptions.commits.length > 0) {
+        commitDropdown.innerHTML = '<option value="">Choose a commit...</option>';
+        analysisState.availableOptions.commits.forEach(commit => {
+            const option = document.createElement('option');
+            option.value = commit.id;
+            option.textContent = `${commit.id} - ${commit.message}`;
+            commitDropdown.appendChild(option);
+        });
+    } else if (commitDropdown) {
+        commitDropdown.innerHTML = '<option value="">No commits available</option>';
+    }
+}
+
+// Changes summary display
+function displayChangesSummary() {
+    const summaryDiv = document.getElementById('changes-summary');
+    if (!summaryDiv || !analysisState.changesSummary) return;
+
+    const summary = analysisState.changesSummary;
+    summaryDiv.innerHTML = `
+        <div class="grid grid-cols-3 gap-4 text-center">
+            <div>
+                <div class="text-2xl font-bold text-blue-600">${summary.filesModified || 0}</div>
+                <div class="text-xs text-gray-600">Files Modified</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-green-600">+${summary.additions || 0}</div>
+                <div class="text-xs text-gray-600">Additions</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-red-600">-${summary.deletions || 0}</div>
+                <div class="text-xs text-gray-600">Deletions</div>
+            </div>
+        </div>
+        ${summary.fileList && summary.fileList.length > 0 ? `
+            <div class="mt-4 pt-4 border-t">
+                <div class="text-sm font-medium text-gray-700 mb-2">Modified Files:</div>
+                <div class="text-xs text-gray-600 max-h-32 overflow-y-auto">
+                    ${summary.fileList.map(file => `• ${file}`).join('<br>')}
+                </div>
+            </div>
+        ` : ''}
+    `;
 }
 
 // Analysis event listeners
