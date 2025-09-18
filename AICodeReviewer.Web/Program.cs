@@ -1,5 +1,4 @@
 using AICodeReviewer.Web.Hubs;
-using AICodeReviewer.Web.Services;
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Infrastructure.Services;
 
@@ -46,10 +45,17 @@ builder.Services.AddMemoryCache(options =>
 builder.Services.AddDistributedMemoryCache();
 
 // Register custom services
-builder.Services.AddScoped<IAIPromptResponseService, AIPromptResponseService>();
+builder.Services.AddScoped<IAIPromptResponseService, AICodeReviewer.Web.Infrastructure.Services.AIPromptResponseService>();
+
+// Register new refactored services
+builder.Services.AddScoped<IValidationService, ValidationService>();
+builder.Services.AddScoped<IContentExtractionService, ContentExtractionService>();
+builder.Services.AddScoped<IDocumentRetrievalService, DocumentRetrievalService>();
+builder.Services.AddScoped<IAIAnalysisOrchestrator, AIAnalysisOrchestrator>();
+builder.Services.AddScoped<IResultProcessorService, ResultProcessorService>();
 
 // Register domain services
-builder.Services.AddScoped<IAnalysisService, AnalysisService>();
+builder.Services.AddScoped<IAnalysisService, AnalysisCoordinatorService>();
 builder.Services.AddScoped<IRepositoryManagementService, RepositoryManagementService>();
 builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService>();
 builder.Services.AddScoped<IPathValidationService, PathValidationService>();

@@ -1,8 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
-using AICodeReviewer.Web.Infrastructure.Services;
-using AICodeReviewer.Web.Models;
-using LibGit2Sharp;
 using AICodeReviewer.Web.Domain.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AICodeReviewer.Web.Controllers;
 

@@ -1,6 +1,5 @@
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Models;
-using AICodeReviewer.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
