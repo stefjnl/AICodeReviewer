@@ -463,9 +463,15 @@ async function validateRepository() {
         const result = await response.json();
         
         if (result.success && result.isValidRepo) {
-            repositoryState.isValid = true;
-            repositoryState.info = result;
-            updateRepositoryUI('success', result);
+            // Additional validation: check if branch info indicates a real repository
+            if (result.currentBranch && result.currentBranch !== "No git repository found") {
+                repositoryState.isValid = true;
+                repositoryState.info = result;
+                updateRepositoryUI('success', result);
+            } else {
+                repositoryState.isValid = false;
+                showValidationError('Not a valid git repository or access denied');
+            }
         } else {
             repositoryState.isValid = false;
             showValidationError(result.error || 'Invalid repository');
@@ -534,15 +540,43 @@ function showValidationError(message) {
 
 function displayRepositoryInfo(info) {
     updateElementContent('repository-info-title', `Repository: ${info.repositoryPath}`);
+    updateElementContent('validation-success-message', `Repository validated successfully at ${info.repositoryPath}`);
     
     const detailsHtml = `
-        <p><strong>Current Branch:</strong> ${info.currentBranch}</p>
-        <p><strong>Has Changes:</strong> ${info.hasChanges ? 'Yes' : 'No'}</p>
-        <p><strong>Unstaged Files:</strong> ${info.unstagedFiles}</p>
-        <p><strong>Staged Files:</strong> ${info.stagedFiles}</p>
+        <div class="grid grid-cols-2 gap-2">
+            <div>
+                <p class="text-gray-600"><strong>Current Branch:</strong></p>
+                <p class="font-mono bg-gray-100 px-2 py-1 rounded text-sm">${info.currentBranch}</p>
+            </div>
+            <div>
+                <p class="text-gray-600"><strong>Last Commit:</strong></p>
+                <p class="text-sm">${info.lastCommit}</p>
+            </div>
+            <div>
+                <p class="text-gray-600"><strong>Status:</strong></p>
+                <p class="text-sm ${info.hasChanges ? 'text-orange-600' : 'text-green-600'}">
+                    ${info.hasChanges ? 'Has changes' : 'Clean'}
+                </p>
+            </div>
+            <div>
+                <p class="text-gray-600"><strong>Files:</strong></p>
+                <p class="text-sm">${info.stagedFiles} staged, ${info.unstagedFiles} unstaged</p>
+            </div>
+            ${info.aheadBy > 0 ? `<div><p class="text-gray-600">Ahead:</p><p class="text-sm text-blue-600">${info.aheadBy} commits</p></div>` : ''}
+            ${info.behindBy > 0 ? `<div><p class="text-gray-600">Behind:</p><p class="text-sm text-yellow-600">${info.behindBy} commits</p></div>` : ''}
+        </div>
     `;
     
     updateElementHtml('repository-info-details', detailsHtml);
+    
+    // Show visual indicators
+    const pathInput = document.getElementById('repository-path');
+    const validIcon = document.getElementById('path-valid-icon');
+    const invalidIcon = document.getElementById('path-invalid-icon');
+    
+    if (pathInput) pathInput.classList.add('border-green-500', 'focus:border-green-500');
+    if (validIcon) validIcon.classList.remove('hidden');
+    if (invalidIcon) invalidIcon.classList.add('hidden');
 }
 
 function clearRepositoryValidation() {
@@ -552,9 +586,35 @@ function clearRepositoryValidation() {
     repositoryState.info = null;
     
     const pathInput = document.getElementById('repository-path');
-    if (pathInput) pathInput.value = '';
+    const validIcon = document.getElementById('path-valid-icon');
+    const invalidIcon = document.getElementById('path-invalid-icon');
+    
+    if (pathInput) {
+        pathInput.value = '';
+        pathInput.classList.remove('border-green-500', 'focus:border-green-500', 'border-red-500', 'focus:border-red-500');
+    }
+    if (validIcon) validIcon.classList.add('hidden');
+    if (invalidIcon) invalidIcon.classList.add('hidden');
     
     updateRepositoryUI('clear');
+}
+
+function showValidationError(message) {
+    repositoryState.error = message;
+    updateElementContent('validation-error-message', message);
+    updateRepositoryUI('error');
+    
+    // Show error indicators
+    const pathInput = document.getElementById('repository-path');
+    const validIcon = document.getElementById('path-valid-icon');
+    const invalidIcon = document.getElementById('path-invalid-icon');
+    
+    if (pathInput) {
+        pathInput.classList.remove('border-green-500', 'focus:border-green-500');
+        pathInput.classList.add('border-red-500', 'focus:border-red-500');
+    }
+    if (validIcon) validIcon.classList.add('hidden');
+    if (invalidIcon) invalidIcon.classList.remove('hidden');
 }
 
 // Repository validation event handlers
