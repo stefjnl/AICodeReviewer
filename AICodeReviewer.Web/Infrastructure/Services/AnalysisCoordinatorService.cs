@@ -2,16 +2,8 @@ using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Hubs;
 using AICodeReviewer.Web.Infrastructure.Extensions;
 using AICodeReviewer.Web.Models;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace AICodeReviewer.Web.Infrastructure.Services
 {

@@ -1,12 +1,7 @@
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace AICodeReviewer.Web.Infrastructure.Services
 {
