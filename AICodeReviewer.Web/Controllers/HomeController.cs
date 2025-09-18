@@ -1,5 +1,6 @@
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Hubs;
+using AICodeReviewer.Web.Infrastructure.Extensions;
 using AICodeReviewer.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;

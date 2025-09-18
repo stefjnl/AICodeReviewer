@@ -17,6 +17,18 @@ builder.Services.AddControllersWithViews(options =>
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
+// Add CORS services
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:8097") // frontend URL
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+});
+
 builder.Services.AddMemoryCache(options =>
 {
     options.SizeLimit = 1000; // Max 1000 entries (prevents memory bloat)
@@ -79,6 +91,8 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+app.MapControllers(); // Map API controllers
 
 // After app.UseRouting()
 app.MapHub<ProgressHub>("/hubs/progress");

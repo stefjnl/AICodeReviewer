@@ -1,0 +1,161 @@
+using Microsoft.AspNetCore.Mvc;
+using AICodeReviewer.Web.Domain.Interfaces;
+
+namespace AICodeReviewer.Web.Controllers;
+
+/// <summary>
+/// API controller for git repository operations
+/// Provides endpoints for validating and inspecting git repositories
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+public class GitApiController : ControllerBase
+{
+    private readonly ILogger<GitApiController> _logger;
+    private readonly IRepositoryManagementService _repositoryService;
+
+    public GitApiController(ILogger<GitApiController> logger, IRepositoryManagementService repositoryService)
+    {
+        _logger = logger;
+        _repositoryService = repositoryService;
+    }
+
+    /// <summary>
+    /// Validates a git repository path and returns repository information
+    /// </summary>
+    /// <param name="request">Repository path validation request</param>
+    /// <returns>Git repository validation result</returns>
+    [HttpPost("validate")]
+    public IActionResult ValidateRepository([FromBody] RepositoryValidationRequest request)
+    {
+        try
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.RepositoryPath))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    isValidRepo = false,
+                    error = "Repository path is required"
+                });
+            }
+
+            var repositoryPath = request.RepositoryPath.Trim();
+            _logger.LogInformation("Validating repository path: {RepositoryPath}", repositoryPath);
+
+            // Use repository service to validate repository
+            var (branchInfo, isError) = _repositoryService.DetectRepository(repositoryPath);
+
+            if (isError || string.IsNullOrEmpty(branchInfo))
+            {
+                _logger.LogWarning("Repository validation failed for: {RepositoryPath}", repositoryPath);
+                return Ok(new
+                {
+                    success = true,
+                    isValidRepo = false,
+                    error = "Not a valid git repository or access denied"
+                });
+            }
+
+            // Repository is valid - simplified response
+            var result = new
+            {
+                success = true,
+                isValidRepo = true,
+                repositoryPath = repositoryPath,
+                currentBranch = branchInfo,
+                hasChanges = true, // Simplified for now
+                unstagedFiles = 0, // Simplified for now
+                stagedFiles = 0, // Simplified for now
+                aheadBy = 0, // Simplified for now
+                behindBy = 0, // Simplified for now
+                lastCommit = DateTime.Now.ToString(), // Simplified for now
+                error = (string?)null
+            };
+
+            _logger.LogInformation("Repository validation successful: {RepositoryPath}", repositoryPath);
+            return Ok(result);
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating repository");
+            return StatusCode(500, new
+            {
+                success = false,
+                isValidRepo = false,
+                error = "An error occurred while validating the repository"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Gets basic repository information including branches
+    /// </summary>
+    /// <param name="request">Repository path request</param>
+    /// <returns>Repository information</returns>
+    [HttpPost("info")]
+    public IActionResult GetRepositoryInfo([FromBody] RepositoryValidationRequest request)
+    {
+        try
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.RepositoryPath))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    error = "Repository path is required"
+                });
+            }
+
+            var repositoryPath = request.RepositoryPath.Trim();
+            _logger.LogInformation("Getting repository info for: {RepositoryPath}", repositoryPath);
+
+            // Use repository service to detect repository
+            var (branchInfo, isError) = _repositoryService.DetectRepository(repositoryPath);
+
+            if (isError || string.IsNullOrEmpty(branchInfo))
+            {
+                _logger.LogWarning("Repository not found or invalid: {RepositoryPath}", repositoryPath);
+                return Ok(new
+                {
+                    success = true,
+                    isValidRepo = false,
+                    error = "Not a valid git repository"
+                });
+            }
+
+            // Format response with repository info
+            var result = new
+            {
+                success = true,
+                isValidRepo = true,
+                repositoryPath,
+                currentBranch = branchInfo,
+                branches = new[] { new { name = branchInfo, isCurrent = true } }, // Simplified for now
+                remoteUrl = "unknown", // Simplified for now
+                error = (string?)null
+            };
+
+            return Ok(result);
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting repository info");
+            return StatusCode(500, new
+            {
+                success = false,
+                error = "An error occurred while getting repository information"
+            });
+        }
+    }
+}
+
+/// <summary>
+/// Request model for repository validation
+/// </summary>
+public class RepositoryValidationRequest
+{
+    public string RepositoryPath { get; set; } = string.Empty;
+}

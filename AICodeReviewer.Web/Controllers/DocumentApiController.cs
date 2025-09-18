@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using AICodeReviewer.Web.Domain.Interfaces;
 
 namespace AICodeReviewer.Web.Controllers;
 
@@ -11,13 +12,15 @@ namespace AICodeReviewer.Web.Controllers;
 public class DocumentApiController : ControllerBase
 {
     private readonly ILogger<DocumentApiController> _logger;
-    private readonly IConfiguration _configuration;
-
-    public DocumentApiController(ILogger<DocumentApiController> logger, IConfiguration configuration)
-    {
-        _logger = logger;
-        _configuration = configuration;
-    }
+    private readonly IDocumentManagementService _documentService;
+    private readonly IWebHostEnvironment _environment;
+    
+public DocumentApiController(ILogger<DocumentApiController> logger, IDocumentManagementService documentService, IWebHostEnvironment environment)
+{
+    _logger = logger;
+    _documentService = documentService;
+    _environment = environment;
+}
 
     /// <summary>
     /// Scans the documents folder for available markdown files
@@ -28,14 +31,14 @@ public class DocumentApiController : ControllerBase
     {
         try
         {
-            // Get documents folder path from configuration
-            var documentsFolder = _configuration["Documents:FolderPath"] ?? "Documents";
-            var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "..", documentsFolder);
+            _logger.LogInformation("Scanning documents via API");
+            
+            // Use default documents folder if none provided
+            var defaultDocumentsFolder = Path.Combine(_environment.ContentRootPath, "..", "Documents");
+            var documentsFolder = defaultDocumentsFolder;
 
-            _logger.LogInformation("Scanning documents folder: {FolderPath}", fullPath);
-
-            // Use existing DocumentService to scan for documents
-            var (files, isError) = DocumentService.ScanDocumentsFolder(fullPath);
+            // Use document service to scan for documents
+            var (files, isError) = _documentService.ScanDocumentsFolder(documentsFolder);
 
             if (isError)
             {
@@ -50,7 +53,7 @@ public class DocumentApiController : ControllerBase
 
             if (!files.Any())
             {
-                _logger.LogInformation("No documents found in folder: {FolderPath}", fullPath);
+                _logger.LogInformation("No documents found");
                 return Ok(new
                 {
                     success = true,
@@ -59,7 +62,7 @@ public class DocumentApiController : ControllerBase
                 });
             }
 
-            _logger.LogInformation("Found {DocumentCount} documents in folder", files.Count);
+            _logger.LogInformation("Found {DocumentCount} documents", files.Count);
             return Ok(new
             {
                 success = true,
@@ -70,7 +73,7 @@ public class DocumentApiController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error scanning documents folder");
+            _logger.LogError(ex, "Error scanning documents");
             return StatusCode(500, new
             {
                 success = false,
@@ -100,14 +103,14 @@ public class DocumentApiController : ControllerBase
                 });
             }
 
-            // Get documents folder path from configuration
-            var documentsFolder = _configuration["Documents:FolderPath"] ?? "Documents";
-            var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "..", documentsFolder);
-
             _logger.LogInformation("Loading document content: {DocumentName}", documentName);
+            
+            // Use default documents folder if none provided
+            var defaultDocumentsFolder = Path.Combine(_environment.ContentRootPath, "..", "Documents");
+            var documentsFolder = defaultDocumentsFolder;
 
-            // Use existing DocumentService to load document content
-            var (content, isError) = DocumentService.LoadDocument(documentName, fullPath);
+            // Use document service to load document content
+            var (content, isError) = _documentService.LoadDocument(documentName, documentsFolder);
 
             if (isError)
             {

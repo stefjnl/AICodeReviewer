@@ -468,6 +468,9 @@ async function validateRepository() {
                 repositoryState.isValid = true;
                 repositoryState.info = result;
                 updateRepositoryUI('success', result);
+                
+                // Trigger workflow progression and auto-detection
+                onRepositoryValidationSuccess();
             } else {
                 repositoryState.isValid = false;
                 showValidationError('Not a valid git repository or access denied');
@@ -685,6 +688,16 @@ window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason);
 });
 
+// Language state management
+const languageState = {
+    supportedLanguages: [],
+    selectedLanguage: null,
+    detectedLanguages: [],
+    fileCounts: {},
+    loading: false,
+    error: null
+};
+
 // Workflow state management
 const workflowState = {
     currentStep: 1,
@@ -709,8 +722,8 @@ const stepCompletionCriteria = {
         return repositoryState.isValid === true;
     },
     3: function() {
-        // Step 3: Language - placeholder, always completed for now
-        return true;
+        // Step 3: Language - completed when language is selected
+        return languageState.selectedLanguage !== null;
     },
     4: function() {
         // Step 4: Analysis - placeholder, always completed for now
@@ -788,11 +801,15 @@ function updateProgressIndicators(currentStep) {
 
 function canNavigateToStep(stepNumber) {
     // Can navigate to any step that's already completed or the current step
+    console.log(`Checking navigation to step ${stepNumber}:`);
     for (let i = 1; i < stepNumber; i++) {
+        console.log(`  Step ${i}: completed=${workflowState.steps[i].completed}, required=${workflowState.steps[i].required}`);
         if (!workflowState.steps[i].completed && workflowState.steps[i].required) {
+            console.log(`  Cannot navigate - step ${i} is required but not completed`);
             return false;
         }
     }
+    console.log(`  Navigation to step ${stepNumber} is allowed`);
     return true;
 }
 
@@ -866,8 +883,14 @@ function initializeWorkflowNavigation() {
     document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
         const stepNum = index + 1;
         indicator.addEventListener('click', () => {
+            console.log(`Step indicator ${stepNum} clicked`);
+            console.log(`  Current step: ${workflowState.currentStep}`);
+            console.log(`  Can navigate to ${stepNum}: ${canNavigateToStep(stepNum)}`);
             if (stepNum <= workflowState.currentStep || canNavigateToStep(stepNum)) {
+                console.log(`  Navigating to step ${stepNum}`);
                 showStep(stepNum);
+            } else {
+                console.log(`  Cannot navigate to step ${stepNum}`);
             }
         });
     });
@@ -920,11 +943,242 @@ function onDocumentLoadError() {
 function onRepositoryValidationSuccess() {
     console.log('Repository validated successfully');
     markStepCompleted(2);
+    
+    // Auto-detect language from validated repository
+    if (repositoryState.path) {
+        detectRepositoryLanguage(repositoryState.path);
+    }
+    
+    // Debug: Check Step 3 availability after repository validation
+    console.log('Step 2 completed:', workflowState.steps[2].completed);
+    console.log('Step 3 required:', workflowState.steps[3].required);
+    console.log('Can navigate to Step 3:', canNavigateToStep(3));
+    console.log('Current step:', workflowState.currentStep);
 }
 
 function onRepositoryValidationError() {
     console.log('Repository validation failed');
     // Don't mark as completed on error
+}
+
+// Language management functions
+async function loadSupportedLanguages() {
+    try {
+        const response = await fetch('/api/languageapi/supported');
+        if (!response.ok) throw new Error('Failed to load languages');
+        
+        const data = await response.json();
+        languageState.supportedLanguages = data.languages || [];
+        populateLanguageDropdown();
+        return true;
+    } catch (error) {
+        console.error('Error loading languages:', error);
+        languageState.error = error.message;
+        return false;
+    }
+}
+
+async function detectRepositoryLanguage(repositoryPath) {
+    if (!repositoryPath) return;
+    
+    languageState.loading = true;
+    languageState.error = null;
+    updateLanguageUI('loading');
+    
+    try {
+        const response = await fetch('/api/languageapi/detect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ repositoryPath })
+        });
+        
+        if (!response.ok) throw new Error('Language detection failed');
+        
+        const data = await response.json();
+        languageState.detectedLanguages = data.detectedLanguages || [];
+        languageState.fileCounts = data.fileCounts || {};
+        languageState.selectedLanguage = data.primaryLanguage || 'multi';
+        
+        updateLanguageUI('loaded');
+        
+        // Auto-select detected language
+        if (languageState.selectedLanguage) {
+            selectLanguage(languageState.selectedLanguage);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error detecting language:', error);
+        languageState.error = error.message;
+        languageState.selectedLanguage = 'multi';
+        updateLanguageUI('error');
+        return false;
+    } finally {
+        languageState.loading = false;
+    }
+}
+
+function selectLanguage(languageId) {
+    const language = languageState.supportedLanguages.find(l => l.id === languageId);
+    if (!language) return;
+    
+    languageState.selectedLanguage = languageId;
+    updateLanguageUI('selected');
+    
+    // Mark Step 3 as completed and enable Step 4
+    markStepCompleted(3);
+    
+    console.log(`Language selected: ${language.name}`);
+}
+
+function populateLanguageDropdown() {
+    const dropdown = document.getElementById('language-select');
+    if (!dropdown) return;
+    
+    dropdown.innerHTML = '<option value="">Select a language...</option>';
+    
+    languageState.supportedLanguages.forEach(language => {
+        const option = document.createElement('option');
+        option.value = language.id;
+        option.textContent = `${language.icon} ${language.name}`;
+        option.selected = language.id === languageState.selectedLanguage;
+        dropdown.appendChild(option);
+    });
+    
+    // Add change event listener
+    dropdown.addEventListener('change', (e) => {
+        if (e.target.value) {
+            selectLanguage(e.target.value);
+        }
+    });
+}
+
+function updateLanguageUI(state) {
+    const loadingEl = document.getElementById('language-loading');
+    const errorEl = document.getElementById('language-error');
+    const contentEl = document.getElementById('language-content');
+    const selectedEl = document.getElementById('language-selected');
+    const detectionResultsEl = document.getElementById('detection-results');
+    const detectedLanguagesEl = document.getElementById('detected-languages');
+    const fileCountSummaryEl = document.getElementById('file-count-summary');
+    const fileCountsEl = document.getElementById('file-counts');
+    const selectedLanguageNameEl = document.getElementById('selected-language-name');
+    
+    if (!loadingEl || !errorEl || !contentEl || !selectedEl) return;
+    
+    // Reset all states
+    loadingEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+    contentEl.classList.add('hidden');
+    selectedEl.classList.add('hidden');
+    if (detectionResultsEl) detectionResultsEl.classList.add('hidden');
+    if (fileCountSummaryEl) fileCountSummaryEl.classList.add('hidden');
+    
+    switch (state) {
+        case 'loading':
+            loadingEl.classList.remove('hidden');
+            break;
+        case 'error':
+            errorEl.classList.remove('hidden');
+            const errorMessageEl = document.getElementById('language-error-message');
+            if (errorMessageEl) errorMessageEl.textContent = languageState.error || 'An error occurred';
+            contentEl.classList.remove('hidden');
+            break;
+        case 'selected':
+            selectedEl.classList.remove('hidden');
+            const selectedLanguage = languageState.supportedLanguages.find(l => l.id === languageState.selectedLanguage);
+            if (selectedLanguage && selectedLanguageNameEl) {
+                selectedLanguageNameEl.textContent = `${selectedLanguage.icon} ${selectedLanguage.name}`;
+            }
+            contentEl.classList.remove('hidden');
+            break;
+        default:
+            contentEl.classList.remove('hidden');
+            // Show detection results and file counts
+            if (languageState.detectedLanguages.length > 0 && detectionResultsEl) {
+                detectionResultsEl.classList.remove('hidden');
+                if (detectedLanguagesEl) {
+                    detectedLanguagesEl.innerHTML = '';
+                    languageState.detectedLanguages.forEach(langId => {
+                        const lang = languageState.supportedLanguages.find(l => l.id === langId);
+                        if (lang) {
+                            const badge = document.createElement('span');
+                            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800';
+                            badge.textContent = `${lang.icon} ${lang.name}`;
+                            detectedLanguagesEl.appendChild(badge);
+                        }
+                    });
+                }
+            }
+            
+            if (Object.keys(languageState.fileCounts).length > 0 && fileCountSummaryEl) {
+                fileCountSummaryEl.classList.remove('hidden');
+                if (fileCountsEl) {
+                    fileCountsEl.innerHTML = '';
+                    Object.entries(languageState.fileCounts).forEach(([langId, count]) => {
+                        const lang = languageState.supportedLanguages.find(l => l.id === langId);
+                        if (lang) {
+                            const div = document.createElement('div');
+                            div.className = 'flex justify-between';
+                            div.innerHTML = `<span>${lang.icon} ${lang.name}</span><span class="font-medium">${count} files</span>`;
+                            fileCountsEl.appendChild(div);
+                        }
+                    });
+                }
+            }
+            break;
+    }
+    
+    // Update dropdown selection
+    const dropdown = document.getElementById('language-select');
+    if (dropdown) {
+        dropdown.value = languageState.selectedLanguage || '';
+    }
+}
+
+function updateLanguageUI(state) {
+    const loadingEl = document.getElementById('language-loading');
+    const errorEl = document.getElementById('language-error');
+    const contentEl = document.getElementById('language-content');
+    const selectedEl = document.getElementById('language-selected');
+    
+    if (!loadingEl || !errorEl || !contentEl || !selectedEl) return;
+    
+    // Reset all states
+    loadingEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+    contentEl.classList.add('hidden');
+    selectedEl.classList.add('hidden');
+    
+    switch (state) {
+        case 'loading':
+            loadingEl.classList.remove('hidden');
+            break;
+        case 'error':
+            errorEl.classList.remove('hidden');
+            errorEl.textContent = languageState.error || 'An error occurred';
+            break;
+        case 'selected':
+            selectedEl.classList.remove('hidden');
+            const selectedLanguage = languageState.supportedLanguages.find(l => l.id === languageState.selectedLanguage);
+            if (selectedLanguage) {
+                selectedEl.textContent = `Selected: ${selectedLanguage.icon} ${selectedLanguage.name}`;
+            }
+            // Fall through to show content too
+            contentEl.classList.remove('hidden');
+            break;
+        default:
+            contentEl.classList.remove('hidden');
+            break;
+    }
+    
+    // Update dropdown selection
+    const dropdown = document.getElementById('language-select');
+    if (dropdown) {
+        dropdown.value = languageState.selectedLanguage || '';
+    }
 }
 
 // Document ready check
@@ -939,6 +1193,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize workflow navigation
     initializeWorkflowNavigation();
+    
+    // Load supported languages
+    loadSupportedLanguages();
     
     // Initialize workflow UI
     showStep(1);
