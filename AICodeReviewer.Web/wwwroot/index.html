@@ -7,6 +7,11 @@
     <meta name="description" content="AI Code Reviewer - Intelligent code analysis and review">
     <title>AI Code Reviewer</title>
 
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -25,11 +30,79 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#3b82f6',
-                        secondary: '#64748b',
+                        primary: '#6366f1',
+                        'primary-dark': '#4f46e5',
+                        'primary-light': '#818cf8',
+                        'primary-lighter': '#a5b4fc',
+                        'primary-lightest': '#c7d2fe',
+                        secondary: '#8b5cf6',
+                        'secondary-dark': '#7c3aed',
+                        'secondary-light': '#a78bfa',
+                        'secondary-lighter': '#c4b5fd',
                         accent: '#06b6d4',
-                        surface: '#f8fafc',
-                        muted: '#94a3b8'
+                        'accent-dark': '#0891b2',
+                        'accent-light': '#22d3ee',
+                        'accent-lighter': '#67e8f9',
+                        surface: '#ffffff',
+                        'surface-light': '#f8fafc',
+                        'surface-dark': '#f1f5f9',
+                        'surface-darker': '#e2e8f0',
+                        'surface-darkest': '#cbd5e1',
+                        muted: '#94a3b8',
+                        success: '#10b981',
+                        'success-dark': '#059669',
+                        'success-light': '#34d399',
+                        'success-lighter': '#6ee7b7',
+                        warning: '#f59e0b',
+                        'warning-dark': '#d97706',
+                        'warning-light': '#fbbf24',
+                        'warning-lighter': '#fcd34d',
+                        error: '#ef4444',
+                        'error-dark': '#dc2626',
+                        'error-light': '#f87171',
+                        'error-lighter': '#fca5a5',
+                        info: '#3b82f6',
+                        'info-dark': '#2563eb',
+                        'info-light': '#60a5fa',
+                        'info-lighter': '#93c5fd'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['Consolas', 'Monaco', 'Courier New', 'monospace']
+                    },
+                    boxShadow: {
+                        'modern-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                        'modern-md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+                        'modern-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
+                        'modern-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        'modern-2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                    },
+                    borderRadius: {
+                        'modern-sm': '0.125rem',
+                        'modern-md': '0.375rem',
+                        'modern-lg': '0.5rem',
+                        'modern-xl': '0.75rem',
+                        'modern-2xl': '1rem'
+                    },
+                    spacing: {
+                        'xs': '0.25rem',
+                        'sm': '0.5rem',
+                        'md': '1rem',
+                        'lg': '1.5rem',
+                        'xl': '2rem',
+                        '2xl': '3rem',
+                        '3xl': '4rem'
+                    },
+                    transitionProperty: {
+                        'modern': 'all',
+                    },
+                    transitionDuration: {
+                        'modern-fast': '150ms',
+                        'modern-normal': '300ms',
+                        'modern-slow': '500ms',
+                    },
+                    transitionTimingFunction: {
+                        'modern': 'ease-in-out',
                     }
                 }
             }
@@ -41,20 +114,29 @@
     <!-- Main Application Container -->
     <div id="app" class="min-h-full">
         <!-- Header -->
-        <header class="bg-white shadow-sm border-b">
+        <header class="bg-white/95 backdrop-blur-md shadow-modern-sm border-b border-gray-100 sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center">
-                        <h1 class="text-2xl font-bold text-gray-900">AI Code Reviewer</h1>
-                        <span class="ml-3 px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full">
+                    <div class="flex items-center space-x-4">
+                        <!-- Logo/Icon -->
+                        <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-modern-sm">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">AI Code Reviewer</h1>
+                            <p class="text-xs text-gray-500">Intelligent code analysis and review</p>
+                        </div>
+                        <span class="px-2.5 py-0.5 text-xs font-semibold text-primary bg-primary/10 rounded-full">
                             Beta
                         </span>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <span class="text-sm text-gray-500">Ready for analysis</span>
+                        <span class="text-sm text-gray-500 hidden sm:inline-block">Ready for analysis</span>
                         <!-- Theme Toggle Button -->
                         <button id="theme-toggle"
-                                class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
+                                class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 shadow-modern-sm"
                                 aria-label="Toggle theme"
                                 title="Toggle dark/light theme">
                             <!-- Sun icon for light mode (shown when in dark mode) -->
@@ -76,40 +158,51 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
                 <!-- Workflow Progress Indicator -->
-                <div class="workflow-progress-container mb-8">
-                    <div class="progress-steps flex items-center justify-center space-x-4">
+                <div class="workflow-progress-container mb-10">
+                    <div class="progress-steps flex items-center justify-between relative">
+                        <!-- Progress bar background -->
+                        <div class="absolute top-5 left-0 right-0 h-1 bg-gray-200 rounded-full z-0"></div>
+                        <!-- Progress bar fill -->
+                        <div class="absolute top-5 left-0 h-1 bg-gradient-to-r from-primary to-secondary rounded-full z-0 transition-all duration-500 ease-out" style="width: 20%"></div>
+                        
                         <!-- Step 1: Documents -->
-                        <div class="step-indicator active" data-step="1">
-                            <div class="step-number">1</div>
-                            <div class="step-label">Documents</div>
+                        <div class="step-indicator active relative z-10 flex flex-col items-center" data-step="1">
+                            <div class="step-circle w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary shadow-modern-md flex items-center justify-center text-white font-semibold transition-all duration-300 transform hover:scale-110">
+                                1
+                            </div>
+                            <div class="step-label mt-2 text-sm font-medium text-gray-900">Documents</div>
                         </div>
-                        <div class="step-connection active"></div>
 
                         <!-- Step 2: Repository -->
-                        <div class="step-indicator" data-step="2">
-                            <div class="step-number">2</div>
-                            <div class="step-label">Repository</div>
+                        <div class="step-indicator relative z-10 flex flex-col items-center" data-step="2">
+                            <div class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
+                                2
+                            </div>
+                            <div class="step-label mt-2 text-sm font-medium text-gray-500">Repository</div>
                         </div>
-                        <div class="step-connection"></div>
 
                         <!-- Step 3: Language -->
-                        <div class="step-indicator" data-step="3">
-                            <div class="step-number">3</div>
-                            <div class="step-label">Language</div>
+                        <div class="step-indicator relative z-10 flex flex-col items-center" data-step="3">
+                            <div class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
+                                3
+                            </div>
+                            <div class="step-label mt-2 text-sm font-medium text-gray-500">Language</div>
                         </div>
-                        <div class="step-connection"></div>
 
                         <!-- Step 4: Analysis -->
-                        <div class="step-indicator" data-step="4">
-                            <div class="step-number">4</div>
-                            <div class="step-label">Analysis</div>
+                        <div class="step-indicator relative z-10 flex flex-col items-center" data-step="4">
+                            <div class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
+                                4
+                            </div>
+                            <div class="step-label mt-2 text-sm font-medium text-gray-500">Analysis</div>
                         </div>
-                        <div class="step-connection"></div>
 
                         <!-- Step 5: Results -->
-                        <div class="step-indicator" data-step="5">
-                            <div class="step-number">5</div>
-                            <div class="step-label">Results</div>
+                        <div class="step-indicator relative z-10 flex flex-col items-center" data-step="5">
+                            <div class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
+                                5
+                            </div>
+                            <div class="step-label mt-2 text-sm font-medium text-gray-500">Results</div>
                         </div>
                     </div>
                 </div>
@@ -118,8 +211,15 @@
                 <div class="workflow-content-container">
                     <!-- Step 1: Document Selection -->
                     <div class="step-content active" id="step-1-content">
-                        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 1: Document Selection</h3>
+                        <div class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="ml-3 text-lg font-semibold text-gray-900">Step 1: Document Selection</h3>
+                            </div>
 
                             <!-- Document Management Component -->
                             <div id="document-manager" class="border-t pt-6">
@@ -128,7 +228,7 @@
                                 <!-- Load Documents Button -->
                                 <div class="mb-4">
                                     <button id="load-documents-btn"
-                                        class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                        class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 font-medium">
                                         <svg id="loading-spinner"
                                             class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -144,7 +244,7 @@
 
                                 <!-- Error Message -->
                                 <div id="error-container"
-                                    class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
+                                    class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
                                     <div class="flex">
                                         <div class="flex-shrink-0">
                                             <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -174,7 +274,7 @@
 
                                 <!-- Loading State -->
                                 <div id="loading-state"
-                                    class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                                    class="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 hidden shadow-modern-sm">
                                     <div class="flex items-center">
                                         <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -195,7 +295,7 @@
                                         Found <span id="document-count">0</span> documents:
                                     </h4>
 
-                                    <div id="document-grid" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                    <div id="document-grid" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                         <!-- Document items will be dynamically added here -->
                                     </div>
                                 </div>
@@ -219,11 +319,11 @@
                                             Document: <span id="selected-document-name"></span>
                                         </h4>
                                         <button id="close-document-btn"
-                                            class="text-xs text-gray-500 hover:text-gray-700">
+                                            class="px-3 py-1 text-xs text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
                                             Close
                                         </button>
                                     </div>
-                                    <div class="bg-gray-50 rounded-md p-4">
+                                    <div class="bg-gray-50 rounded-xl p-4 shadow-modern-sm">
                                         <pre id="document-content"
                                             class="text-sm text-gray-800 whitespace-pre-wrap"></pre>
                                     </div>
@@ -234,7 +334,7 @@
                                     <div>
                                         <!-- Previous button (disabled for first step) -->
                                         <button
-                                            class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                            class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-modern-sm hover:bg-gray-200 hover:shadow-modern-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
                                             disabled>
                                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
@@ -246,7 +346,7 @@
                                     </div>
                                     <div>
                                         <button id="next-step-1-btn"
-                                            class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 font-medium"
                                             disabled>
                                             Next
                                             <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor"
@@ -263,8 +363,16 @@
 
                     <!-- Step 2: Repository Selection -->
                     <div class="step-content" id="step-2-content">
-                        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 2: Repository Selection</h3>
+                        <div class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="ml-3 text-lg font-semibold text-gray-900">Step 2: Repository Selection</h3>
+                            </div>
 
                             <!-- Repository Path Input -->
                             <div class="mb-4">
@@ -274,7 +382,7 @@
                                 <div class="flex gap-2">
                                     <div class="relative flex-1">
                                         <input type="text" id="repository-path"
-                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                            class="block w-full rounded-lg border-gray-300 shadow-modern-sm focus:border-primary focus:ring-primary sm:text-sm px-4 py-2 transition-colors"
                                             placeholder="/path/to/your/git/repository" />
                                         <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                                             <svg id="path-valid-icon" class="h-5 w-5 text-green-500 hidden"
@@ -292,7 +400,7 @@
                                         </div>
                                     </div>
                                     <button id="browse-repository-btn"
-                                        class="inline-flex items-center px-3 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm"
+                                        class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-modern-sm hover:bg-gray-200 hover:shadow-modern-md transition-all duration-300 text-sm font-medium"
                                         title="Browse for repository directory">
                                         <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -308,7 +416,7 @@
                             <!-- Validation Buttons -->
                             <div class="mb-4 flex items-center space-x-2">
                                 <button id="validate-repository-btn"
-                                    class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 font-medium"
                                     disabled>
                                     <svg id="validation-spinner"
                                         class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
@@ -322,7 +430,7 @@
                                     <span id="validation-text">Validate Repository</span>
                                 </button>
                                 <button id="reset-repository-btn"
-                                    class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                    class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-modern-sm hover:bg-gray-200 hover:shadow-modern-md transition-all duration-300 font-medium">
                                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -333,7 +441,7 @@
 
                             <!-- Validation Loading State -->
                             <div id="validation-loading"
-                                class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                                class="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex items-center">
                                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -350,7 +458,7 @@
 
                             <!-- Validation Error State -->
                             <div id="validation-error"
-                                class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
+                                class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -380,7 +488,7 @@
 
                             <!-- Validation Success State -->
                             <div id="validation-success"
-                                class="mb-4 bg-green-50 border border-green-200 rounded-md p-4 hidden">
+                                class="mb-4 bg-green-50 border border-green-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -400,7 +508,7 @@
                             </div>
 
                             <!-- Repository Information Display -->
-                            <div id="repository-info" class="bg-gray-50 rounded-md p-4 hidden">
+                            <div id="repository-info" class="bg-gray-50 rounded-xl p-4 hidden shadow-modern-sm">
                                 <h4 class="text-sm font-medium text-gray-900 mb-2" id="repository-info-title">Repository
                                     Information</h4>
                                 <div class="space-y-1 text-sm text-gray-700" id="repository-info-details">
@@ -412,7 +520,7 @@
                             <div class="mt-6 flex justify-between items-center pt-6 border-t">
                                 <div>
                                     <button id="previous-step-2-btn"
-                                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                        class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-modern-sm hover:bg-gray-200 hover:shadow-modern-md transition-all duration-300 font-medium">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15 19l-7-7 7-7" />
@@ -422,7 +530,7 @@
                                 </div>
                                 <div>
                                     <button id="next-step-2-btn"
-                                        class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 font-medium"
                                         disabled>
                                         Next
                                         <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -437,12 +545,19 @@
 
                     <!-- Step 3: Language Selection -->
                     <div class="step-content" id="step-3-content">
-                        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 3: Language Selection</h3>
+                        <div class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="ml-3 text-lg font-semibold text-gray-900">Step 3: Language Selection</h3>
+                            </div>
 
                             <!-- Language Loading State -->
                             <div id="language-loading"
-                                class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                                class="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex items-center">
                                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -457,7 +572,7 @@
                             </div>
 
                             <!-- Language Error State -->
-                            <div id="language-error" class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
+                            <div id="language-error" class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -491,14 +606,14 @@
                                         Select Programming Language
                                     </label>
                                     <select id="language-select"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                                        class="block w-full rounded-lg border-gray-300 shadow-modern-sm focus:border-primary focus:ring-primary sm:text-sm px-4 py-2 transition-colors">
                                         <option value="">Select a language...</option>
                                         <!-- Options will be populated dynamically -->
                                     </select>
                                 </div>
 
                                 <!-- File Count Summary -->
-                                <div id="file-count-summary" class="bg-gray-50 rounded-md p-4 hidden">
+                                <div id="file-count-summary" class="bg-gray-50 rounded-xl p-4 hidden shadow-modern-sm">
                                     <h4 class="text-sm font-medium text-gray-900 mb-2">File Type Summary</h4>
                                     <div id="file-counts" class="text-sm text-gray-700">
                                         <!-- File counts will be populated here -->
@@ -507,7 +622,7 @@
 
                                 <!-- Selected Language Display -->
                                 <div id="language-selected"
-                                    class="bg-green-50 border border-green-200 rounded-md p-4 hidden">
+                                    class="bg-green-50 border border-green-200 rounded-xl p-4 hidden shadow-modern-sm">
                                     <div class="flex items-center">
                                         <svg class="h-5 w-5 text-green-400 mr-2" viewBox="0 0 20 20"
                                             fill="currentColor">
@@ -526,7 +641,7 @@
                             <div class="mt-6 flex justify-between items-center pt-6 border-t">
                                 <div>
                                     <button id="previous-step-3-btn"
-                                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                        class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-modern-sm hover:bg-gray-200 hover:shadow-modern-md transition-all duration-300 font-medium">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15 19l-7-7 7-7" />
@@ -536,7 +651,7 @@
                                 </div>
                                 <div>
                                     <button id="next-step-3-btn"
-                                        class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 font-medium"
                                         disabled>
                                         Next
                                         <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -551,12 +666,19 @@
 
                     <!-- Step 4: Analysis Options -->
                     <div class="step-content" id="step-4-content">
-                        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 4: Analysis Configuration</h3>
+                        <div class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-info/10 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="ml-3 text-lg font-semibold text-gray-900">Step 4: Analysis Configuration</h3>
+                            </div>
 
                             <!-- Analysis Loading State -->
                             <div id="analysis-loading"
-                                class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                                class="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex items-center">
                                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -571,7 +693,7 @@
                             </div>
 
                             <!-- Analysis Error State -->
-                            <div id="analysis-error" class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
+                            <div id="analysis-error" class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -594,9 +716,9 @@
                                 <!-- Analysis Type Selection -->
                                 <div id="analysis-type-selection">
                                     <h4 class="text-sm font-medium text-gray-700 mb-3">Choose Analysis Type</h4>
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <label
-                                            class="flex items-start space-x-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                                            class="flex items-start space-x-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-modern-sm transition-all duration-300">
                                             <input type="radio" name="analysis-type" value="uncommitted"
                                                 class="mt-1 text-primary">
                                             <div>
@@ -606,7 +728,7 @@
                                             </div>
                                         </label>
                                         <label
-                                            class="flex items-start space-x-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                                            class="flex items-start space-x-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-modern-sm transition-all duration-300">
                                             <input type="radio" name="analysis-type" value="staged"
                                                 class="mt-1 text-primary">
                                             <div>
@@ -615,14 +737,26 @@
                                                     area</div>
                                             </div>
                                         </label>
-                                        <label
-                                            class="flex items-start space-x-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                                       <label
+                                           class="flex items-start space-x-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-modern-sm transition-all duration-300">
                                             <input type="radio" name="analysis-type" value="commit"
                                                 class="mt-1 text-primary">
                                             <div>
                                                 <div class="font-medium text-gray-900">🎯 Specific Commit</div>
                                                 <div class="text-sm text-gray-500">Review changes from a particular
                                                     commit</div>
+                                            </div>
+                                        </label>
+                                        <label
+                                            class="flex items-start space-x-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-modern-sm transition-all duration-300">
+                                            <input type="radio" name="analysis-type" value="pullrequest"
+                                                class="mt-1 text-primary">
+                                            <div>
+                                                <div class="font-medium text-gray-900">🔀 Pull Request Differential</div>
+                                                <div class="text-sm text-gray-500">Review changes between two branches</div>
                                             </div>
                                         </label>
                                     </div>
@@ -632,10 +766,43 @@
                                 <div id="commit-selection" class="hidden">
                                     <h4 class="text-sm font-medium text-gray-700 mb-3">Select Commit</h4>
                                     <select id="commit-dropdown"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                                        class="block w-full rounded-lg border-gray-300 shadow-modern-sm focus:border-primary focus:ring-primary sm:text-sm px-4 py-2 transition-colors">
                                         <option value="">Choose a commit...</option>
                                         <!-- Options will be populated dynamically -->
                                     </select>
+                                </div>
+
+                                <!-- Branch Selection (Hidden by default) -->
+                                <div id="branch-selection" class="hidden">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-3">Branch Comparison</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="source-branch-dropdown" class="block text-sm font-medium text-gray-700 mb-2">
+                                                Source Branch
+                                            </label>
+                                            <select id="source-branch-dropdown"
+                                                class="block w-full rounded-lg border-gray-300 shadow-modern-sm focus:border-primary focus:ring-primary sm:text-sm px-4 py-2 transition-colors">
+                                                <option value="">Choose a source branch...</option>
+                                                <!-- Options will be populated dynamically -->
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="target-branch-dropdown" class="block text-sm font-medium text-gray-700 mb-2">
+                                                Target Branch
+                                            </label>
+                                            <select id="target-branch-dropdown"
+                                                class="block w-full rounded-lg border-gray-300 shadow-modern-sm focus:border-primary focus:ring-primary sm:text-sm px-4 py-2 transition-colors">
+                                                <option value="">Choose a target branch...</option>
+                                                <!-- Options will be populated dynamically -->
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="branch-selection-error" class="mt-2 text-sm text-red-600 hidden">
+                                        <svg class="inline h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span id="branch-selection-error-message"></span>
+                                    </div>
                                 </div>
 
                                 <!-- Available Options Display -->
@@ -660,7 +827,7 @@
                                 <!-- Changes Preview -->
                                 <div id="changes-preview" class="hidden">
                                     <h4 class="text-sm font-medium text-gray-700 mb-3">Changes Summary</h4>
-                                    <div class="bg-gray-50 rounded-md p-4">
+                                    <div class="bg-gray-50 rounded-xl p-4 shadow-modern-sm">
                                         <div id="changes-summary" class="text-sm text-gray-700">
                                             <!-- Summary will be populated dynamically -->
                                         </div>
@@ -672,7 +839,7 @@
                             <div class="mt-6 flex justify-between items-center pt-6 border-t">
                                 <div>
                                     <button id="previous-step-4-btn"
-                                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                        class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-modern-sm hover:bg-gray-200 hover:shadow-modern-md transition-all duration-300 font-medium">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15 19l-7-7 7-7" />
@@ -682,7 +849,7 @@
                                 </div>
                                 <div>
                                     <button id="next-step-4-btn"
-                                        class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 font-medium"
                                         disabled>
                                         Next
                                         <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -697,12 +864,19 @@
 
                     <!-- Step 5: AI Model Selection -->
                     <div class="step-content" id="step-5-content">
-                        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 5: AI Model Selection</h3>
+                        <div class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="ml-3 text-lg font-semibold text-gray-900">Step 5: AI Model Selection</h3>
+                            </div>
 
                             <!-- Model Loading State -->
                             <div id="model-loading"
-                                class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                                class="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex items-center">
                                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -717,7 +891,7 @@
                             </div>
 
                             <!-- Model Error State -->
-                            <div id="model-error" class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
+                            <div id="model-error" class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -743,7 +917,7 @@
                                         Select AI Model for Analysis
                                     </label>
                                     <select id="model-select"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                                        class="block w-full rounded-lg border-gray-300 shadow-modern-sm focus:border-primary focus:ring-primary sm:text-sm px-4 py-2 transition-colors">
                                         <option value="">Choose a model...</option>
                                         <!-- Options will be populated dynamically -->
                                     </select>
@@ -751,7 +925,7 @@
 
                                 <!-- Selected Model Display -->
                                 <div id="model-selected"
-                                    class="bg-green-50 border border-green-200 rounded-md p-4 hidden">
+                                    class="bg-green-50 border border-green-200 rounded-xl p-4 hidden shadow-modern-sm">
                                     <div class="flex items-center">
                                         <svg class="h-5 w-5 text-green-400 mr-2" viewBox="0 0 20 20"
                                             fill="currentColor">
@@ -768,7 +942,7 @@
 
                             <!-- Analysis Execution States -->
                             <div id="analysis-execution-loading" class="hidden">
-                                <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-modern-sm">
                                     <div class="flex items-center">
                                         <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -799,7 +973,7 @@
                             <div class="mt-6 flex justify-between items-center pt-6 border-t">
                                 <div>
                                     <button id="previous-step-5-btn"
-                                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                        class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-modern-sm hover:bg-gray-200 hover:shadow-modern-md transition-all duration-300 font-medium">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15 19l-7-7 7-7" />
@@ -809,7 +983,7 @@
                                 </div>
                                 <div>
                                     <button id="run-analysis-btn"
-                                        class="inline-flex items-center px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg shadow-modern-sm hover:shadow-modern-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 font-medium"
                                         disabled>
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -826,16 +1000,21 @@
         </main>
 
         <!-- Footer -->
-        <footer class="bg-white border-t mt-auto">
+        <footer class="bg-white/80 backdrop-blur-md border-t border-gray-100 mt-auto">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <div class="flex justify-between items-center">
-                    <p class="text-sm text-gray-500">
-                        AI Code Reviewer &copy; 2025
-                    </p>
+                <div class="flex flex-col sm:flex-row justify-between items-center">
+                    <div class="flex items-center space-x-2 mb-2 sm:mb-0">
+                        <div class="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary"></div>
+                        <p class="text-sm text-gray-600 font-medium">
+                            AI Code Reviewer &copy; 2025
+                        </p>
+                    </div>
                     <div class="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>Vanilla JS v1.0.0</span>
-                        <span>SignalR Connected: <span id="signalr-status"
-                                class="text-xs text-gray-400">Initializing...</span></span>
+                        <span class="px-2 py-1 bg-gray-100 rounded-md text-gray-600 font-medium">Vanilla JS v1.0.0</span>
+                        <div class="flex items-center">
+                            <span class="text-gray-500 mr-2">SignalR:</span>
+                            <span id="signalr-status" class="px-2 py-1 bg-gray-100 rounded-md text-xs font-medium text-gray-600">Initializing...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -857,33 +1036,39 @@
         }
     </script>
     <!-- Directory Browser Modal -->
-    <div id="directory-browser-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
-        <div class="modal-content bg-white rounded-lg shadow-xl mx-auto mt-20 max-w-2xl w-full">
-            <div class="modal-header p-4 border-b flex justify-between items-center">
-                <h3 class="text-lg font-semibold">Select Repository Directory</h3>
-                <button id="close-directory-modal" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div id="directory-browser-modal" class="fixed inset-0 bg-black/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="modal-content bg-white rounded-2xl shadow-modern-xl mx-auto max-w-2xl w-full transform transition-all duration-300 scale-95 opacity-0" id="modal-content-wrapper">
+            <div class="modal-header p-5 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-900">Select Repository Directory</h3>
+                <button id="close-directory-modal" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
             
-            <div class="modal-body p-4">
-                <div class="current-path mb-4 text-sm text-gray-600">
-                    Current Path: <span id="current-path-display"></span>
+            <div class="modal-body p-5">
+                <div class="current-path mb-4 px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-600 font-medium">
+                    Current Path: <span id="current-path-display" class="text-gray-900"></span>
                 </div>
                 
-                <div id="directory-list" class="border rounded-md p-2 max-h-64 overflow-y-auto">
+                <div id="directory-list" class="border border-gray-200 rounded-xl p-3 max-h-64 overflow-y-auto bg-gray-50">
                     <!-- Directory items will be populated here -->
                 </div>
             </div>
             
-            <div class="modal-footer p-4 border-t flex justify-between">
-                <button id="directory-up-level" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+            <div class="modal-footer p-5 border-t border-gray-100 flex justify-between">
+                <button id="directory-up-level" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                    <svg class="w-4 h-4 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
                     Up One Level
                 </button>
-                <button id="select-directory" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">
+                <button id="select-directory" class="px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md transition-all duration-300 transform hover:-translate-y-0.5 font-medium">
                     Select This Folder
+                    <svg class="w-4 h-4 ml-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
                 </button>
             </div>
         </div>

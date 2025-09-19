@@ -1,37 +1,62 @@
-/* Dark mode support - VS Code inspired */
+/* Dark mode support - Modern VS Code inspired */
 .dark-theme {
-    /* Override CSS variables for dark theme - VS Code Dark+ colors */
-    --color-surface: #1e1e1e;
-    --color-surface-dark: #252526;
-    --color-surface-darker: #2d2d30;
-    --color-text-primary: #cccccc;
-    --color-text-secondary: #969696;
-    --color-text-muted: #6a6a6a;
-    --color-border: #374151;
-    --color-border-light: #374151;
+    /* Override CSS variables for modern dark theme */
+    --color-surface: #0f172a;
+    --color-surface-light: #1e293b;
+    --color-surface-dark: #1e293b;
+    --color-surface-darker: #334155;
+    --color-surface-darkest: #475569;
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-text-inverse: #0f172a;
+    --color-border: #334155;
+    --color-border-light: #475569;
+    --color-border-dark: #1e293b;
     
-    /* Step indicator colors - VS Code accent colors */
-    --step-number-inactive-bg: #3e3e42;
-    --step-number-inactive-text: #6B7280;
-    --step-number-active-bg: #007acc;
+    /* Modern step indicator colors - VS Code inspired */
+    --step-number-inactive-bg: #334155;
+    --step-number-inactive-text: #64748b;
+    --step-number-active-bg: #6366f1;
     --step-number-active-text: #ffffff;
-    --step-number-completed-bg: #4ec9b0;
+    --step-number-completed-bg: #10b981;
     --step-number-completed-text: #ffffff;
-    --step-number-error-bg: #f48771;
+    --step-number-error-bg: #ef4444;
     --step-number-error-text: #ffffff;
     
     /* Main card background for dark theme */
-    --main-card-bg: #252526;
-    --main-card-text: #cccccc;
+    --main-card-bg: #1e293b;
+    --main-card-text: #f1f5f9;
     --heading-text: #ffffff;
     
-    /* VS Code accent colors */
-    --vscode-accent: #007acc;
-    --vscode-accent-hover: #005a9e;
-    --vscode-button-bg: #0e639c;
-    --vscode-button-hover: #1177bb;
-    --vscode-input-bg: #3c3c3c;
-    --vscode-selection-bg: #094771;
+    /* Modern VS Code accent colors */
+    --vscode-accent: #6366f1;
+    --vscode-accent-hover: #4f46e5;
+    --vscode-button-bg: #4f46e5;
+    --vscode-button-hover: #6366f1;
+    --vscode-input-bg: #334155;
+    --vscode-selection-bg: #4f46e5;
+    --vscode-sidebar-bg: #1e293b;
+    --vscode-editor-bg: #0f172a;
+    
+    /* Enhanced shadows for dark theme */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+    
+    /* Modern background gradients for dark theme */
+    --bg-gradient-primary: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    --bg-gradient-secondary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --bg-gradient-accent: linear-gradient(135deg, #0891b2 0%, #0ea5e9 100%);
+    --bg-gradient-surface: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    
+    /* Glassmorphism effect for dark theme */
+    --glassmorphism-bg: rgba(30, 41, 59, 0.8);
+    --glassmorphism-border: rgba(51, 65, 85, 0.3);
+    --glassmorphism-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* Dark mode main card styling */

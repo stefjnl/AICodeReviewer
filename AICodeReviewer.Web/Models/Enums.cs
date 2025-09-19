@@ -95,5 +95,11 @@ public enum AnalysisType
     /// Analyze a single file
     /// </summary>
     [EnumMember(Value = "singlefile")]
-    SingleFile
+    SingleFile,
+    
+    /// <summary>
+    /// Analyze changes between two branches (pull request differential)
+    /// </summary>
+    [EnumMember(Value = "pullrequest")]
+    PullRequestDifferential
 }

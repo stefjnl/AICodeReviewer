@@ -19,18 +19,13 @@ function updateProgressIndicators(currentStep) {
         }
     });
     
-    // Update step connections
-    document.querySelectorAll('.step-connection').forEach((connection, index) => {
-        const stepNum = index + 1;
-        
-        // Remove all state classes
-        connection.classList.remove('active', 'completed');
-        
-        if (stepNum < currentStep) {
-            // Completed connections
-            connection.classList.add('active', 'completed');
-        }
-    });
+    // Update progress bar fill width
+    const progressFill = document.querySelector('.progress-steps .absolute.h-1.bg-gradient-to-r');
+    if (progressFill) {
+        // Calculate progress percentage: 20% for step 1, 40% for step 2, etc.
+        const progressPercentage = (currentStep - 1) * 20;
+        progressFill.style.width = `${progressPercentage}%`;
+    }
 }
 
 export { updateProgressIndicators };

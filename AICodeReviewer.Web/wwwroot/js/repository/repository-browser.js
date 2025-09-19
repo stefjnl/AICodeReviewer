@@ -56,8 +56,18 @@ function setupModalHandlers() {
 
 function openDirectoryBrowser() {
     const modal = document.getElementById('directory-browser-modal');
-    if (modal) {
+    const modalContent = document.getElementById('modal-content-wrapper');
+    
+    if (modal && modalContent) {
+        // Remove hidden class from modal
         modal.classList.remove('hidden');
+        
+        // Add animation classes to show modal with smooth transition
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+        
         modalOpen = true;
         loadDirectory('');
     }
@@ -65,8 +75,18 @@ function openDirectoryBrowser() {
 
 function closeDirectoryBrowser() {
     const modal = document.getElementById('directory-browser-modal');
-    if (modal) {
-        modal.classList.add('hidden');
+    const modalContent = document.getElementById('modal-content-wrapper');
+    
+    if (modal && modalContent) {
+        // Remove animation classes to hide modal
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        
+        // Add hidden class after animation completes
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300); // Match the duration of the transition (300ms)
+        
         modalOpen = false;
     }
 }

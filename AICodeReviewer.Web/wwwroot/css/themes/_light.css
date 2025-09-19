@@ -1,24 +1,46 @@
-/* Light mode theme */
+/* Light mode theme - Modern UI System */
 .light-theme {
-    /* Override CSS variables for light theme */
-    --color-surface: #f8fafc;
+    /* Override CSS variables for modern light theme */
+    --color-surface: #ffffff;
+    --color-surface-light: #f8fafc;
     --color-surface-dark: #f1f5f9;
     --color-surface-darker: #e2e8f0;
-    --color-text-primary: #0f172a;
-    --color-text-secondary: #475569;
-    --color-text-muted: #64748b;
+    --color-surface-darkest: #cbd5e1;
+    --color-text-primary: #1e293b;
+    --color-text-secondary: #64748b;
+    --color-text-muted: #94a3b8;
     --color-border: #e2e8f0;
     --color-border-light: #f1f5f9;
+    --color-border-dark: #cbd5e1;
     
-    /* Step indicator colors for better contrast */
-    --step-number-inactive-bg: #cbd5e1;
-    --step-number-inactive-text: #475569;
-    --step-number-active-bg: #3b82f6;
+    /* Modern step indicator colors */
+    --step-number-inactive-bg: #e2e8f0;
+    --step-number-inactive-text: #64748b;
+    --step-number-active-bg: #6366f1;
     --step-number-active-text: #ffffff;
     --step-number-completed-bg: #10b981;
     --step-number-completed-text: #ffffff;
     --step-number-error-bg: #ef4444;
     --step-number-error-text: #ffffff;
+    
+    /* Enhanced shadows for light theme */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+    
+    /* Modern background gradients */
+    --bg-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-gradient-secondary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --bg-gradient-accent: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+    --bg-gradient-surface: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    
+    /* Glassmorphism effect */
+    --glassmorphism-bg: rgba(255, 255, 255, 0.8);
+    --glassmorphism-border: rgba(255, 255, 255, 0.3);
+    --glassmorphism-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
 }
 
 /* Light mode specific component styles */

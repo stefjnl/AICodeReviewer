@@ -2,6 +2,7 @@
 
 import { showElement, hideElement, updateElementContent } from '../core/ui-helpers.js';
 import { analysisState } from './analysis-state.js';
+import { selectSourceBranch, selectTargetBranch } from './analysis-options.js';
 
 export function updateAnalysisUI(state) {
     const loadingEl = document.getElementById('analysis-loading');
@@ -23,6 +24,10 @@ export function updateAnalysisUI(state) {
     if (previewEl) previewEl.classList.add('hidden');
     if (typeSelectionEl) typeSelectionEl.classList.add('hidden');
     if (commitSelectionEl) commitSelectionEl.classList.add('hidden');
+    
+    // Also reset branch selection
+    const branchSelectionEl = document.getElementById('branch-selection');
+    if (branchSelectionEl) branchSelectionEl.classList.add('hidden');
 
     switch (state) {
         case 'loading':
@@ -43,6 +48,15 @@ export function updateAnalysisUI(state) {
             if (analysisState.analysisType === 'commit' && commitSelectionEl) {
                 commitSelectionEl.classList.remove('hidden');
                 populateCommitDropdown();
+            }
+            
+            // Get branch selection element
+            const branchSelectionEl = document.getElementById('branch-selection');
+            
+            // Show branch selection if needed for pull request analysis
+            if (analysisState.analysisType === 'pullrequest' && branchSelectionEl) {
+                branchSelectionEl.classList.remove('hidden');
+                populateBranchDropdowns();
             }
             
             // Show options if available
@@ -134,6 +148,44 @@ function populateCommitDropdown() {
         });
     } else if (commitDropdown) {
         commitDropdown.innerHTML = '<option value="">No commits available</option>';
+    }
+}
+
+// Branch dropdowns population for pull request analysis
+function populateBranchDropdowns() {
+    const sourceBranchDropdown = document.getElementById('source-branch-dropdown');
+    const targetBranchDropdown = document.getElementById('target-branch-dropdown');
+
+    if (sourceBranchDropdown && analysisState.availableOptions.branches.length > 0) {
+        sourceBranchDropdown.innerHTML = '<option value="">Choose source branch...</option>';
+        analysisState.availableOptions.branches.forEach(branch => {
+            const option = document.createElement('option');
+            option.value = branch.name; // Extract the branch name from the object
+            option.textContent = branch.name;
+            // Highlight the current branch if it's the current one
+            if (branch.isCurrent) {
+                option.textContent += ' (current)';
+            }
+            sourceBranchDropdown.appendChild(option);
+        });
+    } else if (sourceBranchDropdown) {
+        sourceBranchDropdown.innerHTML = '<option value="">No branches available</option>';
+    }
+
+    if (targetBranchDropdown && analysisState.availableOptions.branches.length > 0) {
+        targetBranchDropdown.innerHTML = '<option value="">Choose target branch...</option>';
+        analysisState.availableOptions.branches.forEach(branch => {
+            const option = document.createElement('option');
+            option.value = branch.name; // Extract the branch name from the object
+            option.textContent = branch.name;
+            // Highlight the current branch if it's the current one
+            if (branch.isCurrent) {
+                option.textContent += ' (current)';
+            }
+            targetBranchDropdown.appendChild(option);
+        });
+    } else if (targetBranchDropdown) {
+        targetBranchDropdown.innerHTML = '<option value="">No branches available</option>';
     }
 }
 

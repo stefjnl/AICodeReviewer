@@ -36,38 +36,54 @@
     color: var(--color-error);
 }
 
-.step-number {
-    width: 2rem;
-    height: 2rem;
+.step-circle {
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 50%;
-    background-color: var(--color-secondary-light);
-    color: white;
+    border: 2px solid #d1d5db;
+    background-color: white;
+    color: #6b7280;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.875rem;
     font-weight: bold;
     transition: all 0.3s ease;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-.step-indicator:not(.active):not(.completed):not(.error) .step-number {
-    background-color: var(--step-number-inactive-bg, var(--color-secondary-light));
-    color: var(--step-number-inactive-text, white);
+.step-indicator:not(.active):not(.completed) .step-circle {
+    background-color: white;
+    border-color: #d1d5db;
+    color: #6b7280;
 }
 
-.step-indicator.active .step-number {
-    background-color: var(--step-number-active-bg, var(--color-primary));
-    color: var(--step-number-active-text, white);
+.step-indicator.active .step-circle {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
-.step-indicator.completed .step-number {
-    background-color: var(--step-number-completed-bg, var(--color-success));
-    color: var(--step-number-completed-text, white);
+.step-indicator.completed .step-circle {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
-.step-indicator.error .step-number {
-    background-color: var(--step-number-error-bg, var(--color-error));
-    color: var(--step-number-error-text, white);
+.step-indicator:not(.active):not(.completed) .step-label {
+    color: #6b7280;
+}
+
+.step-indicator.active .step-label {
+    color: #111827;
+    font-weight: 600;
+}
+
+.step-indicator.completed .step-label {
+    color: #10b981;
+    font-weight: 600;
 }
 
 .step-connection {

@@ -9,6 +9,8 @@ export const analysisState = {
         stagedFiles: []
     },
     selectedCommit: null,
+    selectedSourceBranch: null,
+    selectedTargetBranch: null,
     changesSummary: null,
     loading: false,
     error: null
@@ -19,6 +21,8 @@ export function initializeAnalysisState() {
     // Reset analysis state
     analysisState.analysisType = null;
     analysisState.selectedCommit = null;
+    analysisState.selectedSourceBranch = null;
+    analysisState.selectedTargetBranch = null;
     analysisState.changesSummary = null;
     analysisState.availableOptions = {
         commits: [],

@@ -71,16 +71,24 @@ export async function previewChanges() {
     }
 
     try {
+        const requestBody = {
+            repositoryPath: repositoryState.path,
+            analysisType: analysisState.analysisType,
+            targetCommit: analysisState.selectedCommit
+        };
+
+        // Add branch parameters for pull request analysis
+        if (analysisState.analysisType === 'pullrequest') {
+            requestBody.sourceBranch = analysisState.selectedSourceBranch;
+            requestBody.targetBranch = analysisState.selectedTargetBranch;
+        }
+
         const response = await fetch(apiEndpoints.analysisPreview, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                repositoryPath: repositoryState.path,
-                analysisType: analysisState.analysisType,
-                targetCommit: analysisState.selectedCommit
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) throw new Error('Failed to preview changes');
@@ -104,11 +112,13 @@ export async function previewChanges() {
 }
 
 export function selectAnalysisType(type) {
-    const validTypes = ['uncommitted', 'staged', 'commit'];
+    const validTypes = ['uncommitted', 'staged', 'commit', 'pullrequest'];
     if (!validTypes.includes(type)) return;
 
     analysisState.analysisType = type;
     analysisState.selectedCommit = null; // Reset commit selection
+    analysisState.selectedSourceBranch = null; // Reset branch selections
+    analysisState.selectedTargetBranch = null;
     
     // Update UI to show relevant options
     updateAnalysisUI('loaded');
@@ -125,6 +135,30 @@ export function selectCommit(commitId) {
     
     // Auto-preview for commit analysis
     if (analysisState.analysisType === 'commit') {
+        previewChanges();
+    }
+}
+
+export function selectSourceBranch(branchName) {
+    if (!branchName) return;
+    
+    analysisState.selectedSourceBranch = branchName;
+    updateAnalysisUI('loaded');
+    
+    // Auto-preview for branch analysis
+    if (analysisState.analysisType === 'pullrequest') {
+        previewChanges();
+    }
+}
+
+export function selectTargetBranch(branchName) {
+    if (!branchName) return;
+    
+    analysisState.selectedTargetBranch = branchName;
+    updateAnalysisUI('loaded');
+    
+    // Auto-preview for branch analysis
+    if (analysisState.analysisType === 'pullrequest') {
         previewChanges();
     }
 }
