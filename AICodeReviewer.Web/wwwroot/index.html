@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AI Code Reviewer - Intelligent code analysis and review">
     <title>AI Code Reviewer</title>
-    
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- SignalR CDN -->
     <script src="https://unpkg.com/@microsoft/signalr@latest/dist/browser/signalr.js"></script>
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../css/app.css">
-    
+
     <!-- Custom JS -->
     <script defer type="module" src="../js/main.js"></script>
-    
+
     <!-- Configure Tailwind -->
     <script>
         tailwind.config = {
@@ -35,6 +36,7 @@
         }
     </script>
 </head>
+
 <body class="h-full bg-surface text-gray-900">
     <!-- Main Application Container -->
     <div id="app" class="min-h-full">
@@ -58,7 +60,7 @@
         <!-- Main Content Area -->
         <main class="flex-1">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                
+
                 <!-- Workflow Progress Indicator -->
                 <div class="workflow-progress-container mb-8">
                     <div class="progress-steps flex items-center justify-center space-x-4">
@@ -68,28 +70,28 @@
                             <div class="step-label">Documents</div>
                         </div>
                         <div class="step-connection active"></div>
-                        
+
                         <!-- Step 2: Repository -->
                         <div class="step-indicator" data-step="2">
                             <div class="step-number">2</div>
                             <div class="step-label">Repository</div>
                         </div>
                         <div class="step-connection"></div>
-                        
+
                         <!-- Step 3: Language -->
                         <div class="step-indicator" data-step="3">
                             <div class="step-number">3</div>
                             <div class="step-label">Language</div>
                         </div>
                         <div class="step-connection"></div>
-                        
+
                         <!-- Step 4: Analysis -->
                         <div class="step-indicator" data-step="4">
                             <div class="step-number">4</div>
                             <div class="step-label">Analysis</div>
                         </div>
                         <div class="step-connection"></div>
-                        
+
                         <!-- Step 5: Results -->
                         <div class="step-indicator" data-step="5">
                             <div class="step-number">5</div>
@@ -104,37 +106,37 @@
                     <div class="step-content active" id="step-1-content">
                         <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 1: Document Selection</h3>
-                            
+
                             <!-- Document Management Component -->
                             <div id="document-manager" class="border-t pt-6">
                                 <h3 class="text-md font-medium text-gray-900 mb-4">Available Documents</h3>
-                                
+
                                 <!-- Load Documents Button -->
                                 <div class="mb-4">
-                                    <button
-                                        id="load-documents-btn"
-                                        class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        <svg
-                                            id="loading-spinner"
+                                    <button id="load-documents-btn"
+                                        class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                        <svg id="loading-spinner"
                                             class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
                                         </svg>
                                         <span id="loading-text">Load Documents</span>
                                     </button>
                                 </div>
 
                                 <!-- Error Message -->
-                                <div id="error-container" class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
+                                <div id="error-container"
+                                    class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
                                     <div class="flex">
                                         <div class="flex-shrink-0">
                                             <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                    clip-rule="evenodd" />
                                             </svg>
                                         </div>
                                         <div class="ml-3">
@@ -144,9 +146,12 @@
                                             </div>
                                         </div>
                                         <div class="ml-auto pl-3">
-                                            <button id="close-error-btn" class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100">
+                                            <button id="close-error-btn"
+                                                class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100">
                                                 <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                    <path fill-rule="evenodd"
+                                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                        clip-rule="evenodd" />
                                                 </svg>
                                             </button>
                                         </div>
@@ -154,13 +159,19 @@
                                 </div>
 
                                 <!-- Loading State -->
-                                <div id="loading-state" class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                                <div id="loading-state"
+                                    class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
                                     <div class="flex items-center">
-                                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
                                         </svg>
-                                        <p id="loading-state-text" class="text-sm text-blue-800">Loading documents...</p>
+                                        <p id="loading-state-text" class="text-sm text-blue-800">Loading documents...
+                                        </p>
                                     </div>
                                 </div>
 
@@ -169,7 +180,7 @@
                                     <h4 class="text-sm font-medium text-gray-700 mb-2">
                                         Found <span id="document-count">0</span> documents:
                                     </h4>
-                                    
+
                                     <div id="document-grid" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                         <!-- Document items will be dynamically added here -->
                                     </div>
@@ -177,11 +188,14 @@
 
                                 <!-- Empty State -->
                                 <div id="empty-state" class="text-center py-8 hidden">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                     <h4 class="mt-2 text-sm font-medium text-gray-900">No documents found</h4>
-                                    <p class="mt-1 text-sm text-gray-500">Click "Load Documents" to scan for available files.</p>
+                                    <p class="mt-1 text-sm text-gray-500">Click "Load Documents" to scan for available
+                                        files.</p>
                                 </div>
 
                                 <!-- Document Content Viewer -->
@@ -190,15 +204,14 @@
                                         <h4 class="text-sm font-medium text-gray-900">
                                             Document: <span id="selected-document-name"></span>
                                         </h4>
-                                        <button
-                                            id="close-document-btn"
-                                            class="text-xs text-gray-500 hover:text-gray-700"
-                                        >
+                                        <button id="close-document-btn"
+                                            class="text-xs text-gray-500 hover:text-gray-700">
                                             Close
                                         </button>
                                     </div>
                                     <div class="bg-gray-50 rounded-md p-4">
-                                        <pre id="document-content" class="text-sm text-gray-800 whitespace-pre-wrap"></pre>
+                                        <pre id="document-content"
+                                            class="text-sm text-gray-800 whitespace-pre-wrap"></pre>
                                     </div>
                                 </div>
 
@@ -206,18 +219,26 @@
                                 <div class="mt-6 flex justify-between items-center pt-6 border-t">
                                     <div>
                                         <!-- Previous button (disabled for first step) -->
-                                        <button class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                        <button
+                                            class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                            disabled>
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 19l-7-7 7-7" />
                                             </svg>
                                             Previous
                                         </button>
                                     </div>
                                     <div>
-                                        <button id="next-step-1-btn" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                        <button id="next-step-1-btn"
+                                            class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            disabled>
                                             Next
-                                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5l7 7-7 7" />
                                             </svg>
                                         </button>
                                     </div>
@@ -230,71 +251,98 @@
                     <div class="step-content" id="step-2-content">
                         <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 2: Repository Selection</h3>
-                            
+
                             <!-- Repository Path Input -->
                             <div class="mb-4">
                                 <label for="repository-path" class="block text-sm font-medium text-gray-700 mb-2">
                                     Repository Path
                                 </label>
-                                <div class="relative">
-                                    <input
-                                        type="text"
-                                        id="repository-path"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                        placeholder="/path/to/your/git/repository"
-                                    />
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                        <svg id="path-valid-icon" class="h-5 w-5 text-green-500 hidden" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                        </svg>
-                                        <svg id="path-invalid-icon" class="h-5 w-5 text-red-500 hidden" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                        </svg>
+                                <div class="flex gap-2">
+                                    <div class="relative flex-1">
+                                        <input type="text" id="repository-path"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                            placeholder="/path/to/your/git/repository" />
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                            <svg id="path-valid-icon" class="h-5 w-5 text-green-500 hidden"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <svg id="path-invalid-icon" class="h-5 w-5 text-red-500 hidden"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
                                     </div>
+                                    <button id="browse-repository-btn"
+                                        class="inline-flex items-center px-3 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm"
+                                        title="Browse for repository directory">
+                                        <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+                                        </svg>
+                                        Browse
+                                    </button>
                                 </div>
                             </div>
 
                             <!-- Validation Buttons -->
                             <div class="mb-4 flex items-center space-x-2">
-                                <button
-                                    id="validate-repository-btn"
+                                <button id="validate-repository-btn"
                                     class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    disabled
-                                >
-                                    <svg id="validation-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    disabled>
+                                    <svg id="validation-spinner"
+                                        class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
                                     </svg>
                                     <span id="validation-text">Validate Repository</span>
                                 </button>
-                                <button
-                                    id="reset-repository-btn"
-                                    class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-                                >
+                                <button id="reset-repository-btn"
+                                    class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
                                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                     </svg>
                                     Reset
                                 </button>
                             </div>
 
                             <!-- Validation Loading State -->
-                            <div id="validation-loading" class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                            <div id="validation-loading"
+                                class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
                                 <div class="flex items-center">
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
                                     </svg>
-                                    <p id="validation-loading-text" class="text-sm text-blue-800">Validating repository...</p>
+                                    <p id="validation-loading-text" class="text-sm text-blue-800">Validating
+                                        repository...</p>
                                 </div>
                             </div>
 
                             <!-- Validation Error State -->
-                            <div id="validation-error" class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
+                            <div id="validation-error"
+                                class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 hidden">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                     </div>
                                     <div class="ml-3">
@@ -304,9 +352,12 @@
                                         </div>
                                     </div>
                                     <div class="ml-auto pl-3">
-                                        <button id="close-validation-error-btn" class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100">
+                                        <button id="close-validation-error-btn"
+                                            class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100">
                                             <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                <path fill-rule="evenodd"
+                                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                    clip-rule="evenodd" />
                                             </svg>
                                         </button>
                                     </div>
@@ -314,15 +365,19 @@
                             </div>
 
                             <!-- Validation Success State -->
-                            <div id="validation-success" class="mb-4 bg-green-50 border border-green-200 rounded-md p-4 hidden">
+                            <div id="validation-success"
+                                class="mb-4 bg-green-50 border border-green-200 rounded-md p-4 hidden">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                     </div>
                                     <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-green-800">Repository Validated Successfully</h3>
+                                        <h3 class="text-sm font-medium text-green-800">Repository Validated Successfully
+                                        </h3>
                                         <div class="mt-2 text-sm text-green-700">
                                             <p id="validation-success-message"></p>
                                         </div>
@@ -332,7 +387,8 @@
 
                             <!-- Repository Information Display -->
                             <div id="repository-info" class="bg-gray-50 rounded-md p-4 hidden">
-                                <h4 class="text-sm font-medium text-gray-900 mb-2" id="repository-info-title">Repository Information</h4>
+                                <h4 class="text-sm font-medium text-gray-900 mb-2" id="repository-info-title">Repository
+                                    Information</h4>
                                 <div class="space-y-1 text-sm text-gray-700" id="repository-info-details">
                                     <!-- Dynamic content will be inserted here -->
                                 </div>
@@ -341,18 +397,23 @@
                             <!-- Step Navigation -->
                             <div class="mt-6 flex justify-between items-center pt-6 border-t">
                                 <div>
-                                    <button id="previous-step-2-btn" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                    <button id="previous-step-2-btn"
+                                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 19l-7-7 7-7" />
                                         </svg>
                                         Previous
                                     </button>
                                 </div>
                                 <div>
-                                    <button id="next-step-2-btn" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                    <button id="next-step-2-btn"
+                                        class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        disabled>
                                         Next
                                         <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5l7 7-7 7" />
                                         </svg>
                                     </button>
                                 </div>
@@ -364,13 +425,18 @@
                     <div class="step-content" id="step-3-content">
                         <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 3: Language Selection</h3>
-                            
+
                             <!-- Language Loading State -->
-                            <div id="language-loading" class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                            <div id="language-loading"
+                                class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
                                 <div class="flex items-center">
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
                                     </svg>
                                     <p class="text-sm text-blue-800">Detecting languages from repository...</p>
                                 </div>
@@ -381,7 +447,9 @@
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                     </div>
                                     <div class="ml-3">
@@ -408,10 +476,8 @@
                                     <label for="language-select" class="block text-sm font-medium text-gray-700 mb-2">
                                         Select Programming Language
                                     </label>
-                                    <select
-                                        id="language-select"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                    >
+                                    <select id="language-select"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
                                         <option value="">Select a language...</option>
                                         <!-- Options will be populated dynamically -->
                                     </select>
@@ -426,10 +492,14 @@
                                 </div>
 
                                 <!-- Selected Language Display -->
-                                <div id="language-selected" class="bg-green-50 border border-green-200 rounded-md p-4 hidden">
+                                <div id="language-selected"
+                                    class="bg-green-50 border border-green-200 rounded-md p-4 hidden">
                                     <div class="flex items-center">
-                                        <svg class="h-5 w-5 text-green-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        <svg class="h-5 w-5 text-green-400 mr-2" viewBox="0 0 20 20"
+                                            fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                         <p class="text-sm font-medium text-green-800">
                                             Language selected: <span id="selected-language-name"></span>
@@ -437,22 +507,27 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Step Navigation -->
                             <div class="mt-6 flex justify-between items-center pt-6 border-t">
                                 <div>
-                                    <button id="previous-step-3-btn" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                    <button id="previous-step-3-btn"
+                                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 19l-7-7 7-7" />
                                         </svg>
                                         Previous
                                     </button>
                                 </div>
                                 <div>
-                                    <button id="next-step-3-btn" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                    <button id="next-step-3-btn"
+                                        class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        disabled>
                                         Next
                                         <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5l7 7-7 7" />
                                         </svg>
                                     </button>
                                 </div>
@@ -464,13 +539,18 @@
                     <div class="step-content" id="step-4-content">
                         <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 4: Analysis Configuration</h3>
-                            
+
                             <!-- Analysis Loading State -->
-                            <div id="analysis-loading" class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                            <div id="analysis-loading"
+                                class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
                                 <div class="flex items-center">
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
                                     </svg>
                                     <p class="text-sm text-blue-800">Loading analysis options...</p>
                                 </div>
@@ -481,7 +561,9 @@
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                     </div>
                                     <div class="ml-3">
@@ -499,25 +581,34 @@
                                 <div id="analysis-type-selection">
                                     <h4 class="text-sm font-medium text-gray-700 mb-3">Choose Analysis Type</h4>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                        <label class="flex items-start space-x-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
-                                            <input type="radio" name="analysis-type" value="uncommitted" class="mt-1 text-primary">
+                                        <label
+                                            class="flex items-start space-x-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                                            <input type="radio" name="analysis-type" value="uncommitted"
+                                                class="mt-1 text-primary">
                                             <div>
                                                 <div class="font-medium text-gray-900">📝 Uncommitted Changes</div>
-                                                <div class="text-sm text-gray-500">Review all modified files in working directory</div>
+                                                <div class="text-sm text-gray-500">Review all modified files in working
+                                                    directory</div>
                                             </div>
                                         </label>
-                                        <label class="flex items-start space-x-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
-                                            <input type="radio" name="analysis-type" value="staged" class="mt-1 text-primary">
+                                        <label
+                                            class="flex items-start space-x-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                                            <input type="radio" name="analysis-type" value="staged"
+                                                class="mt-1 text-primary">
                                             <div>
                                                 <div class="font-medium text-gray-900">📋 Staged Files</div>
-                                                <div class="text-sm text-gray-500">Review files added to git staging area</div>
+                                                <div class="text-sm text-gray-500">Review files added to git staging
+                                                    area</div>
                                             </div>
                                         </label>
-                                        <label class="flex items-start space-x-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
-                                            <input type="radio" name="analysis-type" value="commit" class="mt-1 text-primary">
+                                        <label
+                                            class="flex items-start space-x-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                                            <input type="radio" name="analysis-type" value="commit"
+                                                class="mt-1 text-primary">
                                             <div>
                                                 <div class="font-medium text-gray-900">🎯 Specific Commit</div>
-                                                <div class="text-sm text-gray-500">Review changes from a particular commit</div>
+                                                <div class="text-sm text-gray-500">Review changes from a particular
+                                                    commit</div>
                                             </div>
                                         </label>
                                     </div>
@@ -526,7 +617,8 @@
                                 <!-- Commit Selection (Hidden by default) -->
                                 <div id="commit-selection" class="hidden">
                                     <h4 class="text-sm font-medium text-gray-700 mb-3">Select Commit</h4>
-                                    <select id="commit-dropdown" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
+                                    <select id="commit-dropdown"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
                                         <option value="">Choose a commit...</option>
                                         <!-- Options will be populated dynamically -->
                                     </select>
@@ -537,7 +629,8 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <h4 class="text-sm font-medium text-gray-700 mb-2">Recent Commits</h4>
-                                            <div id="commits-list" class="text-sm text-gray-600 max-h-32 overflow-y-auto">
+                                            <div id="commits-list"
+                                                class="text-sm text-gray-600 max-h-32 overflow-y-auto">
                                                 <!-- Commits will be populated dynamically -->
                                             </div>
                                         </div>
@@ -564,18 +657,23 @@
                             <!-- Step Navigation -->
                             <div class="mt-6 flex justify-between items-center pt-6 border-t">
                                 <div>
-                                    <button id="previous-step-4-btn" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                    <button id="previous-step-4-btn"
+                                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 19l-7-7 7-7" />
                                         </svg>
                                         Previous
                                     </button>
                                 </div>
                                 <div>
-                                    <button id="next-step-4-btn" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                    <button id="next-step-4-btn"
+                                        class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        disabled>
                                         Next
                                         <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5l7 7-7 7" />
                                         </svg>
                                     </button>
                                 </div>
@@ -587,13 +685,18 @@
                     <div class="step-content" id="step-5-content">
                         <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Step 5: AI Model Selection</h3>
-                            
+
                             <!-- Model Loading State -->
-                            <div id="model-loading" class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
+                            <div id="model-loading"
+                                class="mb-4 bg-blue-50 border border-blue-200 rounded-md p-4 hidden">
                                 <div class="flex items-center">
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
                                     </svg>
                                     <p class="text-sm text-blue-800">Loading available AI models...</p>
                                 </div>
@@ -604,7 +707,9 @@
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                     </div>
                                     <div class="ml-3">
@@ -616,27 +721,29 @@
                                 </div>
                             </div>
 
-                                                        <!-- Model Selection Content -->
+                            <!-- Model Selection Content -->
                             <div id="model-content" class="space-y-6">
                                 <!-- Model Selection -->
                                 <div id="model-selection">
                                     <label for="model-select" class="block text-sm font-medium text-gray-700 mb-2">
                                         Select AI Model for Analysis
                                     </label>
-                                    <select
-                                        id="model-select"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                    >
+                                    <select id="model-select"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm">
                                         <option value="">Choose a model...</option>
                                         <!-- Options will be populated dynamically -->
                                     </select>
                                 </div>
 
                                 <!-- Selected Model Display -->
-                                <div id="model-selected" class="bg-green-50 border border-green-200 rounded-md p-4 hidden">
+                                <div id="model-selected"
+                                    class="bg-green-50 border border-green-200 rounded-md p-4 hidden">
                                     <div class="flex items-center">
-                                        <svg class="h-5 w-5 text-green-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        <svg class="h-5 w-5 text-green-400 mr-2" viewBox="0 0 20 20"
+                                            fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                         <p class="text-sm font-medium text-green-800">
                                             Model selected: <span id="selected-model-name"></span>
@@ -649,13 +756,18 @@
                             <div id="analysis-execution-loading" class="hidden">
                                 <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
                                     <div class="flex items-center">
-                                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
                                         </svg>
                                         <div>
                                             <h4 class="text-sm font-medium text-blue-800">Running Analysis...</h4>
-                                            <p class="text-sm text-blue-700 mt-1">Processing your code with AI model...</p>
+                                            <p class="text-sm text-blue-700 mt-1">Processing your code with AI model...
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -672,17 +784,22 @@
                             <!-- Step Navigation -->
                             <div class="mt-6 flex justify-between items-center pt-6 border-t">
                                 <div>
-                                    <button id="previous-step-5-btn" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                                    <button id="previous-step-5-btn"
+                                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 19l-7-7 7-7" />
                                         </svg>
                                         Previous
                                     </button>
                                 </div>
                                 <div>
-                                    <button id="run-analysis-btn" class="inline-flex items-center px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                    <button id="run-analysis-btn"
+                                        class="inline-flex items-center px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        disabled>
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h1m4 0h1M3 5h18M3 19h18M3 12h18"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h1m4 0h1M3 5h18M3 19h18M3 12h18" />
                                         </svg>
                                         Start Analysis
                                     </button>
@@ -703,7 +820,8 @@
                     </p>
                     <div class="flex items-center space-x-4 text-sm text-gray-500">
                         <span>Vanilla JS v1.0.0</span>
-                        <span>SignalR Connected: <span id="signalr-status" class="text-xs text-gray-400">Initializing...</span></span>
+                        <span>SignalR Connected: <span id="signalr-status"
+                                class="text-xs text-gray-400">Initializing...</span></span>
                     </div>
                 </div>
             </div>
@@ -713,7 +831,7 @@
     <!-- Simple inline script for basic functionality -->
     <script>
         console.log('🚀 AI Code Reviewer - Inline script loaded');
-        
+
         // Skip SignalR when running from file:// protocol
         if (window.location.protocol === 'file:') {
             console.log('ℹ️ Running from file:// protocol, SignalR will be skipped');
@@ -724,5 +842,38 @@
             }
         }
     </script>
+    <!-- Directory Browser Modal -->
+    <div id="directory-browser-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="modal-content bg-white rounded-lg shadow-xl mx-auto mt-20 max-w-2xl w-full">
+            <div class="modal-header p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Select Repository Directory</h3>
+                <button id="close-directory-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <div class="current-path mb-4 text-sm text-gray-600">
+                    Current Path: <span id="current-path-display"></span>
+                </div>
+                
+                <div id="directory-list" class="border rounded-md p-2 max-h-64 overflow-y-auto">
+                    <!-- Directory items will be populated here -->
+                </div>
+            </div>
+            
+            <div class="modal-footer p-4 border-t flex justify-between">
+                <button id="directory-up-level" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                    Up One Level
+                </button>
+                <button id="select-directory" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">
+                    Select This Folder
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AICodeReviewer.Web", "AICodeReviewer.Web\AICodeReviewer.Web.csproj", "{D78C4FE7-D0D5-4900-9F00-51D746A143E3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AICodeReviewer.Web.Tests", "AICodeReviewer.Web.Tests\AICodeReviewer.Web.Tests.csproj", "{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,18 @@ Global
 		{D78C4FE7-D0D5-4900-9F00-51D746A143E3}.Release|x64.Build.0 = Release|Any CPU
 		{D78C4FE7-D0D5-4900-9F00-51D746A143E3}.Release|x86.ActiveCfg = Release|Any CPU
 		{D78C4FE7-D0D5-4900-9F00-51D746A143E3}.Release|x86.Build.0 = Release|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Debug|x64.Build.0 = Debug|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Debug|x86.Build.0 = Debug|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Release|x64.ActiveCfg = Release|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Release|x64.Build.0 = Release|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Release|x86.ActiveCfg = Release|Any CPU
+		{2CA50B77-B2D2-4F02-AD6D-AB4FA773E52D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

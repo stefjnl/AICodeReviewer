@@ -92,7 +92,7 @@ export class ExecutionService {
                 analysisType = "singlefile";
                 targetFile = workflowState.targetFile;
             } else if (analysisType === 'commit') {
-                targetCommit = workflowState.targetCommit;
+                targetCommit = analysisState.selectedCommit; // Fixed: Use analysisState.selectedCommit instead of workflowState.targetCommit
             } else if (analysisType === 'document') {
                 analysisType = "singlefile"; // Document analysis is treated as single file analysis
             } else if (analysisType === 'uncommitted') {
