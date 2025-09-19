@@ -123,6 +123,19 @@
     transition: all 0.2s ease;
 }
 
+/* Previous button styling - matches Next button but with different color */
+.step-navigation .bg-gray-200 {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border: 1px solid transparent !important;
+}
+
+.step-navigation .bg-gray-200:hover:not(:disabled) {
+    background-color: #1d4ed8 !important;
+    color: white !important;
+    border: 1px solid transparent !important;
+}
+
 .step-navigation button:disabled {
     opacity: 0.5;
     cursor: not-allowed;

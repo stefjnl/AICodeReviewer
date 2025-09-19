@@ -7,12 +7,12 @@
     --color-text-primary: #cccccc;
     --color-text-secondary: #969696;
     --color-text-muted: #6a6a6a;
-    --color-border: #3e3e42;
-    --color-border-light: #464647;
+    --color-border: #374151;
+    --color-border-light: #374151;
     
     /* Step indicator colors - VS Code accent colors */
     --step-number-inactive-bg: #3e3e42;
-    --step-number-inactive-text: #969696;
+    --step-number-inactive-text: #6B7280;
     --step-number-active-bg: #007acc;
     --step-number-active-text: #ffffff;
     --step-number-completed-bg: #4ec9b0;
@@ -74,13 +74,25 @@
     border: 1px solid transparent !important;
 }
 
-.dark-theme .bg-gray-200 {
+.dark-theme .step-navigation .bg-gray-200 {
+    background-color: var(--vscode-button-bg) !important;
+    color: #ffffff !important;
+    border: 1px solid transparent !important;
+}
+
+.dark-theme .step-navigation .bg-gray-200:hover:not(:disabled) {
+    background-color: var(--vscode-button-hover) !important;
+    color: #ffffff !important;
+    border: 1px solid transparent !important;
+}
+
+.dark-theme .bg-gray-200:not(.step-navigation .bg-gray-200) {
     background-color: #3e3e42 !important;
     color: #cccccc !important;
     border: 1px solid #3e3e42 !important;
 }
 
-.dark-theme .bg-gray-200:hover {
+.dark-theme .bg-gray-200:hover:not(.step-navigation .bg-gray-200) {
     background-color: #464647 !important;
     color: #ffffff !important;
     border: 1px solid #464647 !important;
