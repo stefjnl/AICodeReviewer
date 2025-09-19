@@ -1,0 +1,268 @@
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-surface: #0f172a;
+        --color-surface-dark: #1e293b;
+        --color-surface-darker: #334155;
+        --color-text-primary: #f8fafc;
+        --color-text-secondary: #cbd5e1;
+        --color-text-muted: #94a3b8;
+        --color-border: #334155;
+        --color-border-light: #475569;
+    }
+
+    /* Dark mode enhancements for enhanced components */
+    .summary-dashboard {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-color: #334155;
+    }
+    
+    .risk-assessment,
+    .issue-statistics,
+    .impact-analysis {
+        background: #1e293b;
+        border-color: #334155;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    
+    .stat-item {
+        background: #334155;
+        border-color: #475569;
+    }
+    
+    .stat-item.critical {
+        background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%);
+        border-color: #b91c1c;
+    }
+    
+    .stat-item.warning {
+        background: linear-gradient(135deg, #78350f 0%, #c2410c 100%);
+        border-color: #c2410c;
+    }
+    
+    .stat-item.suggestion {
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        border-color: #2563eb;
+    }
+    
+    .stat-item.total {
+        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        border-color: #374151;
+    }
+    
+    .impact-item {
+        background: #334155;
+        border-color: #475569;
+    }
+    
+    .impact-label {
+        color: #cbd5e1;
+    }
+    
+    .impact-value {
+        color: #f8fafc;
+    }
+    
+    .results-controls {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-color: #334155;
+    }
+    
+    .filter-select,
+    .sort-button {
+        background: #334155;
+        border-color: #475569;
+        color: #e2e8f0;
+    }
+    
+    .filter-select:focus,
+    .sort-button:hover {
+        border-color: #3b82f6;
+        background: #1e293b;
+    }
+    
+    .sort-button.active {
+        background: #3b82f6;
+        border-color: #3b82f6;
+    }
+    
+    .issue-group {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    
+    .group-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-color: #334155;
+    }
+    
+    .group-header:hover {
+        background: #1e293b;
+    }
+    
+    .issue-card {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    
+    .issue-header {
+        background: #0f172a;
+        border-color: #1e293b;
+    }
+    
+    .issue-header:hover {
+        background: #1e293b;
+    }
+    
+    .issue-title {
+        color: #f8fafc;
+    }
+    
+    .issue-location,
+    .issue-category {
+        background: #334155;
+        border-color: #475569;
+        color: #cbd5e1;
+    }
+    
+    .issue-location:hover {
+        background: #475569;
+    }
+    
+    .copy-path-btn {
+        color: #64748b;
+    }
+    
+    .copy-path-btn:hover {
+        background: #475569;
+        color: #e2e8f0;
+    }
+    
+    .issue-content {
+        background: #0f172a;
+        border-color: #1e293b;
+    }
+    
+    .description-content {
+        background: #1e293b;
+        border-color: #334155;
+        color: #e2e8f0;
+    }
+    
+    .issue-suggestion {
+        background: linear-gradient(135deg, #052e16 0%, #14532d 100%);
+        border-color: #166534;
+    }
+    
+    .suggestion-header {
+        color: #86efac;
+    }
+    
+    .suggestion-content {
+        color: #d1d5db;
+    }
+    
+    .export-button {
+        background: #334155;
+        border-color: #475569;
+        color: #e2e8f0;
+    }
+    
+    .export-button:hover {
+        background: #475569;
+        border-color: #64748b;
+        color: #f8fafc;
+    }
+    
+    .search-input {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    
+    .search-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    
+    .search-icon {
+        color: #9ca3af;
+    }
+
+    /* Enhanced hover effects for dark mode */
+    .issue-card:hover {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .issue-card.critical {
+        border-left-color: #f87171;
+    }
+    
+    .issue-card.warning {
+        border-left-color: #fbbf24;
+    }
+    
+    .issue-card.suggestion {
+        border-left-color: #60a5fa;
+    }
+    
+    .issue-card.style {
+        border-left-color: #a78bfa;
+    }
+    
+    .issue-card.info {
+        border-left-color: #9ca3af;
+    }
+    
+    .issue-severity.critical {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+    
+    .issue-severity.warning {
+        background-color: rgba(245, 158, 11, 0.2);
+        color: #fcd34d;
+    }
+    
+    .issue-severity.suggestion {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+    }
+    
+    .issue-severity.style {
+        background-color: rgba(139, 92, 246, 0.2);
+        color: #c4b5fd;
+    }
+    
+    .issue-severity.info {
+        background-color: rgba(107, 114, 128, 0.2);
+        color: #d1d5db;
+    }
+    
+    .action-indicator.fix {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+    
+    .action-indicator.review {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+    }
+    
+    .action-indicator.consider {
+        background-color: rgba(107, 114, 128, 0.2);
+        color: #d1d5db;
+    }
+    
+    .risk-progress.high {
+        background: linear-gradient(90deg, #f87171, #ef4444);
+    }
+    
+    .risk-progress.medium {
+        background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    }
+    
+    .risk-progress.low {
+        background: linear-gradient(90deg, #34d399, #10b981);
+    }
+}

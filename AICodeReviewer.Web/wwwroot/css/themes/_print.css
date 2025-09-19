@@ -1,0 +1,31 @@
+/* Print styles */
+@media print {
+    .no-print {
+        display: none;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+
+    /* Print styles for results */
+    .issue-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    .issue-expand-toggle {
+        display: none;
+    }
+    
+    .issue-content {
+        display: block !important;
+    }
+    
+    .results-controls,
+    .export-controls {
+        display: none;
+    }
+}

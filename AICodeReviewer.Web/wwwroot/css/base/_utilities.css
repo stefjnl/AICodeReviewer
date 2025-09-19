@@ -1,0 +1,91 @@
+/* Utility classes for consistent spacing */
+.space-y-1 > * + * {
+    margin-top: 0.25rem;
+}
+
+.space-y-2 > * + * {
+    margin-top: 0.5rem;
+}
+
+.space-y-3 > * + * {
+    margin-top: 0.75rem;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+    .hide-mobile {
+        display: none;
+    }
+}
+
+@media (min-width: 641px) {
+    .hide-desktop {
+        display: none;
+    }
+}
+
+/* Hidden utility */
+.hidden {
+    display: none;
+}
+
+/* Transform utilities for icons */
+.rotate-180 {
+    transform: rotate(180deg);
+}
+
+.transform {
+    transition: transform 0.2s ease;
+}
+
+/* File tree styles */
+.file-tree {
+    font-family: 'Consolas', 'Monaco', 'Lucida Console', 'Liberation Mono', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Courier New', monospace;
+}
+
+.file-tree .folder {
+    color: var(--color-warning);
+}
+
+.file-tree .file {
+    color: var(--color-text-secondary);
+}
+
+/* Status indicator styles */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.status-indicator.success {
+    background-color: var(--color-success);
+}
+
+.status-indicator.warning {
+    background-color: var(--color-warning);
+}
+
+.status-indicator.error {
+    background-color: var(--color-error);
+}
+
+.status-indicator.info {
+    background-color: var(--color-info);
+}
+
+/* Code block styles */
+pre {
+    background-color: var(--color-surface-dark);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+code {
+    font-family: 'Consolas', 'Monaco', 'Lucida Console', 'Liberation Mono', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Courier New', monospace;
+    font-size: 0.875em;
+}

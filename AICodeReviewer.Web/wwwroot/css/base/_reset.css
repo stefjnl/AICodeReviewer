@@ -1,0 +1,69 @@
+/* Reset and base styles */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    -moz-tab-size: 4;
+    tab-size: 4;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-border-light);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-secondary-light);
+    border-radius: var(--radius-md);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-secondary);
+}
+
+/* Focus styles for better accessibility */
+*:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --color-border: #000;
+        --color-text-primary: #000;
+        --color-surface: #fff;
+    }
+}
