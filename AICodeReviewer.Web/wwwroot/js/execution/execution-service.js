@@ -381,11 +381,16 @@ export class ExecutionService {
                     ${feedback.map(item => `
                         <div class="border-l-4 ${this.getSeverityBorderColor(item.severity)} pl-4">
                             <div class="flex items-center justify-between">
-                                <h5 class="text-sm font-medium text-gray-900">${item.title}</h5>
+                                <h5 class="text-sm font-medium text-gray-900">${item.file ? item.file + (item.line ? ':' + item.line : '') : item.title}</h5>
                                 <span class="text-xs ${this.getSeverityTextColor(item.severity)} font-medium">
                                     ${item.severity}
                                 </span>
                             </div>
+                            ${item.file ? `
+                            <div class="issue-location" data-file-path="${item.file}${item.line ? `:${item.line}` : ''}">
+                                <span class="text-xs text-gray-500">${item.file}${item.line ? `:${item.line}` : ''}</span>
+                            </div>
+                            ` : ''}
                             <p class="mt-1 text-sm text-gray-600">${item.description}</p>
                             ${item.suggestions ? `
                                 <div class="mt-2 text-sm">
