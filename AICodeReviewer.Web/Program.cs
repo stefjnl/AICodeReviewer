@@ -54,8 +54,13 @@ builder.Services.AddScoped<IDocumentRetrievalService, DocumentRetrievalService>(
 builder.Services.AddScoped<IAIAnalysisOrchestrator, AIAnalysisOrchestrator>();
 builder.Services.AddScoped<IResultProcessorService, ResultProcessorService>();
 
-// Register domain services
-builder.Services.AddScoped<IAnalysisService, AnalysisCoordinatorService>();
+// Register new specialized services
+builder.Services.AddScoped<AnalysisCacheService>();
+builder.Services.AddScoped<BackgroundTaskService>();
+builder.Services.AddScoped<AnalysisProgressService>();
+
+// Register Application layer service as the main analysis service
+builder.Services.AddScoped<IAnalysisService, AICodeReviewer.Web.Application.Services.AnalysisOrchestrationService>();
 builder.Services.AddScoped<IRepositoryManagementService, RepositoryManagementService>();
 builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService>();
 builder.Services.AddScoped<IPathValidationService, PathValidationService>();
