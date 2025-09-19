@@ -13,12 +13,16 @@ import { updateRepositoryUI } from './repository/repository-ui.js';
 import { initializeAnalysisState } from './analysis/analysis-state.js';
 import { modelState } from './models/model-state.js';
 import { documentManager } from './documents/document-manager.js';
+import ThemeManager from './core/theme-manager.js';
 
 console.log('🚀 AI Code Reviewer - Main.js loaded successfully');
 
 // Document ready check
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM fully loaded and parsed');
+    
+    // Initialize theme manager
+    const themeManager = new ThemeManager();
     
     // Initialize SignalR connection
     initializeSignalR();
@@ -42,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
     showStep(1);
     
     console.log('✅ Application initialized successfully');
+    console.log(`🎨 Current theme: ${themeManager.getCurrentTheme()}`);
     
     // Initialize repository validation UI state
     updateRepositoryUI('clear');

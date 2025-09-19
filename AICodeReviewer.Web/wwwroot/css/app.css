@@ -16,5 +16,6 @@
 @import "components/_animations.css";
 
 /* Import theme layer */
+@import "themes/_light.css";
 @import "themes/_dark.css";
 @import "themes/_print.css";
