@@ -842,6 +842,38 @@
             }
         }
     </script>
+    <!-- Directory Browser Modal -->
+    <div id="directory-browser-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="modal-content bg-white rounded-lg shadow-xl mx-auto mt-20 max-w-2xl w-full">
+            <div class="modal-header p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Select Repository Directory</h3>
+                <button id="close-directory-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <div class="current-path mb-4 text-sm text-gray-600">
+                    Current Path: <span id="current-path-display"></span>
+                </div>
+                
+                <div id="directory-list" class="border rounded-md p-2 max-h-64 overflow-y-auto">
+                    <!-- Directory items will be populated here -->
+                </div>
+            </div>
+            
+            <div class="modal-footer p-4 border-t flex justify-between">
+                <button id="directory-up-level" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                    Up One Level
+                </button>
+                <button id="select-directory" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">
+                    Select This Folder
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
