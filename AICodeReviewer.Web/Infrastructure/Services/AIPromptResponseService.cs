@@ -30,6 +30,14 @@ public class AIPromptResponseService : IAIPromptResponseService
 
         try
         {
+            // Try parsing new format first
+            var newFormatFeedback = ParseNewFormatResponse(rawResponse);
+            if (newFormatFeedback.Count > 0)
+            {
+                return newFormatFeedback;
+            }
+
+            // Fallback to old format parsing
             // First, try to split by numbered or bulleted issues
             var issues = SplitIntoIssues(rawResponse);
             
@@ -318,5 +326,142 @@ public class AIPromptResponseService : IAIPromptResponseService
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Parse new format response with enhanced layout
+    /// </summary>
+    private List<FeedbackItem> ParseNewFormatResponse(string response)
+    {
+        var feedback = new List<FeedbackItem>();
+        
+        // Only attempt new format parsing if we have the exact format markers
+        if (!response.Contains("📊 SUMMARY:") &&
+            !response.Contains("🚨 CRITICAL ISSUES"))
+        {
+            return feedback;
+        }
+        
+        // Parse critical issues section
+        var criticalSection = ExtractSection(response, "🚨 CRITICAL ISSUES", "⚠️ WARNINGS");
+        feedback.AddRange(ParseSection(criticalSection, Severity.Critical));
+        
+        // Parse warnings section
+        var warningSection = ExtractSection(response, "⚠️ WARNINGS", "💡 IMPROVEMENTS");
+        feedback.AddRange(ParseSection(warningSection, Severity.Warning));
+        
+        // Parse improvements section
+        var improvementSection = ExtractSection(response, "💡 IMPROVEMENTS", null);
+        feedback.AddRange(ParseSection(improvementSection, Severity.Suggestion));
+        
+        return feedback;
+    }
+
+    /// <summary>
+    /// Extract a section from the response based on start and end markers
+    /// </summary>
+    private string ExtractSection(string response, string startMarker, string? endMarker)
+    {
+        var startIndex = response.IndexOf(startMarker);
+        if (startIndex == -1) return string.Empty;
+        
+        var actualStart = startIndex + startMarker.Length;
+        var endIndex = endMarker != null ? response.IndexOf(endMarker, actualStart) : -1;
+        var length = endIndex == -1 ? response.Length - actualStart : endIndex - actualStart;
+        
+        return response.Substring(actualStart, length);
+    }
+
+    /// <summary>
+    /// Parse a section into feedback items (new format only)
+    /// </summary>
+    private List<FeedbackItem> ParseSection(string section, Severity defaultSeverity)
+    {
+        var items = new List<FeedbackItem>();
+        
+        if (string.IsNullOrWhiteSpace(section))
+            return items;
+        
+        // Parse individual items from section
+        var lines = section.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var currentItem = new FeedbackItem { Severity = defaultSeverity };
+        bool hasValidContent = false;
+        
+        foreach (var line in lines)
+        {
+            var trimmedLine = line.Trim();
+            if (string.IsNullOrWhiteSpace(trimmedLine)) continue;
+            
+            if (trimmedLine.StartsWith("🚨") || trimmedLine.StartsWith("⚠️") || trimmedLine.StartsWith("💡"))
+            {
+                if (hasValidContent)
+                {
+                    items.Add(currentItem);
+                    currentItem = new FeedbackItem { Severity = defaultSeverity };
+                }
+                currentItem.Message = trimmedLine.Substring(1).Trim();
+                hasValidContent = true;
+            }
+            else if (trimmedLine.StartsWith("File:"))
+            {
+                var fileMatch = Regex.Match(trimmedLine, @"File:\s*([^\n:]+)(?::(\d+))?");
+                if (fileMatch.Success)
+                {
+                    currentItem.FilePath = fileMatch.Groups[1].Value.Trim();
+                    if (int.TryParse(fileMatch.Groups[2].Value, out int lineNum))
+                        currentItem.LineNumber = lineNum;
+                }
+            }
+            else if (trimmedLine.StartsWith("Issue:") || trimmedLine.StartsWith("Fix:") ||
+                     trimmedLine.StartsWith("Suggestion:") || trimmedLine.StartsWith("Better:"))
+            {
+                var content = trimmedLine.Substring(trimmedLine.IndexOf(':') + 1).Trim();
+                if (trimmedLine.StartsWith("Issue:"))
+                    currentItem.Message = content;
+                else
+                    currentItem.Suggestion = content;
+            }
+        }
+        
+        if (hasValidContent)
+            items.Add(currentItem);
+        
+        return items;
+    }
+
+    /// <summary>
+    /// Parse individual item from new format
+    /// </summary>
+    private FeedbackItem? ParseNewFormatItem(string itemText, Severity severity)
+    {
+        if (string.IsNullOrWhiteSpace(itemText))
+            return null;
+
+        // Extract brief description
+        var descriptionMatch = Regex.Match(itemText, @"^([^\n]+)");
+        var briefDescription = descriptionMatch.Success ? descriptionMatch.Groups[1].Value.Trim() : "Issue found";
+
+        // Extract file and line
+        var fileLineMatch = Regex.Match(itemText, @"File:\s*([^\n:]+)(?::(\d+))?");
+        var filePath = fileLineMatch.Success ? fileLineMatch.Groups[1].Value.Trim() : string.Empty;
+        var lineNumber = fileLineMatch.Success && fileLineMatch.Groups.Count > 2 && int.TryParse(fileLineMatch.Groups[2].Value, out int line) ? line : (int?)null;
+
+        // Extract issue/suggestion text
+        var issueMatch = Regex.Match(itemText, @"Issue:\s*([^\n]+)");
+        var suggestionMatch = Regex.Match(itemText, @"(?:Fix|Suggestion|Better):\s*([^\n]+)");
+        var impactMatch = Regex.Match(itemText, @"Impact|Benefit:\s*([^\n]+)");
+        
+        var message = issueMatch.Success ? issueMatch.Groups[1].Value.Trim() : briefDescription;
+        var suggestion = suggestionMatch.Success ? suggestionMatch.Groups[1].Value.Trim() : null;
+
+        return new FeedbackItem
+        {
+            Severity = severity,
+            Message = message,
+            Suggestion = suggestion,
+            FilePath = filePath,
+            LineNumber = lineNumber,
+            Category = DetermineCategory(message)
+        };
     }
 }

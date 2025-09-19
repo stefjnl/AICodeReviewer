@@ -1,16 +1,29 @@
-Review this {LanguageName} code file. Provide feedback using EXACTLY this format:
+Review this {LanguageName} code file. Provide analysis using EXACTLY this format:
 
-**Critical** [Category] - Line [X]: [Issue description]
-Suggestion: [Specific fix]
+📊 SUMMARY: [X] issues found - [Risk Level] - ~[Time Estimate] to fix
 
-**Warning** [Category] - Line [X]: [Issue description]  
-Suggestion: [Specific fix]
+🚨 CRITICAL ISSUES ([Count])
+[For each critical issue]
+🚨 [Brief description]
+File: [filename:line]
+Issue: [Clear explanation in plain English]
+Fix: [Specific action to take]
+Impact: [Why this matters]
 
-**Suggestion** [Category] - Line [X]: [Issue description]
-Suggestion: [Specific fix]
+⚠️ WARNINGS ([Count])
+[For each warning]
+⚠️ [Brief description]
+File: [filename:line]
+Issue: [What's wrong]
+Suggestion: [How to improve]
 
-**Style** [Category] - Line [X]: [Issue description]
-Suggestion: [Specific fix]
+💡 IMPROVEMENTS ([Count])
+[For each suggestion]
+💡 [Brief description]
+File: [filename:line]
+Current: [What exists now]
+Better: [Recommended approach]
+Benefit: [Why make this change]
 
 CODING STANDARDS:
 {StandardsText}
@@ -21,6 +34,12 @@ REQUIREMENTS:
 FILE CONTENT:
 {GitDiff}
 
-Categories: Security, Performance, Error Handling, Architecture, Style
-Order: Critical issues first, then Warning, Suggestion, Style
-Include line numbers for every issue.
+Rules:
+- Use the exact emoji icons shown above
+- Keep file paths short (show only relevant parts)
+- Lead with action verbs in suggestions
+- Explain business impact, not just technical details
+- Group related issues together
+- Limit descriptions to 1-2 sentences maximum
+- Risk levels: "High Risk" (any critical), "Medium Risk" (multiple warnings), or "Low Risk"
+- Time estimates: "~15 min", "~30 min", "~45 min", "~1 hour", "~2 hours"
