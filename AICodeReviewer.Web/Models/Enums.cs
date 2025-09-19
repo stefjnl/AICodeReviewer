@@ -62,7 +62,9 @@ public static class FeedbackConstants
 public enum SupportedLanguage
 {
     NET,
-    Python
+    Python,
+    JavaScript,
+    HTML
 }
 
 /// <summary>

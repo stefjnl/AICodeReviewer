@@ -41,6 +41,24 @@ public class AIService : IAIService
                 NamingConvention = "snake_case for variables and functions",
                 AsyncPattern = "async/await with asyncio",
                 BestPractices = "PEP 8 standards, type hints, proper exception handling"
+            },
+            [SupportedLanguage.JavaScript] = new PromptTemplate
+            {
+                Role = "senior JavaScript/TypeScript developer",
+                LanguageName = "JavaScript/TypeScript",
+                FileExtensions = new[] { ".js", ".ts", ".jsx", ".tsx" },
+                NamingConvention = "camelCase for variables/functions, PascalCase for classes/components",
+                AsyncPattern = "async/await with Promises",
+                BestPractices = "ES6+ features, type safety with TypeScript, proper error handling, module patterns"
+            },
+            [SupportedLanguage.HTML] = new PromptTemplate
+            {
+                Role = "senior frontend developer",
+                LanguageName = "HTML/CSS",
+                FileExtensions = new[] { ".html", ".htm", ".css", ".scss", ".sass", ".less" },
+                NamingConvention = "kebab-case for CSS classes, semantic HTML elements",
+                AsyncPattern = "N/A (markup/styles are not async languages)",
+                BestPractices = "Semantic HTML, accessibility (a11y), responsive design, CSS specificity management, browser compatibility, performance optimization"
             }
         };
     }
@@ -56,10 +74,8 @@ public class AIService : IAIService
             if (string.IsNullOrEmpty(content))
                 return ("", true, isFileContent ? "No file content to analyze" : "No code changes to analyze");
 
-            // Convert string language to enum
-            var languageEnum = Enum.TryParse<SupportedLanguage>(language, true, out var parsedLanguage)
-                ? parsedLanguage
-                : SupportedLanguage.NET; // Default fallback
+            // Convert string language to enum with proper mapping
+            var languageEnum = MapLanguageStringToEnum(language);
 
             var prompt = BuildPrompt(content, codingStandards, requirements, languageEnum, isFileContent);
 
@@ -128,6 +144,19 @@ public class AIService : IAIService
             _logger.LogError(ex, "Unexpected error during AI analysis");
             return ("", true, "An unexpected error occurred during analysis. Please try again.");
         }
+    }
+
+    private SupportedLanguage MapLanguageStringToEnum(string language)
+    {
+        // Map frontend language IDs to backend enum values
+        return language?.ToLowerInvariant() switch
+        {
+            "dotnet" => SupportedLanguage.NET,
+            "python" => SupportedLanguage.Python,
+            "javascript" => SupportedLanguage.JavaScript,
+            "html" => SupportedLanguage.HTML,
+            _ => SupportedLanguage.NET // Default fallback
+        };
     }
 
     private string BuildPrompt(string content, List<string> standards, string requirements, SupportedLanguage language, bool isFileContent = false)
