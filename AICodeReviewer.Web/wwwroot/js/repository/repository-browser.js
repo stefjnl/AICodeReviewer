@@ -19,38 +19,66 @@ export async function browseForRepository() {
  * Initializes the repository browser functionality
  */
 export function initializeRepositoryBrowser() {
+    console.log('🔍 DEBUG: initializeRepositoryBrowser() called');
+    
     const browseBtn = document.getElementById('browse-repository-btn');
-
+    console.log('🔍 DEBUG: browse-repository-btn element:', browseBtn);
+    
     if (browseBtn) {
-        console.log('Initializing repository browser (server-side)');
+        console.log('🔍 DEBUG: Browse button found, attaching listener');
         
-        browseBtn.addEventListener('click', browseForRepository);
+        const clickHandler = () => {
+            console.log('🔍 DEBUG: browse-repository-btn clicked!');
+            browseForRepository();
+        };
+        
+        browseBtn.addEventListener('click', clickHandler);
         browseBtn.title = 'Browse for repository directory using server-side file browser';
+        
+        console.log('🔍 DEBUG: Click listener attached successfully');
         
         // Setup modal event handlers
         setupModalHandlers();
         
-        console.log('Repository browser initialized');
+        console.log('🔍 DEBUG: Repository browser initialization complete');
+    } else {
+        console.error('❌ ERROR: browse-repository-btn not found in DOM');
+        console.error('❌ ERROR: Available buttons:', document.querySelectorAll('button'));
+        console.error('❌ ERROR: Step 2 content visibility:', document.getElementById('step-2-content')?.style.display);
     }
 }
 
 function setupModalHandlers() {
+    console.log('🔍 DEBUG: Setting up modal handlers...');
+    
     // Close modal button
     const closeBtn = document.getElementById('close-directory-modal');
+    console.log('🔍 DEBUG: close-directory-modal:', closeBtn);
     if (closeBtn) {
         closeBtn.addEventListener('click', closeDirectoryBrowser);
+        console.log('🔍 DEBUG: Close modal listener attached');
+    } else {
+        console.error('❌ ERROR: close-directory-modal not found');
     }
     
     // Select directory button
     const selectBtn = document.getElementById('select-directory');
+    console.log('🔍 DEBUG: select-directory:', selectBtn);
     if (selectBtn) {
         selectBtn.addEventListener('click', selectCurrentDirectory);
+        console.log('🔍 DEBUG: Select directory listener attached');
+    } else {
+        console.error('❌ ERROR: select-directory not found');
     }
     
     // Up level button
     const upLevelBtn = document.getElementById('directory-up-level');
+    console.log('🔍 DEBUG: directory-up-level:', upLevelBtn);
     if (upLevelBtn) {
         upLevelBtn.addEventListener('click', navigateUpLevel);
+        console.log('🔍 DEBUG: Up level listener attached');
+    } else {
+        console.error('❌ ERROR: directory-up-level not found');
     }
 }
 

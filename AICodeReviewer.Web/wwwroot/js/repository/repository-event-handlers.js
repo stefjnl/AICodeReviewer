@@ -5,9 +5,28 @@ import { repositoryState } from './repository-state.js';
 import { clearRepositoryValidation, updateRepositoryUI } from './repository-ui.js';
 import { validateRepository } from './repository-validator.js';
 
-export function initializeRepositoryValidation() {
-    // Initialize repository browser functionality
-    initializeRepositoryBrowser();
+// Event listener tracker for repository system
+const repositoryEventListeners = [];
+
+/**
+ * Cleanup all repository-related event listeners
+ */
+export function cleanupRepositoryEventListeners() {
+    repositoryEventListeners.forEach(({ element, event, handler }) => {
+        if (element && element.removeEventListener) {
+            element.removeEventListener(event, handler);
+        }
+    });
+    repositoryEventListeners.length = 0;
+    console.log('🧹 Repository event listeners cleaned up');
+}
+
+/**
+ * Initialize repository event listeners with cleanup capability
+ */
+export function initializeRepositoryEventListeners() {
+    // Clean up any existing listeners first
+    cleanupRepositoryEventListeners();
 
     const pathInput = document.getElementById('repository-path');
     const validateBtn = document.getElementById('validate-repository-btn');
@@ -15,36 +34,64 @@ export function initializeRepositoryValidation() {
     const resetBtn = document.getElementById('reset-repository-btn');
 
     if (pathInput) {
-        pathInput.addEventListener('input', (e) => {
+        const inputHandler = (e) => {
             const path = e.target.value.trim();
             if (validateBtn) validateBtn.disabled = !path;
-
-            // Clear validation states on new input
             if (path !== repositoryState.path) {
                 updateRepositoryUI('clear');
             }
-        });
+        };
+        pathInput.addEventListener('input', inputHandler);
+        repositoryEventListeners.push({ element: pathInput, event: 'input', handler: inputHandler });
 
-        pathInput.addEventListener('keypress', (e) => {
+        const keypressHandler = (e) => {
             if (e.key === 'Enter' && e.target.value.trim()) {
                 validateRepository();
             }
-        });
+        };
+        pathInput.addEventListener('keypress', keypressHandler);
+        repositoryEventListeners.push({ element: pathInput, event: 'keypress', handler: keypressHandler });
     }
 
     if (validateBtn) {
-        validateBtn.addEventListener('click', validateRepository);
+        const handler = () => validateRepository();
+        validateBtn.addEventListener('click', handler);
+        repositoryEventListeners.push({ element: validateBtn, event: 'click', handler });
     }
 
     if (closeErrorBtn) {
-        closeErrorBtn.addEventListener('click', () => {
-            updateRepositoryUI('clear');
-        });
+        const handler = () => updateRepositoryUI('clear');
+        closeErrorBtn.addEventListener('click', handler);
+        repositoryEventListeners.push({ element: closeErrorBtn, event: 'click', handler });
     }
 
     if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            clearRepositoryValidation();
-        });
+        const handler = () => clearRepositoryValidation();
+        resetBtn.addEventListener('click', handler);
+        repositoryEventListeners.push({ element: resetBtn, event: 'click', handler });
     }
+
+    console.log(`📁 Repository event listeners initialized: ${repositoryEventListeners.length} listeners`);
+    
+    // Debug: Verify button existence and listener attachment
+    console.log('🔍 Repository system initialization complete');
+    console.log('   browse-repository-btn:', document.getElementById('browse-repository-btn'));
+    console.log('   validate-repository-btn:', document.getElementById('validate-repository-btn'));
+    console.log('   repository-path:', document.getElementById('repository-path'));
+}
+
+/**
+ * Reinitialize repository event listeners with cleanup
+ */
+export function reinitializeRepositoryEventListeners() {
+    cleanupRepositoryEventListeners();
+    initializeRepositoryEventListeners();
+}
+
+/**
+ * Initialize repository validation (deprecated - use initializeRepositoryEventListeners)
+ */
+export function initializeRepositoryValidation() {
+    console.warn('initializeRepositoryValidation() is deprecated. Use initializeRepositoryEventListeners() instead.');
+    initializeRepositoryEventListeners();
 }
