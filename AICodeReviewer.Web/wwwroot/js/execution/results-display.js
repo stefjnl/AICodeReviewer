@@ -22,6 +22,11 @@ export class ResultsDisplay {
             style: false,
             info: false
         };
+        
+        // Bind event handlers for proper 'this' context
+        this.handleDocumentClick = this.handleDocumentClick.bind(this);
+        this.handleDocumentChange = this.handleDocumentChange.bind(this);
+        this.handleDocumentInput = this.handleDocumentInput.bind(this);
     }
 
     /**
@@ -162,7 +167,7 @@ export class ResultsDisplay {
         if (this.resultsContainer) {
             this.resultsContainer.style.display = 'block';
             this.resultsContainer.innerHTML = this.buildResultsHTML(results);
-            this.initializeEventListeners();
+            this.attachEventListeners();
             this.updateResultsCount();
         }
     }
@@ -962,155 +967,164 @@ export class ResultsDisplay {
     /**
      * Initializes event listeners for interactive elements
      */
-    initializeEventListeners() {
-        // Filter and sort controls
-        const severityFilter = document.getElementById('severity-filter');
-        const categoryFilter = document.getElementById('category-filter');
-        const groupByFilter = document.getElementById('group-by-filter');
-        const sortButtons = document.querySelectorAll('.sort-button');
-        const showOnlyFixable = document.getElementById('show-only-fixable');
-        const searchInput = document.getElementById('issue-search');
-        
-        if (severityFilter) {
-            severityFilter.addEventListener('change', (e) => {
-                this.filterState.severity = e.target.value;
-                this.updateResultsDisplay();
-            });
-        }
-        
-        if (categoryFilter) {
-            categoryFilter.addEventListener('change', (e) => {
-                this.filterState.category = e.target.value;
-                this.updateResultsDisplay();
-            });
-        }
-        
-        if (groupByFilter) {
-            groupByFilter.addEventListener('change', (e) => {
-                this.filterState.groupBy = e.target.value;
-                this.updateResultsDisplay();
-            });
-        }
-        
-        if (showOnlyFixable) {
-            showOnlyFixable.addEventListener('change', (e) => {
-                this.filterState.showOnlyFixable = e.target.checked;
-                this.updateResultsDisplay();
-            });
-        }
-        
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.filterState.search = e.target.value;
-                this.updateResultsDisplay();
-            });
-        }
-        
-        sortButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const sortBy = e.target.dataset.sort;
-                this.filterState.sortBy = sortBy;
-                
-                // Update active state
-                sortButtons.forEach(btn => btn.classList.remove('active'));
-                e.target.classList.add('active');
-                
-                this.updateResultsDisplay();
-            });
-        });
+    /**
+     * Attaches document-level event listeners for event delegation
+     */
+    attachEventListeners() {
+        document.addEventListener('click', this.handleDocumentClick.bind(this));
+        document.addEventListener('change', this.handleDocumentChange.bind(this));
+        document.addEventListener('input', this.handleDocumentInput.bind(this));
+    }
 
-        // Group header toggles
-        document.querySelectorAll('.group-header').forEach(header => {
-            header.addEventListener('click', (e) => {
-                const groupName = header.dataset.group;
-                const content = header.nextElementSibling;
-                const icon = header.querySelector('svg');
-                
-                content.classList.toggle('hidden');
+    /**
+     * Removes document-level event listeners during cleanup
+     */
+    removeEventListeners() {
+        document.removeEventListener('click', this.handleDocumentClick);
+        document.removeEventListener('change', this.handleDocumentChange);
+        document.removeEventListener('input', this.handleDocumentInput);
+    }
+
+    /**
+     * Handles document-level click events using event delegation
+     * @param {Event} event Click event
+     */
+    handleDocumentClick(event) {
+        // Handle group header toggles
+        const groupHeader = event.target.closest('.group-header');
+        if (groupHeader) {
+            const groupName = groupHeader.dataset.group;
+            const content = groupHeader.nextElementSibling;
+            const icon = groupHeader.querySelector('svg');
+            
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+            this.expandedSections[groupName.toLowerCase()] = !content.classList.contains('hidden');
+            return;
+        }
+
+        // Handle issue expand toggles
+        const expandToggle = event.target.closest('.issue-expand-toggle');
+        if (expandToggle) {
+            event.stopPropagation();
+            const content = expandToggle.closest('.issue-header').nextElementSibling;
+            content.classList.toggle('hidden');
+            
+            const icon = expandToggle.querySelector('svg');
+            if (icon) {
                 icon.classList.toggle('rotate-180');
-                
-                // Save expanded state
-                this.expandedSections[groupName.toLowerCase()] = !content.classList.contains('hidden');
-            });
-        });
-
-        // Issue expand toggles
-        document.querySelectorAll('.issue-expand-toggle').forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const content = button.closest('.issue-header').nextElementSibling;
-                content.classList.toggle('hidden');
-                
-                const icon = button.querySelector('svg');
-                if (icon) {
-                    icon.classList.toggle('rotate-180');
-                }
-            });
-        });
-
-        // Copy code buttons
-        document.querySelectorAll('.copy-code-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const code = e.target.dataset.code;
-                navigator.clipboard.writeText(code).then(() => {
-                    const originalHtml = e.target.innerHTML;
-                    e.target.innerHTML = `
-                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        Copied!
-                    `;
-                    setTimeout(() => {
-                        e.target.innerHTML = originalHtml;
-                    }, 2000);
-                });
-            });
-        });
-
-        // Copy file path buttons
-        document.querySelectorAll('.copy-path-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const locationSpan = button.closest('.issue-location');
-                const filePath = locationSpan.dataset.filePath;
-                
-                navigator.clipboard.writeText(filePath).then(() => {
-                    const originalHtml = button.innerHTML;
-                    button.innerHTML = `
-                        <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                    `;
-                    setTimeout(() => {
-                        button.innerHTML = originalHtml;
-                    }, 2000);
-                });
-            });
-        });
-
-        // Export buttons
-        const exportJsonBtn = document.getElementById('export-json-btn');
-        const exportMarkdownBtn = document.getElementById('export-markdown-btn');
-        
-        if (exportJsonBtn) {
-            exportJsonBtn.addEventListener('click', () => this.exportResults('json'));
+            }
+            return;
         }
-        
-        if (exportMarkdownBtn) {
-            exportMarkdownBtn.addEventListener('click', () => this.exportResults('markdown'));
+
+        // Handle copy code buttons
+        const copyCodeBtn = event.target.closest('.copy-code-btn');
+        if (copyCodeBtn) {
+            event.stopPropagation();
+            const code = copyCodeBtn.dataset.code;
+            navigator.clipboard.writeText(code).then(() => {
+                const originalHtml = copyCodeBtn.innerHTML;
+                copyCodeBtn.innerHTML = `
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Copied!
+                `;
+                setTimeout(() => {
+                    copyCodeBtn.innerHTML = originalHtml;
+                }, 2000);
+            });
+            return;
         }
-        
-        // Raw data toggle
-        const toggleRawDataBtn = document.getElementById('toggle-raw-data');
-        const rawDataSection = document.getElementById('raw-data-section');
-        
-        if (toggleRawDataBtn && rawDataSection) {
-            toggleRawDataBtn.addEventListener('click', () => {
+
+        // Handle copy path buttons
+        const copyPathBtn = event.target.closest('.copy-path-btn');
+        if (copyPathBtn) {
+            event.stopPropagation();
+            const locationSpan = copyPathBtn.closest('.issue-location');
+            const filePath = locationSpan.dataset.filePath;
+            
+            navigator.clipboard.writeText(filePath).then(() => {
+                const originalHtml = copyPathBtn.innerHTML;
+                copyPathBtn.innerHTML = `
+                    <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                `;
+                setTimeout(() => {
+                    copyPathBtn.innerHTML = originalHtml;
+                }, 2000);
+            });
+            return;
+        }
+
+        // Handle sort buttons
+        const sortButton = event.target.closest('.sort-button');
+        if (sortButton) {
+            const sortBy = sortButton.dataset.sort;
+            this.filterState.sortBy = sortBy;
+            
+            // Update active state
+            document.querySelectorAll('.sort-button').forEach(btn => btn.classList.remove('active'));
+            sortButton.classList.add('active');
+            
+            this.updateResultsDisplay();
+            return;
+        }
+
+        // Handle export buttons
+        const exportButton = event.target.closest('.export-button');
+        if (exportButton) {
+            const format = exportButton.id === 'export-json-btn' ? 'json' : 'markdown';
+            this.exportResults(format);
+            return;
+        }
+
+        // Handle raw data toggle
+        if (event.target.matches('#toggle-raw-data')) {
+            const rawDataSection = document.getElementById('raw-data-section');
+            if (rawDataSection) {
                 const isHidden = rawDataSection.classList.contains('hidden');
                 rawDataSection.classList.toggle('hidden');
-                toggleRawDataBtn.textContent = isHidden ? 'Hide Raw Analysis Data' : 'Show Raw Analysis Data';
-            });
+                event.target.textContent = isHidden ? 'Hide Raw Analysis Data' : 'Show Raw Analysis Data';
+            }
+            return;
+        }
+    }
+
+    /**
+     * Handles document-level change events for filter controls
+     * @param {Event} event Change event
+     */
+    handleDocumentChange(event) {
+        const target = event.target;
+        
+        if (target.matches('#severity-filter')) {
+            this.filterState.severity = target.value;
+            this.updateResultsDisplay();
+        }
+        else if (target.matches('#category-filter')) {
+            this.filterState.category = target.value;
+            this.updateResultsDisplay();
+        }
+        else if (target.matches('#group-by-filter')) {
+            this.filterState.groupBy = target.value;
+            this.updateResultsDisplay();
+        }
+        else if (target.matches('#show-only-fixable')) {
+            this.filterState.showOnlyFixable = target.checked;
+            this.updateResultsDisplay();
+        }
+    }
+
+    /**
+     * Handles document-level input events for search field
+     * @param {Event} event Input event
+     */
+    handleDocumentInput(event) {
+        if (event.target.matches('#issue-search')) {
+            this.filterState.search = event.target.value;
+            this.updateResultsDisplay();
         }
     }
 
@@ -1127,9 +1141,6 @@ export class ResultsDisplay {
         const issuesContainer = document.getElementById('issues-container');
         if (issuesContainer) {
             issuesContainer.innerHTML = this.buildGroupedIssues(groupedIssues);
-            
-            // Re-initialize event listeners for new elements
-            this.initializeEventListeners();
         }
         
         this.updateResultsCount();
@@ -1145,49 +1156,7 @@ export class ResultsDisplay {
         }
     }
 
-    /**
-     * Initializes code copy listeners for newly created elements
-     */
-    initializeCodeCopyListeners() {
-        document.querySelectorAll('.copy-code-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const code = e.target.dataset.code;
-                navigator.clipboard.writeText(code).then(() => {
-                    const originalHtml = e.target.innerHTML;
-                    e.target.innerHTML = `
-                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        Copied!
-                    `;
-                    setTimeout(() => {
-                        e.target.innerHTML = originalHtml;
-                    }, 2000);
-                });
-            });
-        });
-
-        document.querySelectorAll('.copy-path-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const locationSpan = button.closest('.issue-location');
-                const filePath = locationSpan.dataset.filePath;
-                
-                navigator.clipboard.writeText(filePath).then(() => {
-                    const originalHtml = button.innerHTML;
-                    button.innerHTML = `
-                        <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                    `;
-                    setTimeout(() => {
-                        button.innerHTML = originalHtml;
-                    }, 2000);
-                });
-            });
-        });
-    }
+    // Removed: Replaced by event delegation
 
     /**
      * Exports results in specified format
@@ -1299,6 +1268,7 @@ export class ResultsDisplay {
         if (this.loadingContainer) this.loadingContainer.style.display = 'none';
         if (this.errorContainer) this.errorContainer.style.display = 'none';
         if (this.resultsContainer) this.resultsContainer.style.display = 'none';
+        this.removeEventListeners();
     }
 }
 
