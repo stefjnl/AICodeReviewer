@@ -11,12 +11,30 @@ import { executionService } from '../execution/execution-service.js';
 import { resultsDisplay } from '../execution/results-display.js';
 import { workflowState } from './workflow-state.js';
 
-// Move the initializeWorkflowNavigation function here without importing itself
+// Event listener tracker
+const eventListeners = [];
+
+/**
+ * Cleanup all workflow navigation event listeners
+ */
+export function cleanupWorkflowNavigation() {
+    eventListeners.forEach(({ element, event, handler }) => {
+        element.removeEventListener(event, handler);
+    });
+    eventListeners.length = 0; // Clear the array
+}
+
+/**
+ * Initialize workflow navigation with cleanup capability
+ */
 export function initializeWorkflowNavigation() {
-    // Add click handlers to step indicators
+    // Clean up any existing listeners first
+    cleanupWorkflowNavigation();
+
+    // Track step indicators
     document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
         const stepNum = index + 1;
-        indicator.addEventListener('click', () => {
+        const handler = () => {
             console.log(`Step indicator ${stepNum} clicked`);
             console.log(`  Current step: ${workflowState.currentStep}`);
             console.log(`  Can navigate to ${stepNum}: ${canNavigateToStep(stepNum)}`);
@@ -26,24 +44,28 @@ export function initializeWorkflowNavigation() {
             } else {
                 console.log(`  Cannot navigate to step ${stepNum}`);
             }
-        });
+        };
+        indicator.addEventListener('click', handler);
+        eventListeners.push({ element: indicator, event: 'click', handler });
     });
     
-    // Add click handlers to navigation buttons
+    // Track navigation buttons
     for (let i = 1; i <= 5; i++) {
         const prevBtn = document.getElementById(`previous-step-${i}-btn`);
         const nextBtn = document.getElementById(`next-step-${i}-btn`);
         
         if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
+            const handler = () => {
                 if (i > 1) {
                     showStep(i - 1);
                 }
-            });
+            };
+            prevBtn.addEventListener('click', handler);
+            eventListeners.push({ element: prevBtn, event: 'click', handler });
         }
         
         if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
+            const handler = () => {
                 if (i < 5) {
                     // For steps 3 and 5, we need to manually trigger completion
                     if (i === 3) {
@@ -69,14 +91,16 @@ export function initializeWorkflowNavigation() {
                         }
                     }
                 }
-            });
+            };
+            nextBtn.addEventListener('click', handler);
+            eventListeners.push({ element: nextBtn, event: 'click', handler });
         }
     }
     
-    // Run Analysis button
+    // Track run analysis button
     const runBtn = document.getElementById('run-analysis-btn');
     if (runBtn) {
-        runBtn.addEventListener('click', async () => {
+        const handler = async () => {
             console.log('Run analysis button clicked - checking prerequisites...');
             if (canNavigateToStep(5)) {
                 console.log('All prerequisites met - starting analysis');
@@ -95,13 +119,15 @@ export function initializeWorkflowNavigation() {
                 const errorMessage = getPrerequisitesError();
                 executionService.showErrorState(errorMessage);
             }
-        });
+        };
+        runBtn.addEventListener('click', handler);
+        eventListeners.push({ element: runBtn, event: 'click', handler });
     }
     
-    // Add event listeners for language and model selection to auto-complete steps
+    // Track language and model selection
     const languageSelect = document.getElementById('language-select');
     if (languageSelect) {
-        languageSelect.addEventListener('change', (e) => {
+        const handler = (e) => {
             if (e.target.value) {
                 console.log('Language selected via dropdown:', e.target.value);
                 selectLanguage(e.target.value);
@@ -109,12 +135,14 @@ export function initializeWorkflowNavigation() {
                 markStepCompleted(3);
                 console.log('Step 3 completion status after language selection:', workflowState.steps[3].completed);
             }
-        });
+        };
+        languageSelect.addEventListener('change', handler);
+        eventListeners.push({ element: languageSelect, event: 'change', handler });
     }
     
     const modelSelect = document.getElementById('model-select');
     if (modelSelect) {
-        modelSelect.addEventListener('change', (e) => {
+        const handler = (e) => {
             if (e.target.value) {
                 console.log('Model selected via dropdown:', e.target.value);
                 selectModel(e.target.value);
@@ -131,7 +159,9 @@ export function initializeWorkflowNavigation() {
                     }
                 }
             }
-        });
+        };
+        modelSelect.addEventListener('change', handler);
+        eventListeners.push({ element: modelSelect, event: 'change', handler });
     }
 
     // Initialize results display
@@ -149,4 +179,12 @@ export function initializeWorkflowNavigation() {
         
         return `Please complete the following steps before running analysis: ${missing.join(', ')}`;
     };
+}
+
+/**
+ * Reinitialize workflow navigation with cleanup
+ */
+export function reinitializeWorkflowNavigation() {
+    cleanupWorkflowNavigation();
+    initializeWorkflowNavigation();
 }

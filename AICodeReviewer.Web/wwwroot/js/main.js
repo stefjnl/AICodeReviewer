@@ -5,7 +5,7 @@ import { initializeSignalR } from './signalr/signalr-client.js';
 import { loadDocuments } from './documents/document-api.js';
 import { clearError, clearSelection } from './documents/document-ui.js';
 import { initializeRepositoryValidation } from './repository/repository-event-handlers.js';
-import { initializeWorkflowNavigation, showStep } from './workflow/workflow-navigation.js';
+import { initializeWorkflowNavigation, showStep, reinitializeWorkflowNavigation } from './workflow/workflow-navigation.js';
 import { loadSupportedLanguages } from './language/language-detector.js';
 import { initializeAnalysisEventListeners } from './analysis/analysis-event-handlers.js';
 import { initializeModelEventListeners } from './models/model-event-handlers.js';
@@ -31,7 +31,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     
     // Initialize workflow navigation
+    // Initialize workflow navigation with cleanup capability
     initializeWorkflowNavigation();
+    
+    // Create reinitialization function for future use
+    window.reinitializeWorkflowNavigation = reinitializeWorkflowNavigation;
     
     // Initialize analysis event listeners
     initializeAnalysisEventListeners();
