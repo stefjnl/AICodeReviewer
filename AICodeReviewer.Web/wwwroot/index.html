@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI Code Reviewer - Intelligent code analysis and review">
-    <title>AI Code Reviewer</title>
+    <meta name="description" content="CodeGuard - Intelligent code analysis and review">
+    <title>CodeGuard</title>
 
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -113,30 +113,41 @@
 <body class="h-full bg-surface text-gray-900">
     <!-- Main Application Container -->
     <div id="app" class="min-h-full">
-        <!-- Header -->
-        <header class="bg-white/95 backdrop-blur-md shadow-modern-sm border-b border-gray-100 sticky top-0 z-50">
+        <!-- Enhanced Header -->
+        <header class="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 backdrop-blur-lg shadow-2xl border-b border-gray-700/30 sticky top-0 z-50 animate-gradient-x">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center space-x-4">
-                        <!-- Logo/Icon -->
-                        <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-modern-sm">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
+                <div class="flex justify-between items-center py-5">
+                    <div class="flex items-center space-x-5">
+                        <!-- Modern Logo/Icon -->
+                        <div class="relative group">
+                            <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
+                            <div class="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 shadow-modern-lg transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                            </div>
                         </div>
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">AI Code Reviewer</h1>
-                            <p class="text-xs text-gray-500">Intelligent code analysis and review</p>
+                            <h1 class="text-2xl font-bold text-white tracking-tight flex items-center space-x-2">
+                                <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-200">CodeGuard</span>
+                                <span class="px-2.5 py-0.5 text-xs font-semibold text-purple-200 bg-purple-800/50 rounded-full backdrop-blur-sm border border-purple-600/30">
+                                    Beta
+                                </span>
+                            </h1>
+                            <p class="text-xs text-purple-200/80 font-medium">Intelligent code analysis & review</p>
                         </div>
-                        <span class="px-2.5 py-0.5 text-xs font-semibold text-primary bg-primary/10 rounded-full">
-                            Beta
-                        </span>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <span class="text-sm text-gray-500 hidden sm:inline-block">Ready for analysis</span>
-                        <!-- Theme Toggle Button -->
+                    <div class="flex items-center space-x-6">
+                        <!-- Enhanced Status Indicator -->
+                        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 backdrop-blur-sm rounded-lg border border-green-500/30">
+                            <div class="flex-shrink-0">
+                                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                            </div>
+                            <span class="text-sm font-medium text-green-300">Ready for analysis</span>
+                        </div>
+                        <!-- Enhanced Theme Toggle Button -->
                         <button id="theme-toggle"
-                                class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 shadow-modern-sm"
+                                class="relative p-2.5 rounded-xl text-purple-200 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-purple-900 transition-all duration-300 shadow-modern-md hover:shadow-modern-lg transform hover:scale-105"
                                 aria-label="Toggle theme"
                                 title="Toggle dark/light theme">
                             <!-- Sun icon for light mode (shown when in dark mode) -->
@@ -1006,7 +1017,7 @@
                     <div class="flex items-center space-x-2 mb-2 sm:mb-0">
                         <div class="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary"></div>
                         <p class="text-sm text-gray-600 font-medium">
-                            AI Code Reviewer &copy; 2025
+                            CodeGuard &copy; 2025
                         </p>
                     </div>
                     <div class="flex items-center space-x-4 text-sm text-gray-500">
@@ -1023,7 +1034,7 @@
 
     <!-- Simple inline script for basic functionality -->
     <script>
-        console.log('🚀 AI Code Reviewer - Inline script loaded');
+        console.log('🚀 CodeGuard - Inline script loaded');
 
         // Skip SignalR when running from file:// protocol
         if (window.location.protocol === 'file:') {
