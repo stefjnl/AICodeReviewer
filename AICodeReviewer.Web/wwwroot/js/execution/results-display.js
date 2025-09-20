@@ -971,9 +971,9 @@ export class ResultsDisplay {
      * Attaches document-level event listeners for event delegation
      */
     attachEventListeners() {
-        document.addEventListener('click', this.handleDocumentClick.bind(this));
-        document.addEventListener('change', this.handleDocumentChange.bind(this));
-        document.addEventListener('input', this.handleDocumentInput.bind(this));
+        document.addEventListener('click', this.handleDocumentClick);
+        document.addEventListener('change', this.handleDocumentChange);
+        document.addEventListener('input', this.handleDocumentInput);
     }
 
     /**
