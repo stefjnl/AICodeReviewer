@@ -74,34 +74,65 @@ export async function loadAvailableModels() {
 // Fallback models for when API is not available
 function useFallbackModels() {
     console.log('🛠️ Using fallback models...');
-    
-    modelState.availableModels = [
-        {
-            id: "qwen/qwen3-coder",
+
+    // Define fallback models matching the single source of truth in appsettings.json
+    const fallbackModelsData = {
+        "qwen/qwen3-coder": {
             name: "Qwen3 Coder",
             provider: "Qwen",
             description: "Specialized for code analysis and review",
             icon: "🔍"
         },
-        {
-            id: "moonshotai/kimi-k2-0905",
+        "moonshotai/kimi-k2-0905": {
             name: "Kimi K2",
             provider: "Moonshot AI",
             description: "Advanced reasoning for complex code patterns",
             icon: "🌙"
         },
-        {
-            id: "qwen/qwen3-next-80b-a3b-instruct",
+        "qwen/qwen3-next-80b-a3b-instruct": {
             name: "Qwen3 Next 80B",
             provider: "Qwen",
             description: "Large model for comprehensive analysis",
             icon: "🚀"
+        },
+        "x-ai/grok-4-fast:free": {
+            name: "Grok-4 Fast",
+            provider: "xAI",
+            description: "Fast and efficient code analysis",
+            icon: "⚡"
+        },
+        "deepseek/deepseek-chat-v3.1:free": {
+            name: "DeepSeek Chat v3.1",
+            provider: "DeepSeek",
+            description: "Advanced conversational AI for code review",
+            icon: "🤖"
+        },
+        "openai/gpt-oss-120b:free": {
+            name: "GPT-OSS 120B",
+            provider: "OpenAI",
+            description: "Open source large language model",
+            icon: "🧠"
+        },
+        "z-ai/glm-4.5-air:free": {
+            name: "GLM-4.5 Air",
+            provider: "Z-AI",
+            description: "Lightweight and efficient code analysis",
+            icon: "💨"
         }
-    ];
-    
+    };
+
+    // Convert to the format expected by the UI
+    modelState.availableModels = Object.keys(fallbackModelsData).map(id => ({
+        id: id,
+        name: fallbackModelsData[id].name,
+        provider: fallbackModelsData[id].provider,
+        description: fallbackModelsData[id].description,
+        icon: fallbackModelsData[id].icon
+    }));
+
     console.log('✅ Fallback models loaded:', modelState.availableModels.length);
     updateModelUI('loaded');
-    
+
     // Auto-select first model
     if (modelState.availableModels.length > 0) {
         console.log('🎯 Auto-selecting first model:', modelState.availableModels[0].name);
