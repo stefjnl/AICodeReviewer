@@ -1,6 +1,6 @@
 // AI Code Reviewer - Analysis Event Handlers
 
-import { selectAnalysisType, selectCommit, loadAnalysisOptions } from './analysis-options.js';
+import { selectAnalysisType, selectCommit, selectSourceBranch, selectTargetBranch, loadAnalysisOptions } from './analysis-options.js';
 
 export function initializeAnalysisEventListeners() {
     // Analysis type selection
@@ -15,6 +15,22 @@ export function initializeAnalysisEventListeners() {
     if (commitDropdown) {
         commitDropdown.addEventListener('change', (e) => {
             selectCommit(e.target.value);
+        });
+    }
+
+    // Source branch selection
+    const sourceBranchDropdown = document.getElementById('source-branch-dropdown');
+    if (sourceBranchDropdown) {
+        sourceBranchDropdown.addEventListener('change', (e) => {
+            selectSourceBranch(e.target.value);
+        });
+    }
+
+    // Target branch selection
+    const targetBranchDropdown = document.getElementById('target-branch-dropdown');
+    if (targetBranchDropdown) {
+        targetBranchDropdown.addEventListener('change', (e) => {
+            selectTargetBranch(e.target.value);
         });
     }
 

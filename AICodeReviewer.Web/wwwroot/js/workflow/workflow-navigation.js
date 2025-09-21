@@ -7,13 +7,17 @@ import { updateProgressIndicators } from './workflow-navigation-indicators.js';
 import { markStepCompleted } from './workflow-navigation-completion.js';
 import { updateNavigationButtons } from './workflow-navigation-buttons.js';
 import { initializeWorkflowNavigation } from './workflow-navigation-initializer.js';
+import { cleanupWorkflowNavigation } from './workflow-navigation-initializer.js';
+import { reinitializeWorkflowNavigation } from './workflow-navigation-initializer.js';
 
 // Re-export all public functions
 export {
     canNavigateToStep,
     showStep,
     markStepCompleted,
-    initializeWorkflowNavigation
+    initializeWorkflowNavigation,
+    cleanupWorkflowNavigation,
+    reinitializeWorkflowNavigation
 };
 
 // Keep the getPrerequisitesError function as a global function for backward compatibility

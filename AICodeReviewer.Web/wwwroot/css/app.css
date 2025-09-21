@@ -7,6 +7,8 @@
 @import "base/_variables.css";
 @import "base/_reset.css";
 @import "base/_utilities.css";
+@import "base/_typography.css";
+@import "base/_modern-utilities.css";
 
 /* Import component layer */
 @import "components/_workflow.css";
@@ -16,5 +18,6 @@
 @import "components/_animations.css";
 
 /* Import theme layer */
+@import "themes/_light.css";
 @import "themes/_dark.css";
 @import "themes/_print.css";

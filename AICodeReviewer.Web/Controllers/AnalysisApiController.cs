@@ -68,10 +68,15 @@ public class AnalysisApiController : ControllerBase
                 return BadRequest(new { success = false, error = "Repository path is required" });
             }
 
-            var preview = _repositoryService.PreviewChanges(request.RepositoryPath, request.AnalysisType, request.TargetCommit);
+            var preview = _repositoryService.PreviewChanges(
+                request.RepositoryPath,
+                request.AnalysisType,
+                request.TargetCommit,
+                request.SourceBranch,
+                request.TargetBranch);
             
-            return Ok(new 
-            { 
+            return Ok(new
+            {
                 success = true,
                 changesSummary = preview.changesSummary,
                 isValid = preview.isValid,
@@ -100,6 +105,8 @@ public class AnalysisOptionsRequest
 public class PreviewRequest
 {
     public string RepositoryPath { get; set; } = string.Empty;
-    public string AnalysisType { get; set; } = "uncommitted"; // uncommitted, staged, commit
+    public string AnalysisType { get; set; } = "uncommitted"; // uncommitted, staged, commit, pullrequest
     public string? TargetCommit { get; set; }
+    public string? SourceBranch { get; set; }
+    public string? TargetBranch { get; set; }
 }

@@ -53,45 +53,31 @@ namespace AICodeReviewer.Web.Controllers
         /// </summary>
         private ModelInfo MapToDisplayModel(string modelId)
         {
-            // Model display mapping based on the provided model IDs
-            var displayMap = new Dictionary<string, ModelInfo>
-            {
-                ["qwen/qwen3-coder"] = new ModelInfo
-                {
-                    Id = "qwen/qwen3-coder",
-                    Name = "Qwen3 Coder",
-                    Provider = "Qwen",
-                    Description = "Specialized for code analysis and review",
-                    Icon = "🔍"
-                },
-                ["moonshotai/kimi-k2-0905"] = new ModelInfo
-                {
-                    Id = "moonshotai/kimi-k2-0905",
-                    Name = "Kimi K2",
-                    Provider = "Moonshot AI",
-                    Description = "Advanced reasoning for complex code patterns",
-                    Icon = "🌙"
-                },
-                ["qwen/qwen3-next-80b-a3b-instruct"] = new ModelInfo
-                {
-                    Id = "qwen/qwen3-next-80b-a3b-instruct",
-                    Name = "Qwen3 Next 80B",
-                    Provider = "Qwen",
-                    Description = "Large model for comprehensive analysis",
-                    Icon = "🚀"
-                }
-            };
+            // Get model configuration from appsettings.json
+            var modelsSection = _configuration.GetSection("Models");
+            var modelConfig = modelsSection.GetSection(modelId);
 
-            return displayMap.TryGetValue(modelId, out var modelInfo) 
-                ? modelInfo 
-                : new ModelInfo 
-                { 
+            if (modelConfig.Exists())
+            {
+                return new ModelInfo
+                {
                     Id = modelId,
-                    Name = modelId.Split('/').Last(),
-                    Provider = "Unknown",
-                    Description = "AI model for code analysis",
-                    Icon = "🤖"
+                    Name = modelConfig["name"] ?? modelId.Split('/').Last(),
+                    Provider = modelConfig["provider"] ?? "Unknown",
+                    Description = modelConfig["description"] ?? "AI model for code analysis",
+                    Icon = modelConfig["icon"] ?? "🤖"
                 };
+            }
+
+            // Fallback for unknown models
+            return new ModelInfo
+            {
+                Id = modelId,
+                Name = modelId.Split('/').Last(),
+                Provider = "Unknown",
+                Description = "AI model for code analysis",
+                Icon = "🤖"
+            };
         }
     }
 }

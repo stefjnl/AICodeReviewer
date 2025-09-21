@@ -36,30 +36,54 @@
     color: var(--color-error);
 }
 
-.step-number {
-    width: 2rem;
-    height: 2rem;
+.step-circle {
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 50%;
-    background-color: var(--color-secondary-light);
-    color: white;
+    border: 2px solid #d1d5db;
+    background-color: white;
+    color: #6b7280;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.875rem;
     font-weight: bold;
     transition: all 0.3s ease;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-.step-indicator.active .step-number {
-    background-color: var(--color-primary);
+.step-indicator:not(.active):not(.completed) .step-circle {
+    background-color: white;
+    border-color: #d1d5db;
+    color: #6b7280;
 }
 
-.step-indicator.completed .step-number {
-    background-color: var(--color-success);
+.step-indicator.active .step-circle {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
-.step-indicator.error .step-number {
-    background-color: var(--color-error);
+.step-indicator.completed .step-circle {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.step-indicator:not(.active):not(.completed) .step-label {
+    color: #6b7280;
+}
+
+.step-indicator.active .step-label {
+    color: #111827;
+    font-weight: 600;
+}
+
+.step-indicator.completed .step-label {
+    color: #10b981;
+    font-weight: 600;
 }
 
 .step-connection {
@@ -113,6 +137,19 @@
     border-radius: 0.375rem;
     font-size: 0.875rem;
     transition: all 0.2s ease;
+}
+
+/* Previous button styling - matches Next button but with different color */
+.step-navigation .bg-gray-200 {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border: 1px solid transparent !important;
+}
+
+.step-navigation .bg-gray-200:hover:not(:disabled) {
+    background-color: #1d4ed8 !important;
+    color: white !important;
+    border: 1px solid transparent !important;
 }
 
 .step-navigation button:disabled {

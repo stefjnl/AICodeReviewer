@@ -1,268 +1,478 @@
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --color-surface: #0f172a;
-        --color-surface-dark: #1e293b;
-        --color-surface-darker: #334155;
-        --color-text-primary: #f8fafc;
-        --color-text-secondary: #cbd5e1;
-        --color-text-muted: #94a3b8;
-        --color-border: #334155;
-        --color-border-light: #475569;
-    }
+/* Dark mode support - Modern VS Code inspired */
+.dark-theme {
+    /* Override CSS variables for modern dark theme */
+    --color-surface: #0f172a;
+    --color-surface-light: #1e293b;
+    --color-surface-dark: #1e293b;
+    --color-surface-darker: #334155;
+    --color-surface-darkest: #475569;
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-text-inverse: #0f172a;
+    --color-border: #334155;
+    --color-border-light: #475569;
+    --color-border-dark: #1e293b;
+    
+    /* Modern step indicator colors - VS Code inspired */
+    --step-number-inactive-bg: #334155;
+    --step-number-inactive-text: #64748b;
+    --step-number-active-bg: #6366f1;
+    --step-number-active-text: #ffffff;
+    --step-number-completed-bg: #10b981;
+    --step-number-completed-text: #ffffff;
+    --step-number-error-bg: #ef4444;
+    --step-number-error-text: #ffffff;
+    
+    /* Main card background for dark theme */
+    --main-card-bg: #1e293b;
+    --main-card-text: #f1f5f9;
+    --heading-text: #ffffff;
+    
+    /* Modern VS Code accent colors */
+    --vscode-accent: #6366f1;
+    --vscode-accent-hover: #4f46e5;
+    --vscode-button-bg: #4f46e5;
+    --vscode-button-hover: #6366f1;
+    --vscode-input-bg: #334155;
+    --vscode-selection-bg: #4f46e5;
+    --vscode-sidebar-bg: #1e293b;
+    --vscode-editor-bg: #0f172a;
+    
+    /* Enhanced shadows for dark theme */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+    
+    /* Modern background gradients for dark theme */
+    --bg-gradient-primary: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    --bg-gradient-secondary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --bg-gradient-accent: linear-gradient(135deg, #0891b2 0%, #0ea5e9 100%);
+    --bg-gradient-surface: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    
+    /* Glassmorphism effect for dark theme */
+    --glassmorphism-bg: rgba(30, 41, 59, 0.8);
+    --glassmorphism-border: rgba(51, 65, 85, 0.3);
+    --glassmorphism-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
 
-    /* Dark mode enhancements for enhanced components */
+/* Dark mode main card styling */
+.dark-theme .bg-white {
+    background-color: var(--main-card-bg) !important;
+    color: var(--main-card-text) !important;
+}
+
+.dark-theme .bg-white .text-gray-900,
+.dark-theme .bg-white .text-gray-800,
+.dark-theme .bg-white .text-gray-700,
+.dark-theme .bg-white .text-gray-600,
+.dark-theme .bg-white .text-gray-500 {
+    color: var(--main-card-text) !important;
+}
+
+.dark-theme .bg-white .border-gray-300 {
+    border-color: var(--color-border) !important;
+}
+
+.dark-theme .bg-white .bg-gray-50 {
+    background-color: var(--color-surface-dark) !important;
+}
+
+.dark-theme .bg-white .text-gray-900 {
+    color: var(--main-card-text) !important;
+}
+
+/* Dark mode button styling - VS Code inspired */
+.dark-theme .bg-primary {
+    background-color: var(--vscode-button-bg) !important;
+    color: #ffffff !important;
+    border: 1px solid transparent !important;
+}
+
+.dark-theme .bg-primary:hover,
+.dark-theme .hover\:bg-primary\/90:hover {
+    background-color: var(--vscode-button-hover) !important;
+    color: #ffffff !important;
+    border: 1px solid transparent !important;
+}
+
+.dark-theme .step-navigation .bg-gray-200 {
+    background-color: var(--vscode-button-bg) !important;
+    color: #ffffff !important;
+    border: 1px solid transparent !important;
+}
+
+.dark-theme .step-navigation .bg-gray-200:hover:not(:disabled) {
+    background-color: var(--vscode-button-hover) !important;
+    color: #ffffff !important;
+    border: 1px solid transparent !important;
+}
+
+.dark-theme .bg-gray-200:not(.step-navigation .bg-gray-200) {
+    background-color: #3e3e42 !important;
+    color: #cccccc !important;
+    border: 1px solid #3e3e42 !important;
+}
+
+.dark-theme .bg-gray-200:hover:not(.step-navigation .bg-gray-200) {
+    background-color: #464647 !important;
+    color: #ffffff !important;
+    border: 1px solid #464647 !important;
+}
+
+.dark-theme .bg-green-600 {
+    background-color: #4ec9b0 !important;
+    color: #ffffff !important;
+    border: 1px solid transparent !important;
+}
+
+.dark-theme .bg-green-600:hover {
+    background-color: #3db9a0 !important;
+    color: #ffffff !important;
+    border: 1px solid transparent !important;
+}
+
+/* VS Code style input fields */
+.dark-theme input,
+.dark-theme select,
+.dark-theme textarea {
+    background-color: var(--vscode-input-bg) !important;
+    color: #cccccc !important;
+    border: 1px solid #3e3e42 !important;
+}
+
+.dark-theme input:focus,
+.dark-theme select:focus,
+.dark-theme textarea:focus {
+    border-color: var(--vscode-accent) !important;
+    outline: 1px solid var(--vscode-accent) !important;
+    outline-offset: -1px !important;
+}
+
+/* Dark mode text hierarchy - VS Code inspired */
+.dark-theme .text-gray-900 {
+    color: var(--main-card-text) !important;
+    font-weight: 500;
+}
+
+.dark-theme .text-gray-800 {
+    color: #cccccc !important;
+    font-weight: 400;
+}
+
+.dark-theme .text-gray-700 {
+    color: #969696 !important;
+    font-weight: 400;
+}
+
+.dark-theme .text-gray-600 {
+    color: #6a6a6a !important;
+    font-weight: 400;
+}
+
+.dark-theme .text-gray-500 {
+    color: #6a6a6a !important;
+    font-weight: 400;
+}
+
+.dark-theme h1,
+.dark-theme h2,
+.dark-theme h3,
+.dark-theme h4,
+.dark-theme h5,
+.dark-theme h6 {
+    color: var(--heading-text) !important;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.dark-theme p,
+.dark-theme span,
+.dark-theme div:not(.step-number):not(.stat-value):not(.impact-value) {
+    color: var(--main-card-text) !important;
+}
+
+.dark-theme .text-sm {
+    color: #969696 !important;
+}
+
+.dark-theme .text-xs {
+    color: #6a6a6a !important;
+}
+
+/* VS Code style selection */
+.dark-theme ::selection {
+    background-color: var(--vscode-selection-bg) !important;
+    color: #ffffff !important;
+}
+
+    /* Dark mode enhancements for enhanced components - VS Code inspired */
     .summary-dashboard {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border-color: #334155;
+        background: var(--color-surface-dark);
+        border: 1px solid var(--color-border);
+        box-shadow: none;
     }
     
     .risk-assessment,
     .issue-statistics,
     .impact-analysis {
-        background: #1e293b;
-        border-color: #334155;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        background: var(--color-surface-dark);
+        border: 1px solid var(--color-border);
+        box-shadow: none;
     }
     
     .stat-item {
-        background: #334155;
-        border-color: #475569;
+        background: var(--vscode-input-bg);
+        border: 1px solid var(--color-border);
     }
     
     .stat-item.critical {
-        background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%);
-        border-color: #b91c1c;
+        background: #742a2a;
+        border-color: #e53e3e;
     }
     
     .stat-item.warning {
-        background: linear-gradient(135deg, #78350f 0%, #c2410c 100%);
-        border-color: #c2410c;
+        background: #744210;
+        border-color: #d69e2e;
     }
     
     .stat-item.suggestion {
-        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-        border-color: #2563eb;
+        background: #2a4365;
+        border-color: var(--vscode-accent);
     }
     
     .stat-item.total {
-        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-        border-color: #374151;
+        background: var(--color-surface-darker);
+        border-color: var(--color-border);
     }
     
     .impact-item {
-        background: #334155;
-        border-color: #475569;
+        background: var(--vscode-input-bg);
+        border: 1px solid var(--color-border);
     }
     
     .impact-label {
-        color: #cbd5e1;
+        color: var(--color-text-secondary);
     }
     
     .impact-value {
-        color: #f8fafc;
+        color: var(--color-text-primary);
     }
     
     .results-controls {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border-color: #334155;
+        background: var(--color-surface-dark);
+        border: 1px solid var(--color-border);
     }
     
     .filter-select,
     .sort-button {
-        background: #334155;
-        border-color: #475569;
-        color: #e2e8f0;
+        background: var(--vscode-input-bg);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-primary);
     }
     
     .filter-select:focus,
     .sort-button:hover {
-        border-color: #3b82f6;
-        background: #1e293b;
+        border-color: var(--vscode-accent);
+        background: var(--color-surface-darker);
     }
     
     .sort-button.active {
-        background: #3b82f6;
-        border-color: #3b82f6;
+        background: var(--vscode-accent);
+        border-color: var(--vscode-accent);
+        color: #ffffff;
     }
     
     .issue-group {
-        background: #1e293b;
-        border-color: #334155;
+        background: var(--color-surface-dark);
+        border: 1px solid var(--color-border);
     }
     
     .group-header {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border-color: #334155;
+        background: var(--color-surface-darker);
+        border: 1px solid var(--color-border);
     }
     
     .group-header:hover {
-        background: #1e293b;
+        background: var(--vscode-selection-bg);
     }
     
     .issue-card {
-        background: #1e293b;
-        border-color: #334155;
+        background: var(--color-surface-dark);
+        border: 1px solid var(--color-border);
     }
     
     .issue-header {
-        background: #0f172a;
-        border-color: #1e293b;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
     }
     
     .issue-header:hover {
-        background: #1e293b;
+        background: var(--vscode-selection-bg);
     }
     
     .issue-title {
-        color: #f8fafc;
+        color: var(--color-text-primary);
     }
     
     .issue-location,
     .issue-category {
-        background: #334155;
-        border-color: #475569;
-        color: #cbd5e1;
+        background: var(--vscode-input-bg);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-secondary);
     }
     
     .issue-location:hover {
-        background: #475569;
+        background: var(--color-surface-darker);
+        border-color: var(--vscode-accent);
     }
     
     .copy-path-btn {
-        color: #64748b;
+        color: var(--color-text-muted);
     }
     
     .copy-path-btn:hover {
-        background: #475569;
-        color: #e2e8f0;
+        background: var(--color-surface-darker);
+        color: var(--color-text-secondary);
     }
     
     .issue-content {
-        background: #0f172a;
-        border-color: #1e293b;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
     }
     
     .description-content {
-        background: #1e293b;
-        border-color: #334155;
-        color: #e2e8f0;
+        background: var(--vscode-input-bg);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-primary);
     }
     
     .issue-suggestion {
-        background: linear-gradient(135deg, #052e16 0%, #14532d 100%);
-        border-color: #166534;
+        background: #1a3a1a;
+        border-color: #4ec9b0;
     }
     
     .suggestion-header {
-        color: #86efac;
+        color: #4ec9b0;
     }
     
     .suggestion-content {
-        color: #d1d5db;
+        color: var(--color-text-primary);
     }
     
     .export-button {
-        background: #334155;
-        border-color: #475569;
-        color: #e2e8f0;
+        background: var(--vscode-button-bg);
+        border: 1px solid var(--vscode-button-bg);
+        color: #ffffff;
     }
     
     .export-button:hover {
-        background: #475569;
-        border-color: #64748b;
-        color: #f8fafc;
+        background: var(--vscode-button-hover);
+        border-color: var(--vscode-button-hover);
+        color: #ffffff;
     }
     
     .search-input {
-        background: #374151;
-        border-color: #4b5563;
-        color: #f9fafb;
+        background: var(--vscode-input-bg);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-primary);
     }
     
     .search-input:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        border-color: var(--vscode-accent);
+        box-shadow: none;
+        outline: 1px solid var(--vscode-accent);
+        outline-offset: -1px;
     }
     
     .search-icon {
-        color: #9ca3af;
+        color: var(--color-text-muted);
     }
 
-    /* Enhanced hover effects for dark mode */
+    /* Enhanced hover effects for dark mode - VS Code inspired */
     .issue-card:hover {
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        border-color: var(--vscode-accent);
     }
     
     .issue-card.critical {
-        border-left-color: #f87171;
+        border-left: 3px solid #e53e3e;
     }
     
     .issue-card.warning {
-        border-left-color: #fbbf24;
+        border-left: 3px solid #d69e2e;
     }
     
     .issue-card.suggestion {
-        border-left-color: #60a5fa;
+        border-left: 3px solid var(--vscode-accent);
     }
     
     .issue-card.style {
-        border-left-color: #a78bfa;
+        border-left: 3px solid #805ad5;
     }
     
     .issue-card.info {
-        border-left-color: #9ca3af;
+        border-left: 3px solid var(--color-border);
     }
     
     .issue-severity.critical {
-        background-color: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
+        background-color: #742a2a;
+        color: #fc8181;
+        border: 1px solid #e53e3e;
     }
     
     .issue-severity.warning {
-        background-color: rgba(245, 158, 11, 0.2);
-        color: #fcd34d;
+        background-color: #744210;
+        color: #f6e05e;
+        border: 1px solid #d69e2e;
     }
     
     .issue-severity.suggestion {
-        background-color: rgba(59, 130, 246, 0.2);
-        color: #93c5fd;
+        background-color: #2a4365;
+        color: #90cdf4;
+        border: 1px solid var(--vscode-accent);
     }
     
     .issue-severity.style {
-        background-color: rgba(139, 92, 246, 0.2);
-        color: #c4b5fd;
+        background-color: #44337a;
+        color: #d6bcfa;
+        border: 1px solid #805ad5;
     }
     
     .issue-severity.info {
-        background-color: rgba(107, 114, 128, 0.2);
-        color: #d1d5db;
+        background-color: var(--color-surface-darker);
+        color: var(--color-text-secondary);
+        border: 1px solid var(--color-border);
     }
     
     .action-indicator.fix {
-        background-color: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
+        background-color: #742a2a;
+        color: #fc8181;
+        border: 1px solid #e53e3e;
     }
     
     .action-indicator.review {
-        background-color: rgba(59, 130, 246, 0.2);
-        color: #93c5fd;
+        background-color: #2a4365;
+        color: #90cdf4;
+        border: 1px solid var(--vscode-accent);
     }
     
     .action-indicator.consider {
-        background-color: rgba(107, 114, 128, 0.2);
-        color: #d1d5db;
+        background-color: var(--color-surface-darker);
+        color: var(--color-text-secondary);
+        border: 1px solid var(--color-border);
     }
     
     .risk-progress.high {
-        background: linear-gradient(90deg, #f87171, #ef4444);
+        background: linear-gradient(90deg, #e53e3e, #c53030);
     }
     
     .risk-progress.medium {
-        background: linear-gradient(90deg, #fbbf24, #f59e0b);
+        background: linear-gradient(90deg, #d69e2e, #b7791f);
     }
     
     .risk-progress.low {
-        background: linear-gradient(90deg, #34d399, #10b981);
+        background: linear-gradient(90deg, #4ec9b0, #38b2ac);
     }
-}

@@ -93,6 +93,8 @@ export class ExecutionService {
                 targetFile = workflowState.targetFile;
             } else if (analysisType === 'commit') {
                 targetCommit = analysisState.selectedCommit; // Fixed: Use analysisState.selectedCommit instead of workflowState.targetCommit
+            } else if (analysisType === 'pullrequest') {
+                analysisType = "pullrequestdifferential"; // Use backend enum value
             } else if (analysisType === 'document') {
                 analysisType = "singlefile"; // Document analysis is treated as single file analysis
             } else if (analysisType === 'uncommitted') {
@@ -114,6 +116,12 @@ export class ExecutionService {
             // Only include commitId for commit analysis
             if (analysisType === "commit") {
                 request.commitId = targetCommit;
+            }
+
+            // Only include branch parameters for pull request analysis
+            if (analysisType === "pullrequestdifferential") {
+                request.sourceBranch = analysisState.selectedSourceBranch;
+                request.targetBranch = analysisState.selectedTargetBranch;
             }
 
             // Only include filePath for single file analysis

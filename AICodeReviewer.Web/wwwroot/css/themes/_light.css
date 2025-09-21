@@ -1,0 +1,300 @@
+/* Light mode theme - Modern UI System */
+.light-theme {
+    /* Override CSS variables for modern light theme */
+    --color-surface: #ffffff;
+    --color-surface-light: #f8fafc;
+    --color-surface-dark: #f1f5f9;
+    --color-surface-darker: #e2e8f0;
+    --color-surface-darkest: #cbd5e1;
+    --color-text-primary: #1e293b;
+    --color-text-secondary: #64748b;
+    --color-text-muted: #94a3b8;
+    --color-border: #e2e8f0;
+    --color-border-light: #f1f5f9;
+    --color-border-dark: #cbd5e1;
+    
+    /* Modern step indicator colors */
+    --step-number-inactive-bg: #e2e8f0;
+    --step-number-inactive-text: #64748b;
+    --step-number-active-bg: #6366f1;
+    --step-number-active-text: #ffffff;
+    --step-number-completed-bg: #10b981;
+    --step-number-completed-text: #ffffff;
+    --step-number-error-bg: #ef4444;
+    --step-number-error-text: #ffffff;
+    
+    /* Enhanced shadows for light theme */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+    
+    /* Modern background gradients */
+    --bg-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-gradient-secondary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --bg-gradient-accent: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+    --bg-gradient-surface: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    
+    /* Glassmorphism effect */
+    --glassmorphism-bg: rgba(255, 255, 255, 0.8);
+    --glassmorphism-border: rgba(255, 255, 255, 0.3);
+    --glassmorphism-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+/* Light mode specific component styles */
+.light-theme .summary-dashboard {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-color: #e2e8f0;
+}
+
+.light-theme .risk-assessment,
+.light-theme .issue-statistics,
+.light-theme .impact-analysis {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .stat-item {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.light-theme .stat-item.critical {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-color: #fecaca;
+}
+
+.light-theme .stat-item.warning {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-color: #fde68a;
+}
+
+.light-theme .stat-item.suggestion {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: #bfdbfe;
+}
+
+.light-theme .stat-item.total {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-color: #e5e7eb;
+}
+
+.light-theme .impact-item {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.light-theme .impact-label {
+    color: #475569;
+}
+
+.light-theme .impact-value {
+    color: #0f172a;
+}
+
+.light-theme .results-controls {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-color: #e2e8f0;
+}
+
+.light-theme .filter-select,
+.light-theme .sort-button {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    color: #475569;
+}
+
+.light-theme .filter-select:focus,
+.light-theme .sort-button:hover {
+    border-color: #3b82f6;
+    background: #f8fafc;
+}
+
+.light-theme .sort-button.active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #ffffff;
+}
+
+.light-theme .issue-group {
+    background: #ffffff;
+    border-color: #e2e8f0;
+}
+
+.light-theme .group-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-color: #e2e8f0;
+}
+
+.light-theme .group-header:hover {
+    background: #f1f5f9;
+}
+
+.light-theme .issue-card {
+    background: #ffffff;
+    border-color: #e2e8f0;
+}
+
+.light-theme .issue-header {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.light-theme .issue-header:hover {
+    background: #f1f5f9;
+}
+
+.light-theme .issue-title {
+    color: #0f172a;
+}
+
+.light-theme .issue-location,
+.light-theme .issue-category {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #475569;
+}
+
+.light-theme .issue-location:hover {
+    background: #e2e8f0;
+}
+
+.light-theme .copy-path-btn {
+    color: #94a3b8;
+}
+
+.light-theme .copy-path-btn:hover {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.light-theme .issue-content {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.light-theme .description-content {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    color: #0f172a;
+}
+
+.light-theme .issue-suggestion {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-color: #bbf7d0;
+}
+
+.light-theme .suggestion-header {
+    color: #166534;
+}
+
+.light-theme .suggestion-content {
+    color: #374151;
+}
+
+.light-theme .export-button {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #475569;
+}
+
+.light-theme .export-button:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.light-theme .search-input {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    color: #0f172a;
+}
+
+.light-theme .search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.light-theme .search-icon {
+    color: #9ca3af;
+}
+
+/* Light mode hover effects */
+.light-theme .issue-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .issue-card.critical {
+    border-left-color: #ef4444;
+}
+
+.light-theme .issue-card.warning {
+    border-left-color: #f59e0b;
+}
+
+.light-theme .issue-card.suggestion {
+    border-left-color: #3b82f6;
+}
+
+.light-theme .issue-card.style {
+    border-left-color: #8b5cf6;
+}
+
+.light-theme .issue-card.info {
+    border-left-color: #6b7280;
+}
+
+.light-theme .issue-severity.critical {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.light-theme .issue-severity.warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.light-theme .issue-severity.suggestion {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+.light-theme .issue-severity.style {
+    background-color: rgba(139, 92, 246, 0.1);
+    color: #7c3aed;
+}
+
+.light-theme .issue-severity.info {
+    background-color: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+}
+
+.light-theme .action-indicator.fix {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.light-theme .action-indicator.review {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+.light-theme .action-indicator.consider {
+    background-color: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+}
+
+.light-theme .risk-progress.high {
+    background: linear-gradient(90deg, #f87171, #ef4444);
+}
+
+.light-theme .risk-progress.medium {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.light-theme .risk-progress.low {
+    background: linear-gradient(90deg, #34d399, #10b981);
+}

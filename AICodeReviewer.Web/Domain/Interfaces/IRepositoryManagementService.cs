@@ -71,6 +71,8 @@ public interface IRepositoryManagementService
     /// <param name="repositoryPath">Path to the git repository</param>
     /// <param name="analysisType">Type of analysis to perform</param>
     /// <param name="targetCommit">Specific commit for commit analysis</param>
+    /// <param name="sourceBranch">Source branch for pull request analysis</param>
+    /// <param name="targetBranch">Target branch for pull request analysis</param>
     /// <returns>Changes summary and validation result</returns>
-    (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, string analysisType, string? targetCommit = null);
+    (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, string analysisType, string? targetCommit = null, string? sourceBranch = null, string? targetBranch = null);
 }

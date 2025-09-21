@@ -339,9 +339,85 @@ public class RepositoryManagementService : IRepositoryManagementService
     }
 
     /// <summary>
+    /// Get branch diff between two branches
+    /// </summary>
+    public (string diff, bool isError) GetBranchDiff(string repositoryPath, string sourceBranch, string targetBranch)
+    {
+        try
+        {
+            using var repo = new Repository(repositoryPath);
+            
+            // Find the source and target branches
+            var sourceBranchObj = repo.Branches[sourceBranch];
+            var targetBranchObj = repo.Branches[targetBranch];
+            
+            if (sourceBranchObj == null)
+            {
+                _logger.LogWarning("Source branch '{SourceBranch}' not found in repository: {Path}", sourceBranch, repositoryPath);
+                return ($"Source branch '{sourceBranch}' not found.", true);
+            }
+            
+            if (targetBranchObj == null)
+            {
+                _logger.LogWarning("Target branch '{TargetBranch}' not found in repository: {Path}", targetBranch, repositoryPath);
+                return ($"Target branch '{targetBranch}' not found.", true);
+            }
+            
+            // Handle case where branches might not have commits yet
+            if (sourceBranchObj.Tip == null)
+            {
+                _logger.LogWarning("Source branch '{SourceBranch}' has no commits in repository: {Path}", sourceBranch, repositoryPath);
+                return ($"Source branch '{sourceBranch}' has no commits.", true);
+            }
+            
+            if (targetBranchObj.Tip == null)
+            {
+                _logger.LogWarning("Target branch '{TargetBranch}' has no commits in repository: {Path}", targetBranch, repositoryPath);
+                return ($"Target branch '{targetBranch}' has no commits.", true);
+            }
+            
+            // Compare the two branches
+            var compareOptions = new CompareOptions
+            {
+                Similarity = SimilarityOptions.Renames,
+                IncludeUnmodified = false
+            };
+            
+            var branchDiff = repo.Diff.Compare<Patch>(targetBranchObj.Tip.Tree, sourceBranchObj.Tip.Tree, compareOptions);
+            var diffContent = branchDiff.Content;
+            
+            // Size check - 100KB limit
+            if (diffContent.Length > 102400)
+            {
+                _logger.LogWarning("Branch diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
+                return ($"Branch diff too large ({diffContent.Length} bytes > 100KB).", true);
+            }
+            
+            // Include branch information
+            var branchInfo = $"Comparing {sourceBranch} → {targetBranch}\n" +
+                            $"Source: {sourceBranchObj.Tip.Sha.Substring(0, 7)} - {sourceBranchObj.Tip.MessageShort}\n" +
+                            $"Target: {targetBranchObj.Tip.Sha.Substring(0, 7)} - {targetBranchObj.Tip.MessageShort}\n\n";
+            
+            return string.IsNullOrEmpty(diffContent)
+                ? (branchInfo + "No changes between branches.", false)
+                : (branchInfo + diffContent, false);
+        }
+        catch (RepositoryNotFoundException)
+        {
+            _logger.LogWarning("Not a git repository at path: {Path}", repositoryPath);
+            return ("Not a git repository.", true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Git error while getting branch diff between '{SourceBranch}' and '{TargetBranch}' from: {Path}", sourceBranch, targetBranch, repositoryPath);
+            return ($"Git error: {ex.Message}", true);
+        }
+    }
+
+    /// <summary>
     /// Preview changes for analysis configuration
     /// </summary>
-    public (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, string analysisType, string? targetCommit = null)
+    public (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, string analysisType, string? targetCommit = null, string? sourceBranch = null, string? targetBranch = null)
     {
         try
         {
@@ -391,6 +467,42 @@ public class RepositoryManagementService : IRepositoryManagementService
                         {
                             if (line.StartsWith("+") && !line.StartsWith("+++")) totalAdditions++;
                             else if (line.StartsWith("-") && !line.StartsWith("---")) totalDeletions++;
+                        }
+                    }
+                    break;
+
+                case "pullrequest":
+                    if (string.IsNullOrEmpty(sourceBranch) || string.IsNullOrEmpty(targetBranch))
+                    {
+                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Both source and target branches are required for branch comparison");
+                    }
+
+                    if (sourceBranch == targetBranch)
+                    {
+                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Source and target branches cannot be the same");
+                    }
+
+                    var branchDiffResult = GetBranchDiff(repositoryPath, sourceBranch, targetBranch);
+                    diffContent = branchDiffResult.diff;
+                    if (branchDiffResult.isError)
+                    {
+                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, branchDiffResult.diff);
+                    }
+
+                    // Parse branch diff for basic stats
+                    var branchLines = diffContent.Split('\n');
+                    foreach (var line in branchLines)
+                    {
+                        if (line.StartsWith("+") && !line.StartsWith("+++")) totalAdditions++;
+                        else if (line.StartsWith("-") && !line.StartsWith("---")) totalDeletions++;
+                        else if (line.StartsWith("diff --git") || (line.StartsWith("---") && line.Contains("a/")))
+                        {
+                            // Extract file names from diff lines
+                            var match = System.Text.RegularExpressions.Regex.Match(line, @"diff --git a/(.*) b/(.*)");
+                            if (match.Success)
+                            {
+                                files.Add(match.Groups[1].Value);
+                            }
                         }
                     }
                     break;
