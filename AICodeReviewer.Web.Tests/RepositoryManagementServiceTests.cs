@@ -53,7 +53,8 @@ namespace AICodeReviewer.Web.Tests
             {
                 _fixture = fixture;
                 _mockLogger = new Mock<ILogger<RepositoryManagementService>>();
-                _repositoryManagementService = new RepositoryManagementService(_mockLogger.Object);
+                _repositoryManagementService = new RepositoryManagementService(
+                    _mockLogger.Object);
                 _fixture.Repo.Reset(ResetMode.Hard);
             }
 
@@ -206,3 +207,4 @@ namespace AICodeReviewer.Web.Tests
         }
     }
 }
+

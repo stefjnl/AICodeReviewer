@@ -1,3 +1,4 @@
+using AICodeReviewer.Web.Domain;
 using AICodeReviewer.Web.Domain.Interfaces;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
@@ -9,9 +10,11 @@ namespace AICodeReviewer.Web.Infrastructure.Services;
 /// </summary>
 public class RepositoryManagementService : IRepositoryManagementService
 {
+    
     private readonly ILogger<RepositoryManagementService> _logger;
 
-    public RepositoryManagementService(ILogger<RepositoryManagementService> logger)
+    public RepositoryManagementService(
+        ILogger<RepositoryManagementService> logger)
     {
         _logger = logger;
     }
@@ -78,7 +81,7 @@ public class RepositoryManagementService : IRepositoryManagementService
             var diffContent = diff.Content;
             
             // Simple size check - 200KB limit
-            if (diffContent.Length > 204800) // 100KB
+            if (diffContent.Length > DiffConstants.MaxUncommittedDiffSize) // 200KB
             {
                 _logger.LogWarning("Diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
                 return ($"Diff too large ({diffContent.Length} bytes > 100KB). Commit some changes first.", true);
@@ -121,7 +124,7 @@ public class RepositoryManagementService : IRepositoryManagementService
             if (!commit.Parents.Any())
             {
                 // Compare against empty tree for initial commit
-                var emptyTree = repo.Lookup<Tree>("4b825dc642cb6eb9a060e54bf8d69288fbee4904"); // Empty tree hash
+                var emptyTree = repo.Lookup<Tree>(DiffConstants.GitEmptyTreeSha); // Git empty tree SHA
                 var diff = repo.Diff.Compare<Patch>(emptyTree, commit.Tree);
                 var branchInfo = $"Branch: {repo.Head.FriendlyName}\nCommit: {commit.Sha.Substring(0, 7)} - {commit.MessageShort}\n\n";
                 return (branchInfo + diff.Content, false);
@@ -139,7 +142,7 @@ public class RepositoryManagementService : IRepositoryManagementService
             var diffContent = commitDiff.Content;
             
             // Size check - 100KB limit
-            if (diffContent.Length > 102400)
+            if (diffContent.Length > DiffConstants.MaxDiffSize)
             {
                 _logger.LogWarning("Commit diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
                 return ($"Commit diff too large ({diffContent.Length} bytes > 100KB).", true);
@@ -234,7 +237,7 @@ public class RepositoryManagementService : IRepositoryManagementService
             var diffContent = diff.Content;
             
             // Simple size check - 100KB limit
-            if (diffContent.Length > 102400)
+            if (diffContent.Length > DiffConstants.MaxDiffSize)
             {
                 _logger.LogWarning("Staged diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
                 return ($"Staged diff too large ({diffContent.Length} bytes > 100KB).", true);
@@ -387,7 +390,7 @@ public class RepositoryManagementService : IRepositoryManagementService
             var diffContent = branchDiff.Content;
             
             // Size check - 100KB limit
-            if (diffContent.Length > 102400)
+            if (diffContent.Length > DiffConstants.MaxDiffSize)
             {
                 _logger.LogWarning("Branch diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
                 return ($"Branch diff too large ({diffContent.Length} bytes > 100KB).", true);
@@ -562,3 +565,4 @@ public class RepositoryManagementService : IRepositoryManagementService
         }
     }
 }
+
