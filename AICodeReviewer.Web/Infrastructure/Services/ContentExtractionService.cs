@@ -1,5 +1,6 @@
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Models;
+using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
@@ -14,13 +15,16 @@ namespace AICodeReviewer.Web.Infrastructure.Services
     {
         private readonly ILogger<ContentExtractionService> _logger;
         private readonly IRepositoryManagementService _repositoryService;
+        private readonly IDiffProviderFactory _diffProviderFactory;
 
         public ContentExtractionService(
             ILogger<ContentExtractionService> logger,
-            IRepositoryManagementService repositoryService)
+            IRepositoryManagementService repositoryService,
+            IDiffProviderFactory diffProviderFactory)
         {
             _logger = logger;
             _repositoryService = repositoryService;
+            _diffProviderFactory = diffProviderFactory;
         }
 
         public async Task<(string content, bool contentError, bool isFileContent, string? error)> ExtractContentAsync(
@@ -46,37 +50,55 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                     isFileContent = true;
                     _logger.LogInformation("[ContentExtraction] File read successfully, length: {Length}", content.Length);
                 }
-                else if (analysisType == AnalysisType.Commit && !string.IsNullOrEmpty(commitId))
-                {
-                    _logger.LogInformation("[ContentExtraction] Extracting commit diff for {CommitId}", commitId);
-                    (content, contentError) = _repositoryService.GetCommitDiff(repositoryPath, commitId);
-                    isFileContent = false;
-                }
-                else if (analysisType == AnalysisType.Staged)
-                {
-                    _logger.LogInformation("[ContentExtraction] Extracting staged changes");
-                    (content, contentError) = _repositoryService.ExtractStagedDiff(repositoryPath);
-                    isFileContent = false;
-                }
                 else
                 {
-                    _logger.LogInformation("[ContentExtraction] Extracting uncommitted changes");
-                    (content, contentError) = _repositoryService.ExtractDiff(repositoryPath);
+                    // Use the diff provider pattern for git-based analysis
+                    string analysisTypeString = analysisType switch
+                    {
+                        AnalysisType.Commit => "commit",
+                        AnalysisType.Staged => "staged",
+                        AnalysisType.Uncommitted => "uncommitted",
+                        _ => throw new ArgumentException($"Unsupported analysis type: {analysisType}")
+                    };
+
+                    // Create the appropriate diff provider
+                    var diffProvider = _diffProviderFactory.CreateProvider(analysisTypeString);
+
+                    // Validate inputs
+                    if (!diffProvider.ValidateInputs(commitId, null, null))
+                    {
+                        contentError = true;
+                        error = "Invalid input parameters for the selected analysis type";
+                        _logger.LogWarning("[ContentExtraction] Invalid input parameters for analysis type {AnalysisType}", analysisTypeString);
+                        return (content, contentError, isFileContent, error);
+                    }
+
+                    // Get the diff content using the provider
+                    using var repo = new Repository(repositoryPath);
+                    var (diffContent, isError, errorMsg) = diffProvider.GetDiff(repo, commitId, null, null);
+                    
+                    content = diffContent;
+                    contentError = isError;
+                    error = errorMsg;
                     isFileContent = false;
+                    
+                    if (contentError)
+                    {
+                        _logger.LogError("[ContentExtraction] Content extraction failed: {Error}", error);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("[ContentExtraction] Diff content extracted successfully, length: {Length}", content.Length);
+                    }
                 }
 
-                if (contentError)
-                {
-                    error = content; // Original uses content as error message for git errors
-                    _logger.LogError("[ContentExtraction] Content extraction failed: {Error}", error);
-                }
-                else if (string.IsNullOrEmpty(content))
+                if (!contentError && string.IsNullOrEmpty(content))
                 {
                     contentError = true;
                     error = "No content extracted";
                     _logger.LogWarning("[ContentExtraction] No content was extracted");
                 }
-                else
+                else if (!contentError)
                 {
                     _logger.LogInformation("[ContentExtraction] Content extracted successfully, length: {Length}", content.Length);
                 }

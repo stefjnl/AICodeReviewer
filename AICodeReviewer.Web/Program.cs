@@ -67,6 +67,8 @@ builder.Services.AddScoped<IPathValidationService, PathValidationService>();
 builder.Services.AddScoped<ISignalRBroadcastService, SignalRBroadcastService>();
 builder.Services.AddScoped<IDirectoryBrowsingService, DirectoryBrowsingService>();
 builder.Services.AddScoped<IResourceService, ResourceService>();
+builder.Services.AddScoped<IDiffProviderFactory, DiffProviderFactory>();
+builder.Services.AddScoped<IDiffStatisticsParser, DiffStatisticsParser>();
 builder.Services.AddHttpClient<IAIService, AIService>(client =>
 {
     client.BaseAddress = new Uri("https://openrouter.ai/api/v1/");
