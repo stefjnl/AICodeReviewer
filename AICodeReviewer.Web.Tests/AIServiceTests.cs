@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace AICodeReviewer.Web.Tests
 {
-    public class AIServiceTests
+    public class AIServiceTests : IDisposable
     {
         private readonly Mock<ILogger<AIService>> _mockLogger;
         private readonly Mock<IResourceService> _mockResourceService;
@@ -26,6 +26,11 @@ namespace AICodeReviewer.Web.Tests
                 .Returns("Test prompt template for git diff: {GitDiff}");
             _mockResourceService.Setup(x => x.GetSingleFilePromptTemplate())
                 .Returns("Test prompt template for single file: {GitDiff}");
+        }
+
+        public void Dispose()
+        {
+            _httpClient?.Dispose();
         }
 
         [Fact]

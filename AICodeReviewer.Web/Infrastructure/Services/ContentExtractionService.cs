@@ -74,34 +74,26 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                     }
 
                     // Get the diff content using the provider
-                    using var repo = new Repository(repositoryPath);
-                    var (diffContent, isError, errorMsg) = diffProvider.GetDiff(repo, commitId, null, null);
-                    
-                    content = diffContent;
-                    contentError = isError;
-                    error = errorMsg;
-                    isFileContent = false;
-                    
-                    if (contentError)
+                    using (var repo = new Repository(repositoryPath))
                     {
-                        _logger.LogError("[ContentExtraction] Content extraction failed: {Error}", error);
-                    }
-                    else
-                    {
-                        _logger.LogInformation("[ContentExtraction] Diff content extracted successfully, length: {Length}", content.Length);
+                        var (diffContent, isError, errorMsg) = diffProvider.GetDiff(repo, commitId, null, null);
+                        
+                        content = diffContent;
+                        contentError = isError;
+                        error = errorMsg;
+                        isFileContent = false;
+                        
+                        if (contentError)
+                        {
+                            _logger.LogError("[ContentExtraction] Content extraction failed: {Error}", error);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("[ContentExtraction] Diff content extracted successfully, length: {Length}", content.Length);
+                        }
                     }
                 }
 
-                if (!contentError && string.IsNullOrEmpty(content))
-                {
-                    contentError = true;
-                    error = "No content extracted";
-                    _logger.LogWarning("[ContentExtraction] No content was extracted");
-                }
-                else if (!contentError)
-                {
-                    _logger.LogInformation("[ContentExtraction] Content extracted successfully, length: {Length}", content.Length);
-                }
             }
             catch (Exception ex)
             {

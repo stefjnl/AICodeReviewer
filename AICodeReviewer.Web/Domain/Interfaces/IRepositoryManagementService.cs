@@ -1,4 +1,5 @@
 using LibGit2Sharp;
+using AICodeReviewer.Web.Models;
 
 namespace AICodeReviewer.Web.Domain.Interfaces;
 
@@ -74,5 +75,5 @@ public interface IRepositoryManagementService
     /// <param name="sourceBranch">Source branch for pull request analysis</param>
     /// <param name="targetBranch">Target branch for pull request analysis</param>
     /// <returns>Changes summary and validation result</returns>
-    (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, string analysisType, string? targetCommit = null, string? sourceBranch = null, string? targetBranch = null);
+    (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, AnalysisType analysisType, string? targetCommit = null, string? sourceBranch = null, string? targetBranch = null);
 }

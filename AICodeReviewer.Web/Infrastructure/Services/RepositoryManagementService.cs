@@ -1,5 +1,6 @@
 using AICodeReviewer.Web.Domain;
 using AICodeReviewer.Web.Domain.Interfaces;
+using AICodeReviewer.Web.Models;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
 
@@ -71,28 +72,29 @@ public class RepositoryManagementService : IRepositoryManagementService
     {
         try
         {
-            using var repo = new Repository(repositoryPath);
-            
-            // Get both staged and unstaged changes
-            var diff = repo.Diff.Compare<Patch>(
-                repo.Head.Tip?.Tree, 
-                DiffTargets.Index | DiffTargets.WorkingDirectory);
-            
-            var diffContent = diff.Content;
-            
-            // Simple size check - 200KB limit
-            if (diffContent.Length > DiffConstants.MaxUncommittedDiffSize) // 200KB
+            using (var repo = new Repository(repositoryPath))
             {
-                _logger.LogWarning("Diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
-                return ($"Diff too large ({diffContent.Length} bytes > 100KB). Commit some changes first.", true);
+                // Get both staged and unstaged changes
+                var diff = repo.Diff.Compare<Patch>(
+                    repo.Head.Tip?.Tree,
+                    DiffTargets.Index | DiffTargets.WorkingDirectory);
+                
+                var diffContent = diff.Content;
+                
+                // Simple size check - 200KB limit
+                if (diffContent.Length > DiffConstants.MaxUncommittedDiffSize) // 200KB
+                {
+                    _logger.LogWarning("Diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
+                    return ($"Diff too large ({diffContent.Length} bytes > 100KB). Commit some changes first.", true);
+                }
+                
+                // Include current branch information
+                var branchInfo = $"Branch: {repo.Head.FriendlyName}\n\n";
+                
+                return string.IsNullOrEmpty(diffContent)
+                    ? (branchInfo + "No changes detected.", false)  // Empty repo graceful handling
+                    : (branchInfo + diffContent, false);
             }
-            
-            // Include current branch information
-            var branchInfo = $"Branch: {repo.Head.FriendlyName}\n\n";
-            
-            return string.IsNullOrEmpty(diffContent) 
-                ? (branchInfo + "No changes detected.", false)  // Empty repo graceful handling
-                : (branchInfo + diffContent, false);
         }
         catch (RepositoryNotFoundException)
         {
@@ -110,50 +112,51 @@ public class RepositoryManagementService : IRepositoryManagementService
     {
         try
         {
-            using var repo = new Repository(repositoryPath);
-            
-            // Lookup commit by ID (full or partial hash)
-            var commit = repo.Lookup<Commit>(commitId);
-            if (commit == null)
+            using (var repo = new Repository(repositoryPath))
             {
-                _logger.LogWarning("Commit '{CommitId}' not found in repository: {Path}", commitId, repositoryPath);
-                return ($"Commit '{commitId}' not found.", true);
+                // Lookup commit by ID (full or partial hash)
+                var commit = repo.Lookup<Commit>(commitId);
+                if (commit == null)
+                {
+                    _logger.LogWarning("Commit '{CommitId}' not found in repository: {Path}", commitId, repositoryPath);
+                    return ($"Commit '{commitId}' not found.", true);
+                }
+                
+                // Handle initial commit (no parent)
+                if (!commit.Parents.Any())
+                {
+                    // Compare against empty tree for initial commit
+                    var emptyTree = repo.Lookup<Tree>(DiffConstants.GitEmptyTreeSha); // Git empty tree SHA
+                    var diff = repo.Diff.Compare<Patch>(emptyTree, commit.Tree);
+                    var branchInfo = $"Branch: {repo.Head.FriendlyName}\nCommit: {commit.Sha.Substring(0, 7)} - {commit.MessageShort}\n\n";
+                    return (branchInfo + diff.Content, false);
+                }
+                
+                // Normal case: compare with parent
+                var parentCommit = commit.Parents.First();
+                var compareOptions = new CompareOptions
+                {
+                    Similarity = SimilarityOptions.Renames,
+                    IncludeUnmodified = false
+                };
+                
+                var commitDiff = repo.Diff.Compare<Patch>(parentCommit.Tree, commit.Tree, compareOptions);
+                var diffContent = commitDiff.Content;
+                
+                // Size check - 100KB limit
+                if (diffContent.Length > DiffConstants.MaxDiffSize)
+                {
+                    _logger.LogWarning("Commit diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
+                    return ($"Commit diff too large ({diffContent.Length} bytes > 100KB).", true);
+                }
+                
+                // Include commit information
+                var commitInfo = $"Branch: {repo.Head.FriendlyName}\nCommit: {commit.Sha.Substring(0, 7)} - {commit.MessageShort}\n\n";
+                
+                return string.IsNullOrEmpty(diffContent)
+                    ? (commitInfo + "No changes in this commit.", false)
+                    : (commitInfo + diffContent, false);
             }
-            
-            // Handle initial commit (no parent)
-            if (!commit.Parents.Any())
-            {
-                // Compare against empty tree for initial commit
-                var emptyTree = repo.Lookup<Tree>(DiffConstants.GitEmptyTreeSha); // Git empty tree SHA
-                var diff = repo.Diff.Compare<Patch>(emptyTree, commit.Tree);
-                var branchInfo = $"Branch: {repo.Head.FriendlyName}\nCommit: {commit.Sha.Substring(0, 7)} - {commit.MessageShort}\n\n";
-                return (branchInfo + diff.Content, false);
-            }
-            
-            // Normal case: compare with parent
-            var parentCommit = commit.Parents.First();
-            var compareOptions = new CompareOptions
-            {
-                Similarity = SimilarityOptions.Renames,
-                IncludeUnmodified = false
-            };
-            
-            var commitDiff = repo.Diff.Compare<Patch>(parentCommit.Tree, commit.Tree, compareOptions);
-            var diffContent = commitDiff.Content;
-            
-            // Size check - 100KB limit
-            if (diffContent.Length > DiffConstants.MaxDiffSize)
-            {
-                _logger.LogWarning("Commit diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
-                return ($"Commit diff too large ({diffContent.Length} bytes > 100KB).", true);
-            }
-            
-            // Include commit information
-            var commitInfo = $"Branch: {repo.Head.FriendlyName}\nCommit: {commit.Sha.Substring(0, 7)} - {commit.MessageShort}\n\n";
-            
-            return string.IsNullOrEmpty(diffContent)
-                ? (commitInfo + "No changes in this commit.", false)
-                : (commitInfo + diffContent, false);
         }
         catch (RepositoryNotFoundException)
         {
@@ -176,18 +179,20 @@ public class RepositoryManagementService : IRepositoryManagementService
     {
         try
         {
-            using var repo = new Repository(repositoryPath);
-            var commit = repo.Lookup<Commit>(commitId);
-            
-            if (commit == null)
+            using (var repo = new Repository(repositoryPath))
             {
-                _logger.LogWarning("Commit '{CommitId}' not found in repository: {Path}", commitId, repositoryPath);
-                return (false, null, $"Commit '{commitId}' not found");
+                var commit = repo.Lookup<Commit>(commitId);
+                
+                if (commit == null)
+                {
+                    _logger.LogWarning("Commit '{CommitId}' not found in repository: {Path}", commitId, repositoryPath);
+                    return (false, null, $"Commit '{commitId}' not found");
+                }
+                
+                var message = $"{commit.Sha.Substring(0, 7)} - {commit.MessageShort}";
+                _logger.LogInformation("Validated commit '{CommitId}' in repository: {Path} - {Message}", commitId, repositoryPath, message);
+                return (true, message, null);
             }
-            
-            var message = $"{commit.Sha.Substring(0, 7)} - {commit.MessageShort}";
-            _logger.LogInformation("Validated commit '{CommitId}' in repository: {Path} - {Message}", commitId, repositoryPath, message);
-            return (true, message, null);
         }
         catch (RepositoryNotFoundException)
         {
@@ -227,28 +232,29 @@ public class RepositoryManagementService : IRepositoryManagementService
     {
         try
         {
-            using var repo = new Repository(repositoryPath);
-            
-            // Get only staged changes (HEAD vs Index)
-            var diff = repo.Diff.Compare<Patch>(
-                repo.Head.Tip?.Tree,
-                DiffTargets.Index);
-            
-            var diffContent = diff.Content;
-            
-            // Simple size check - 100KB limit
-            if (diffContent.Length > DiffConstants.MaxDiffSize)
+            using (var repo = new Repository(repositoryPath))
             {
-                _logger.LogWarning("Staged diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
-                return ($"Staged diff too large ({diffContent.Length} bytes > 100KB).", true);
+                // Get only staged changes (HEAD vs Index)
+                var diff = repo.Diff.Compare<Patch>(
+                    repo.Head.Tip?.Tree,
+                    DiffTargets.Index);
+                
+                var diffContent = diff.Content;
+                
+                // Simple size check - 100KB limit
+                if (diffContent.Length > DiffConstants.MaxDiffSize)
+                {
+                    _logger.LogWarning("Staged diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
+                    return ($"Staged diff too large ({diffContent.Length} bytes > 100KB).", true);
+                }
+                
+                // Include current branch information
+                var branchInfo = $"Branch: {repo.Head.FriendlyName}\n\n";
+                
+                return string.IsNullOrEmpty(diffContent)
+                    ? (branchInfo + "No staged changes detected.", false)  // No staged changes graceful handling
+                    : (branchInfo + diffContent, false);
             }
-            
-            // Include current branch information
-            var branchInfo = $"Branch: {repo.Head.FriendlyName}\n\n";
-            
-            return string.IsNullOrEmpty(diffContent)
-                ? (branchInfo + "No staged changes detected.", false)  // No staged changes graceful handling
-                : (branchInfo + diffContent, false);
         }
         catch (RepositoryNotFoundException)
         {
@@ -266,17 +272,18 @@ public class RepositoryManagementService : IRepositoryManagementService
     {
         try
         {
-            using var repo = new Repository(repositoryPath);
-            
-            // Check if there are any staged changes by comparing HEAD tree with index
-            var diff = repo.Diff.Compare<Patch>(
-                repo.Head.Tip?.Tree,
-                DiffTargets.Index);
-            
-            var hasStaged = !string.IsNullOrEmpty(diff.Content);
-            
-            _logger.LogInformation("Checked for staged changes in repository: {Path} - Has staged: {HasStaged}", repositoryPath, hasStaged);
-            return (hasStaged, null);
+            using (var repo = new Repository(repositoryPath))
+            {
+                // Check if there are any staged changes by comparing HEAD tree with index
+                var diff = repo.Diff.Compare<Patch>(
+                    repo.Head.Tip?.Tree,
+                    DiffTargets.Index);
+                
+                var hasStaged = !string.IsNullOrEmpty(diff.Content);
+                
+                _logger.LogInformation("Checked for staged changes in repository: {Path} - Has staged: {HasStaged}", repositoryPath, hasStaged);
+                return (hasStaged, null);
+            }
         }
         catch (RepositoryNotFoundException)
         {
@@ -297,37 +304,38 @@ public class RepositoryManagementService : IRepositoryManagementService
     {
         try
         {
-            using var repo = new Repository(repositoryPath);
-            
-            // Get last 10 commits
-            var commits = repo.Commits.Take(10).Select(c => new
+            using (var repo = new Repository(repositoryPath))
             {
-                id = c.Sha.Substring(0, 7),
-                message = c.MessageShort,
-                author = c.Author.Name,
-                date = c.Author.When.ToString("yyyy-MM-dd HH:mm")
-            }).ToList<object>();
+                // Get last 10 commits
+                var commits = repo.Commits.Take(10).Select(c => new
+                {
+                    id = c.Sha.Substring(0, 7),
+                    message = c.MessageShort,
+                    author = c.Author.Name,
+                    date = c.Author.When.ToString("yyyy-MM-dd HH:mm")
+                }).ToList<object>();
 
-            // Get branches
-            var branches = repo.Branches.Where(b => !b.IsRemote).Select(b => new
-            {
-                name = b.FriendlyName,
-                isCurrent = b.IsCurrentRepositoryHead
-            }).ToList<object>();
+                // Get branches
+                var branches = repo.Branches.Where(b => !b.IsRemote).Select(b => new
+                {
+                    name = b.FriendlyName,
+                    isCurrent = b.IsCurrentRepositoryHead
+                }).ToList<object>();
 
-            // Get modified/untracked files
-            var status = repo.RetrieveStatus();
-            var modifiedFiles = status.Where(s => s.State != FileStatus.Unaltered)
-                                    .Select(s => s.FilePath)
-                                    .ToList();
+                // Get modified/untracked files
+                var status = repo.RetrieveStatus();
+                var modifiedFiles = status.Where(s => s.State != FileStatus.Unaltered)
+                                        .Select(s => s.FilePath)
+                                        .ToList();
 
-            // Get staged files - any files with changes
-            var stagedFiles = status.Where(s => s.State != FileStatus.Unaltered)
-                                  .Select(s => s.FilePath)
-                                  .ToList();
+                // Get staged files - any files with changes
+                var stagedFiles = status.Where(s => s.State != FileStatus.Unaltered)
+                                      .Select(s => s.FilePath)
+                                      .ToList();
 
-            _logger.LogInformation("Retrieved analysis options for repository: {Path}", repositoryPath);
-            return (commits, branches, modifiedFiles, stagedFiles);
+                _logger.LogInformation("Retrieved analysis options for repository: {Path}", repositoryPath);
+                return (commits, branches, modifiedFiles, stagedFiles);
+            }
         }
         catch (RepositoryNotFoundException)
         {
@@ -348,62 +356,63 @@ public class RepositoryManagementService : IRepositoryManagementService
     {
         try
         {
-            using var repo = new Repository(repositoryPath);
-            
-            // Find the source and target branches
-            var sourceBranchObj = repo.Branches[sourceBranch];
-            var targetBranchObj = repo.Branches[targetBranch];
-            
-            if (sourceBranchObj == null)
+            using (var repo = new Repository(repositoryPath))
             {
-                _logger.LogWarning("Source branch '{SourceBranch}' not found in repository: {Path}", sourceBranch, repositoryPath);
-                return ($"Source branch '{sourceBranch}' not found.", true);
+                // Find the source and target branches
+                var sourceBranchObj = repo.Branches[sourceBranch];
+                var targetBranchObj = repo.Branches[targetBranch];
+                
+                if (sourceBranchObj == null)
+                {
+                    _logger.LogWarning("Source branch '{SourceBranch}' not found in repository: {Path}", sourceBranch, repositoryPath);
+                    return ($"Source branch '{sourceBranch}' not found.", true);
+                }
+                
+                if (targetBranchObj == null)
+                {
+                    _logger.LogWarning("Target branch '{TargetBranch}' not found in repository: {Path}", targetBranch, repositoryPath);
+                    return ($"Target branch '{targetBranch}' not found.", true);
+                }
+                
+                // Handle case where branches might not have commits yet
+                if (sourceBranchObj.Tip == null)
+                {
+                    _logger.LogWarning("Source branch '{SourceBranch}' has no commits in repository: {Path}", sourceBranch, repositoryPath);
+                    return ($"Source branch '{sourceBranch}' has no commits.", true);
+                }
+                
+                if (targetBranchObj.Tip == null)
+                {
+                    _logger.LogWarning("Target branch '{TargetBranch}' has no commits in repository: {Path}", targetBranch, repositoryPath);
+                    return ($"Target branch '{targetBranch}' has no commits.", true);
+                }
+                
+                // Compare the two branches
+                var compareOptions = new CompareOptions
+                {
+                    Similarity = SimilarityOptions.Renames,
+                    IncludeUnmodified = false
+                };
+                
+                var branchDiff = repo.Diff.Compare<Patch>(targetBranchObj.Tip.Tree, sourceBranchObj.Tip.Tree, compareOptions);
+                var diffContent = branchDiff.Content;
+                
+                // Size check - 100KB limit
+                if (diffContent.Length > DiffConstants.MaxDiffSize)
+                {
+                    _logger.LogWarning("Branch diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
+                    return ($"Branch diff too large ({diffContent.Length} bytes > 100KB).", true);
+                }
+                
+                // Include branch information
+                var branchInfo = $"Comparing {sourceBranch} → {targetBranch}\n" +
+                                $"Source: {sourceBranchObj.Tip.Sha.Substring(0, 7)} - {sourceBranchObj.Tip.MessageShort}\n" +
+                                $"Target: {targetBranchObj.Tip.Sha.Substring(0, 7)} - {targetBranchObj.Tip.MessageShort}\n\n";
+                
+                return string.IsNullOrEmpty(diffContent)
+                    ? (branchInfo + "No changes between branches.", false)
+                    : (branchInfo + diffContent, false);
             }
-            
-            if (targetBranchObj == null)
-            {
-                _logger.LogWarning("Target branch '{TargetBranch}' not found in repository: {Path}", targetBranch, repositoryPath);
-                return ($"Target branch '{targetBranch}' not found.", true);
-            }
-            
-            // Handle case where branches might not have commits yet
-            if (sourceBranchObj.Tip == null)
-            {
-                _logger.LogWarning("Source branch '{SourceBranch}' has no commits in repository: {Path}", sourceBranch, repositoryPath);
-                return ($"Source branch '{sourceBranch}' has no commits.", true);
-            }
-            
-            if (targetBranchObj.Tip == null)
-            {
-                _logger.LogWarning("Target branch '{TargetBranch}' has no commits in repository: {Path}", targetBranch, repositoryPath);
-                return ($"Target branch '{targetBranch}' has no commits.", true);
-            }
-            
-            // Compare the two branches
-            var compareOptions = new CompareOptions
-            {
-                Similarity = SimilarityOptions.Renames,
-                IncludeUnmodified = false
-            };
-            
-            var branchDiff = repo.Diff.Compare<Patch>(targetBranchObj.Tip.Tree, sourceBranchObj.Tip.Tree, compareOptions);
-            var diffContent = branchDiff.Content;
-            
-            // Size check - 100KB limit
-            if (diffContent.Length > DiffConstants.MaxDiffSize)
-            {
-                _logger.LogWarning("Branch diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
-                return ($"Branch diff too large ({diffContent.Length} bytes > 100KB).", true);
-            }
-            
-            // Include branch information
-            var branchInfo = $"Comparing {sourceBranch} → {targetBranch}\n" +
-                            $"Source: {sourceBranchObj.Tip.Sha.Substring(0, 7)} - {sourceBranchObj.Tip.MessageShort}\n" +
-                            $"Target: {targetBranchObj.Tip.Sha.Substring(0, 7)} - {targetBranchObj.Tip.MessageShort}\n\n";
-            
-            return string.IsNullOrEmpty(diffContent)
-                ? (branchInfo + "No changes between branches.", false)
-                : (branchInfo + diffContent, false);
         }
         catch (RepositoryNotFoundException)
         {
@@ -420,120 +429,80 @@ public class RepositoryManagementService : IRepositoryManagementService
     /// <summary>
     /// Preview changes for analysis configuration
     /// </summary>
-    public (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, string analysisType, string? targetCommit = null, string? sourceBranch = null, string? targetBranch = null)
+    public (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, AnalysisType analysisType, string? targetCommit = null, string? sourceBranch = null, string? targetBranch = null)
     {
         try
         {
-            using var repo = new Repository(repositoryPath);
-            string diffContent;
-            int totalAdditions = 0;
-            int totalDeletions = 0;
-            List<string> files = new List<string>();
-
-            switch (analysisType.ToLower())
+            using (var repo = new Repository(repositoryPath))
             {
-                case "uncommitted":
-                    var uncommittedDiff = repo.Diff.Compare<Patch>(
-                        repo.Head.Tip?.Tree,
-                        DiffTargets.Index | DiffTargets.WorkingDirectory);
-                    diffContent = uncommittedDiff.Content;
-                    ExtractFileStats(uncommittedDiff, ref totalAdditions, ref totalDeletions, files);
-                    break;
+                Patch diff;
+                string diffContent;
 
-                case "staged":
-                    var stagedDiff = repo.Diff.Compare<Patch>(
-                        repo.Head.Tip?.Tree,
-                        DiffTargets.Index);
-                    diffContent = stagedDiff.Content;
-                    ExtractFileStats(stagedDiff, ref totalAdditions, ref totalDeletions, files);
-                    break;
-
-                case "commit":
-                    if (string.IsNullOrEmpty(targetCommit))
-                    {
-                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Commit ID is required for commit analysis");
-                    }
-
-                    var commit = repo.Lookup<Commit>(targetCommit);
-                    if (commit == null)
-                    {
-                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Commit not found");
-                    }
-
-                    var commitDiff = GetCommitDiff(repositoryPath, targetCommit);
-                    diffContent = commitDiff.diff;
-                    if (!commitDiff.isError)
-                    {
-                        // Parse commit diff for basic stats
-                        var lines = diffContent.Split('\n');
-                        foreach (var line in lines)
-                        {
-                            if (line.StartsWith("+") && !line.StartsWith("+++")) totalAdditions++;
-                            else if (line.StartsWith("-") && !line.StartsWith("---")) totalDeletions++;
-                        }
-                    }
-                    break;
-
-                case "pullrequest":
-                    if (string.IsNullOrEmpty(sourceBranch) || string.IsNullOrEmpty(targetBranch))
-                    {
-                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Both source and target branches are required for branch comparison");
-                    }
-
-                    if (sourceBranch == targetBranch)
-                    {
-                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Source and target branches cannot be the same");
-                    }
-
-                    var branchDiffResult = GetBranchDiff(repositoryPath, sourceBranch, targetBranch);
-                    diffContent = branchDiffResult.diff;
-                    if (branchDiffResult.isError)
-                    {
-                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, branchDiffResult.diff);
-                    }
-
-                    // Parse branch diff for basic stats
-                    var branchLines = diffContent.Split('\n');
-                    foreach (var line in branchLines)
-                    {
-                        if (line.StartsWith("+") && !line.StartsWith("+++")) totalAdditions++;
-                        else if (line.StartsWith("-") && !line.StartsWith("---")) totalDeletions++;
-                        else if (line.StartsWith("diff --git") || (line.StartsWith("---") && line.Contains("a/")))
-                        {
-                            // Extract file names from diff lines
-                            var match = System.Text.RegularExpressions.Regex.Match(line, @"diff --git a/(.*) b/(.*)");
-                            if (match.Success)
-                            {
-                                files.Add(match.Groups[1].Value);
-                            }
-                        }
-                    }
-                    break;
-
-                default:
-                    return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Invalid analysis type");
-            }
-
-            if (string.IsNullOrEmpty(diffContent))
-            {
-                return (new
+                switch (analysisType)
                 {
-                    filesModified = 0,
-                    additions = 0,
-                    deletions = 0,
-                    fileList = new List<string>()
-                }, true, null);
+                    case AnalysisType.Uncommitted:
+                        diff = repo.Diff.Compare<Patch>(
+                            repo.Head.Tip?.Tree,
+                            DiffTargets.Index | DiffTargets.WorkingDirectory);
+                        diffContent = diff.Content;
+                        break;
+
+                    case AnalysisType.Staged:
+                        diff = repo.Diff.Compare<Patch>(
+                            repo.Head.Tip?.Tree,
+                            DiffTargets.Index);
+                        diffContent = diff.Content;
+                        break;
+
+                    case AnalysisType.Commit:
+                        diff = ComputeCommitDiff(repo, targetCommit);
+                        if (diff == null)
+                        {
+                            return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Commit not found or invalid");
+                        }
+                        diffContent = diff.Content;
+                        break;
+
+                    case AnalysisType.PullRequestDifferential:
+                        diff = ComputePullRequestDiff(repo, sourceBranch, targetBranch);
+                        if (diff == null)
+                        {
+                            return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Branch comparison failed");
+                        }
+                        diffContent = diff.Content;
+                        break;
+
+                    default:
+                        return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, $"Analysis type '{analysisType}' is not supported for preview");
+                }
+
+                if (string.IsNullOrEmpty(diffContent))
+                {
+                    return (new
+                    {
+                        filesModified = 0,
+                        additions = 0,
+                        deletions = 0,
+                        fileList = new List<string>()
+                    }, true, null);
+                }
+
+                // Use ExtractFileStats for consistent processing across all analysis types
+                int totalAdditions = 0;
+                int totalDeletions = 0;
+                List<string> files = new List<string>();
+                ExtractFileStats(diff, ref totalAdditions, ref totalDeletions, files);
+
+                var changesSummary = new
+                {
+                    filesModified = files.Count,
+                    additions = totalAdditions,
+                    deletions = totalDeletions,
+                    fileList = files
+                };
+
+                return (changesSummary, true, null);
             }
-
-            var changesSummary = new
-            {
-                filesModified = files.Count,
-                additions = totalAdditions,
-                deletions = totalDeletions,
-                fileList = files
-            };
-
-            return (changesSummary, true, null);
         }
         catch (RepositoryNotFoundException)
         {
@@ -552,7 +521,7 @@ public class RepositoryManagementService : IRepositoryManagementService
         foreach (var patchEntry in diff)
         {
             files.Add(patchEntry.Path);
-            
+
             // Count lines manually from patch content
             var lines = patchEntry.Patch.Split('\n');
             foreach (var line in lines)
@@ -563,6 +532,96 @@ public class RepositoryManagementService : IRepositoryManagementService
                     deletions++;
             }
         }
+    }
+
+    /// <summary>
+    /// Computes the diff for a specific commit
+    /// </summary>
+    private Patch? ComputeCommitDiff(Repository repo, string? targetCommit)
+    {
+        if (string.IsNullOrEmpty(targetCommit))
+        {
+            _logger.LogWarning("Commit ID is required for commit analysis");
+            return null;
+        }
+
+        var commit = repo.Lookup<Commit>(targetCommit);
+        if (commit == null)
+        {
+            _logger.LogWarning("Commit '{CommitId}' not found", targetCommit);
+            return null;
+        }
+
+        // Handle initial commit (no parent)
+        if (!commit.Parents.Any())
+        {
+            var emptyTree = repo.Lookup<Tree>(DiffConstants.GitEmptyTreeSha);
+            return repo.Diff.Compare<Patch>(emptyTree, commit.Tree);
+        }
+        else
+        {
+            // Normal case: compare with parent
+            var parentCommit = commit.Parents.First();
+            var compareOptions = new CompareOptions
+            {
+                Similarity = SimilarityOptions.Renames,
+                IncludeUnmodified = false
+            };
+            return repo.Diff.Compare<Patch>(parentCommit.Tree, commit.Tree, compareOptions);
+        }
+    }
+
+    /// <summary>
+    /// Computes the diff between two branches for pull request analysis
+    /// </summary>
+    private Patch? ComputePullRequestDiff(Repository repo, string? sourceBranch, string? targetBranch)
+    {
+        if (string.IsNullOrEmpty(sourceBranch) || string.IsNullOrEmpty(targetBranch))
+        {
+            _logger.LogWarning("Both source and target branches are required for branch comparison");
+            return null;
+        }
+
+        if (sourceBranch == targetBranch)
+        {
+            _logger.LogWarning("Source and target branches cannot be the same: {Branch}", sourceBranch);
+            return null;
+        }
+
+        var sourceBranchObj = repo.Branches[sourceBranch];
+        var targetBranchObj = repo.Branches[targetBranch];
+
+        if (sourceBranchObj == null)
+        {
+            _logger.LogWarning("Source branch '{SourceBranch}' not found", sourceBranch);
+            return null;
+        }
+
+        if (targetBranchObj == null)
+        {
+            _logger.LogWarning("Target branch '{TargetBranch}' not found", targetBranch);
+            return null;
+        }
+
+        if (sourceBranchObj.Tip == null)
+        {
+            _logger.LogWarning("Source branch '{SourceBranch}' has no commits", sourceBranch);
+            return null;
+        }
+
+        if (targetBranchObj.Tip == null)
+        {
+            _logger.LogWarning("Target branch '{TargetBranch}' has no commits", targetBranch);
+            return null;
+        }
+
+        var branchCompareOptions = new CompareOptions
+        {
+            Similarity = SimilarityOptions.Renames,
+            IncludeUnmodified = false
+        };
+
+        return repo.Diff.Compare<Patch>(targetBranchObj.Tip.Tree, sourceBranchObj.Tip.Tree, branchCompareOptions);
     }
 }
 

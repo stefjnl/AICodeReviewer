@@ -1,4 +1,5 @@
 using AICodeReviewer.Web.Domain.Interfaces;
+using AICodeReviewer.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AICodeReviewer.Web.Controllers;
@@ -105,7 +106,7 @@ public class AnalysisOptionsRequest
 public class PreviewRequest
 {
     public string RepositoryPath { get; set; } = string.Empty;
-    public string AnalysisType { get; set; } = "uncommitted"; // uncommitted, staged, commit, pullrequest
+    public AnalysisType AnalysisType { get; set; } = AnalysisType.Uncommitted;
     public string? TargetCommit { get; set; }
     public string? SourceBranch { get; set; }
     public string? TargetBranch { get; set; }

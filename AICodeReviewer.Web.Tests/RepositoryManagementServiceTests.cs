@@ -3,6 +3,7 @@ using Xunit;
 using Moq;
 using Microsoft.Extensions.Logging;
 using AICodeReviewer.Web.Infrastructure.Services;
+using AICodeReviewer.Web.Models;
 using System.IO;
 using System;
 using LibGit2Sharp;
@@ -190,7 +191,7 @@ namespace AICodeReviewer.Web.Tests
                 File.WriteAllText(Path.Combine(_fixture.RepoPath, "test.txt"), "new content");
 
                 // Act
-                var (summary, isValid, error) = _repositoryManagementService.PreviewChanges(_fixture.RepoPath, "uncommitted");
+                var (summary, isValid, error) = _repositoryManagementService.PreviewChanges(_fixture.RepoPath, AnalysisType.Uncommitted);
 
                 // Assert
                 Assert.True(isValid);

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Models;
 using System.IO;
+using LibGit2Sharp;
 
 namespace AICodeReviewer.Web.Tests
 {
@@ -14,13 +15,15 @@ namespace AICodeReviewer.Web.Tests
     {
         private readonly Mock<ILogger<ContentExtractionService>> _mockLogger;
         private readonly Mock<IRepositoryManagementService> _mockRepositoryManagementService;
+        private readonly Mock<IDiffProviderFactory> _mockDiffProviderFactory;
         private readonly ContentExtractionService _contentExtractionService;
 
         public ContentExtractionServiceTests()
         {
             _mockLogger = new Mock<ILogger<ContentExtractionService>>();
             _mockRepositoryManagementService = new Mock<IRepositoryManagementService>();
-            _contentExtractionService = new ContentExtractionService(_mockLogger.Object, _mockRepositoryManagementService.Object);
+            _mockDiffProviderFactory = new Mock<IDiffProviderFactory>();
+            _contentExtractionService = new ContentExtractionService(_mockLogger.Object, _mockRepositoryManagementService.Object, _mockDiffProviderFactory.Object);
         }
 
         [Fact]
@@ -49,8 +52,14 @@ namespace AICodeReviewer.Web.Tests
         public async Task ExtractContentAsync_Commit_ReturnsCommitDiff()
         {
             // Arrange
-            _mockRepositoryManagementService.Setup(s => s.GetCommitDiff(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(("commit diff", false));
+            var mockDiffProvider = new Mock<IDiffProvider>();
+            mockDiffProvider.Setup(p => p.ValidateInputs(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(true);
+            mockDiffProvider.Setup(p => p.GetDiff(It.IsAny<Repository>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(("commit diff", false, null));
+            
+            _mockDiffProviderFactory.Setup(f => f.CreateProvider("commit"))
+                .Returns(mockDiffProvider.Object);
 
             // Act
             var (content, contentError, isFileContent, error) = await _contentExtractionService.ExtractContentAsync(
@@ -67,8 +76,14 @@ namespace AICodeReviewer.Web.Tests
         public async Task ExtractContentAsync_Staged_ReturnsStagedDiff()
         {
             // Arrange
-            _mockRepositoryManagementService.Setup(s => s.ExtractStagedDiff(It.IsAny<string>()))
-                .Returns(("staged diff", false));
+            var mockDiffProvider = new Mock<IDiffProvider>();
+            mockDiffProvider.Setup(p => p.ValidateInputs(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(true);
+            mockDiffProvider.Setup(p => p.GetDiff(It.IsAny<Repository>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(("staged diff", false, null));
+            
+            _mockDiffProviderFactory.Setup(f => f.CreateProvider("staged"))
+                .Returns(mockDiffProvider.Object);
 
             // Act
             var (content, contentError, isFileContent, error) = await _contentExtractionService.ExtractContentAsync(
@@ -85,8 +100,14 @@ namespace AICodeReviewer.Web.Tests
         public async Task ExtractContentAsync_Uncommitted_ReturnsUncommittedDiff()
         {
             // Arrange
-            _mockRepositoryManagementService.Setup(s => s.ExtractDiff(It.IsAny<string>()))
-                .Returns(("uncommitted diff", false));
+            var mockDiffProvider = new Mock<IDiffProvider>();
+            mockDiffProvider.Setup(p => p.ValidateInputs(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(true);
+            mockDiffProvider.Setup(p => p.GetDiff(It.IsAny<Repository>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(("uncommitted diff", false, null));
+            
+            _mockDiffProviderFactory.Setup(f => f.CreateProvider("uncommitted"))
+                .Returns(mockDiffProvider.Object);
 
             // Act
             var (content, contentError, isFileContent, error) = await _contentExtractionService.ExtractContentAsync(
@@ -103,8 +124,14 @@ namespace AICodeReviewer.Web.Tests
         public async Task ExtractContentAsync_RepoError_ReturnsError()
         {
             // Arrange
-            _mockRepositoryManagementService.Setup(s => s.ExtractDiff(It.IsAny<string>()))
-                .Returns(("git error", true));
+            var mockDiffProvider = new Mock<IDiffProvider>();
+            mockDiffProvider.Setup(p => p.ValidateInputs(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(true);
+            mockDiffProvider.Setup(p => p.GetDiff(It.IsAny<Repository>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(("", true, "git error"));
+            
+            _mockDiffProviderFactory.Setup(f => f.CreateProvider("uncommitted"))
+                .Returns(mockDiffProvider.Object);
 
             // Act
             var (content, contentError, isFileContent, error) = await _contentExtractionService.ExtractContentAsync(
@@ -119,8 +146,14 @@ namespace AICodeReviewer.Web.Tests
         public async Task ExtractContentAsync_EmptyContent_ReturnsError()
         {
             // Arrange
-            _mockRepositoryManagementService.Setup(s => s.ExtractDiff(It.IsAny<string>()))
-                .Returns(("", false));
+            var mockDiffProvider = new Mock<IDiffProvider>();
+            mockDiffProvider.Setup(p => p.ValidateInputs(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(true);
+            mockDiffProvider.Setup(p => p.GetDiff(It.IsAny<Repository>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(("", false, null));
+            
+            _mockDiffProviderFactory.Setup(f => f.CreateProvider("uncommitted"))
+                .Returns(mockDiffProvider.Object);
 
             // Act
             var (content, contentError, isFileContent, error) = await _contentExtractionService.ExtractContentAsync(
