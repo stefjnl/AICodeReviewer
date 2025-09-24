@@ -145,6 +145,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(error => {
         console.error('❌ ERROR: Failed to initialize repository browser:', error);
     });
+
+    // Initialize file browser for single file analysis
+    console.log('🔍 DEBUG: About to call initializeFileBrowser()');
+    import('./analysis/file-browser.js').then(module => {
+        module.initializeFileBrowser();
+        console.log('🔍 DEBUG: File browser initialized');
+    }).catch(error => {
+        console.error('❌ ERROR: Failed to initialize file browser:', error);
+    });
     
     // Initialize analysis state
     initializeAnalysisState();

@@ -51,9 +51,9 @@ namespace AICodeReviewer.Web.Controllers
                     fileCounts = GetFileCounts(request.RepositoryPath)
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, new { error = $"Error detecting language: {ex.Message}" });
+                return StatusCode(500, new { error = "An error occurred while detecting the programming language. Please try again." });
             }
         }
 

@@ -112,17 +112,19 @@ export async function previewChanges() {
 }
 
 export function selectAnalysisType(type) {
-    const validTypes = ['uncommitted', 'staged', 'commit', 'pullrequest'];
+    const validTypes = ['uncommitted', 'staged', 'commit', 'singlefile', 'pullrequest'];
     if (!validTypes.includes(type)) return;
 
     analysisState.analysisType = type;
     analysisState.selectedCommit = null; // Reset commit selection
     analysisState.selectedSourceBranch = null; // Reset branch selections
     analysisState.selectedTargetBranch = null;
-    
+    analysisState.selectedFilePath = null; // Reset file selection
+    analysisState.selectedFileContent = null;
+
     // Update UI to show relevant options
     updateAnalysisUI('loaded');
-    
+
     // Auto-preview changes
     previewChanges();
 }
@@ -153,12 +155,30 @@ export function selectSourceBranch(branchName) {
 
 export function selectTargetBranch(branchName) {
     if (!branchName) return;
-    
+
     analysisState.selectedTargetBranch = branchName;
     updateAnalysisUI('loaded');
-    
+
     // Auto-preview for branch analysis
     if (analysisState.analysisType === 'pullrequest') {
         previewChanges();
     }
+}
+
+export function selectFile(filePath) {
+    if (!filePath) return;
+
+    analysisState.selectedFilePath = filePath;
+    updateAnalysisUI('loaded');
+
+    // Auto-preview for single file analysis
+    if (analysisState.analysisType === 'singlefile') {
+        previewChanges();
+    }
+}
+
+export function clearFileSelection() {
+    analysisState.selectedFilePath = null;
+    analysisState.selectedFileContent = null;
+    updateAnalysisUI('loaded');
 }

@@ -71,7 +71,7 @@ public class DirectoryBrowserController : ControllerBase
         {
             // Log the detailed error for debugging
             Console.WriteLine($"Directory browsing error: {ex}");
-            return StatusCode(500, new { error = $"Error browsing directory: {ex.Message}" });
+            return StatusCode(500, new { error = "An error occurred while browsing the directory. Please try again." });
         }
     }
 }

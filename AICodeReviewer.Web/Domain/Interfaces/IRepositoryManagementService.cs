@@ -1,5 +1,7 @@
 using LibGit2Sharp;
 using AICodeReviewer.Web.Models;
+using System.Threading.Tasks;
+using FileSystemItem = AICodeReviewer.Web.Models.FileSystemItem;
 
 namespace AICodeReviewer.Web.Domain.Interfaces;
 
@@ -76,4 +78,20 @@ public interface IRepositoryManagementService
     /// <param name="targetBranch">Target branch for pull request analysis</param>
     /// <returns>Changes summary and validation result</returns>
     (object changesSummary, bool isValid, string? error) PreviewChanges(string repositoryPath, AnalysisType analysisType, string? targetCommit = null, string? sourceBranch = null, string? targetBranch = null);
+
+    /// <summary>
+    /// Get file content for single file analysis
+    /// </summary>
+    /// <param name="repositoryPath">Path to the git repository</param>
+    /// <param name="filePath">Path to the file to read</param>
+    /// <returns>File content and error status</returns>
+    Task<(string content, bool isError)> GetFileContentAsync(string repositoryPath, string filePath);
+
+    /// <summary>
+    /// Get files in a directory within the repository for single file analysis
+    /// </summary>
+    /// <param name="repositoryPath">Path to the git repository</param>
+    /// <param name="relativePath">Relative path within the repository</param>
+    /// <returns>List of files and directories with error status</returns>
+    Task<(List<FileSystemItem> files, bool isError)> GetFilesInDirectoryAsync(string repositoryPath, string relativePath = "");
 }
