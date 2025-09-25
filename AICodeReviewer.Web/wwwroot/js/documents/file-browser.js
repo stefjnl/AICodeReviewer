@@ -246,6 +246,13 @@ function selectFile(filePath, fileName) {
         if (validIcon) validIcon.classList.remove('hidden');
         if (invalidIcon) invalidIcon.classList.add('hidden');
 
+        // Store the selected file path in analysis state
+        if (window.analysisState) {
+            window.analysisState.selectedFilePath = filePath;
+            window.analysisState.selectedFileContent = null; // Will be loaded in preview
+            console.log('✅ File path stored in analysis state:', filePath);
+        }
+
         // Load file content preview
         loadFilePreview(filePath, fileName);
     }

@@ -31,7 +31,8 @@ namespace AICodeReviewer.Web.Infrastructure.Services
             string repositoryPath,
             AnalysisType analysisType,
             string? commitId = null,
-            string? filePath = null)
+            string? filePath = null,
+            string? fileContent = null)
         {
             _logger.LogInformation("[ContentExtraction] Starting extraction for type {AnalysisType}, repo {RepositoryPath}", analysisType, repositoryPath);
 
@@ -45,10 +46,22 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                 if (analysisType == AnalysisType.SingleFile && !string.IsNullOrEmpty(filePath))
                 {
                     _logger.LogInformation("[ContentExtraction] Extracting single file content: {FilePath}", filePath);
-                    content = await File.ReadAllTextAsync(filePath);
+                    
+                    // Use provided file content if available, otherwise read from file system
+                    if (!string.IsNullOrEmpty(fileContent))
+                    {
+                        _logger.LogInformation("[ContentExtraction] Using provided file content, length: {Length}", fileContent.Length);
+                        content = fileContent;
+                    }
+                    else
+                    {
+                        _logger.LogInformation("[ContentExtraction] Reading file from system: {FilePath}", filePath);
+                        content = await File.ReadAllTextAsync(filePath);
+                    }
+                    
                     contentError = false;
                     isFileContent = true;
-                    _logger.LogInformation("[ContentExtraction] File read successfully, length: {Length}", content.Length);
+                    _logger.LogInformation("[ContentExtraction] File content extracted successfully, length: {Length}", content.Length);
                 }
                 else
                 {

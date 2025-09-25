@@ -60,6 +60,7 @@ public class AnalysisOrchestrationService : IAnalysisService
             var analysisType = request.AnalysisType ?? AnalysisType.Uncommitted;
             var commitId = request.CommitId;
             var filePath = request.FilePath;
+            var fileContent = request.FileContent;
 
             // Store language in session for consistency
             session.SetString("Language", language);
@@ -108,6 +109,7 @@ public class AnalysisOrchestrationService : IAnalysisService
                     analysisType,
                     commitId,
                     filePath,
+                    fileContent,
                     session),
                 async (ex) => await _progressService.BroadcastErrorAsync(analysisId, $"Background analysis error: {ex.Message}")
             );
@@ -165,6 +167,7 @@ public class AnalysisOrchestrationService : IAnalysisService
         AnalysisType analysisType,
         string? commitId,
         string? filePath,
+        string? fileContent,
         ISession session)
     {
         _logger.LogInformation($"[Analysis {analysisId}] Starting background analysis");
@@ -191,8 +194,11 @@ public class AnalysisOrchestrationService : IAnalysisService
             await _progressService.BroadcastProgressAsync(analysisId, "Reading git changes...", model, fallbackModel);
 
             // Extract content
-            var extractionResult = await _contentExtractionService.ExtractContentAsync(repositoryPath, analysisType, commitId, filePath);
-            var (content, contentError, isFileContent, contentErrorMsg) = extractionResult;
+            var extractionResult = await _contentExtractionService.ExtractContentAsync(repositoryPath, analysisType, commitId, filePath, fileContent);
+            string content = extractionResult.content;
+            bool contentError = extractionResult.contentError;
+            bool isFileContent = extractionResult.isFileContent;
+            string? contentErrorMsg = extractionResult.error;
 
             if (contentError)
             {
@@ -224,7 +230,10 @@ public class AnalysisOrchestrationService : IAnalysisService
 
             // Perform AI analysis
             var aiResult = await _aiAnalysisOrchestrator.AnalyzeAsync(content, codingStandards, requirements, apiKey, model, fallbackModel, language, isFileContent);
-            var (aiAnalysis, aiError, aiErrorMsg, usedModel) = aiResult;
+            string aiAnalysis = aiResult.analysis;
+            bool aiError = aiResult.error;
+            string? aiErrorMsg = aiResult.errorMsg;
+            string usedModel = aiResult.usedModel;
 
             // Process results
             await _resultProcessorService.ProcessAndBroadcastAsync(analysisId, aiAnalysis, aiErrorMsg, aiError, usedModel, fallbackModel, session);

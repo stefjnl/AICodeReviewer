@@ -10,7 +10,7 @@ import { loadSupportedLanguages } from './language/language-detector.js';
 import { initializeAnalysisEventListeners } from './analysis/analysis-event-handlers.js';
 import { initializeModelEventListeners } from './models/model-event-handlers.js';
 import { updateRepositoryUI } from './repository/repository-ui.js';
-import { initializeAnalysisState } from './analysis/analysis-state.js';
+import { initializeAnalysisState, analysisState } from './analysis/analysis-state.js';
 import { modelState } from './models/model-state.js';
 import { documentManager } from './documents/document-manager.js';
 import ThemeManager from './core/theme-manager.js';
@@ -157,7 +157,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize analysis state
     initializeAnalysisState();
-    
+
+    // Make analysis state globally available for file browser
+    window.analysisState = analysisState;
+
     // Initialize model state
     modelState.availableModels = [];
     modelState.selectedModel = null;
