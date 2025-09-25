@@ -12,32 +12,23 @@ namespace AICodeReviewer.Web.Application.Services;
 public class AnalysisOrchestrationService : IAnalysisService
 {
     private readonly ILogger<AnalysisOrchestrationService> _logger;
-    private readonly IValidationService _validationService;
-    private readonly IContentExtractionService _contentExtractionService;
-    private readonly IDocumentRetrievalService _documentRetrievalService;
-    private readonly IAIAnalysisOrchestrator _aiAnalysisOrchestrator;
-    private readonly IResultProcessorService _resultProcessorService;
+    private readonly IAnalysisPreparationService _preparationService;
+    private readonly IAnalysisExecutionService _executionService;
     private readonly AnalysisCacheService _cacheService;
     private readonly BackgroundTaskService _backgroundTaskService;
     private readonly AnalysisProgressService _progressService;
 
     public AnalysisOrchestrationService(
         ILogger<AnalysisOrchestrationService> logger,
-        IValidationService validationService,
-        IContentExtractionService contentExtractionService,
-        IDocumentRetrievalService documentRetrievalService,
-        IAIAnalysisOrchestrator aiAnalysisOrchestrator,
-        IResultProcessorService resultProcessorService,
+        IAnalysisPreparationService preparationService,
+        IAnalysisExecutionService executionService,
         AnalysisCacheService cacheService,
         BackgroundTaskService backgroundTaskService,
         AnalysisProgressService progressService)
     {
         _logger = logger;
-        _validationService = validationService;
-        _contentExtractionService = contentExtractionService;
-        _documentRetrievalService = documentRetrievalService;
-        _aiAnalysisOrchestrator = aiAnalysisOrchestrator;
-        _resultProcessorService = resultProcessorService;
+        _preparationService = preparationService;
+        _executionService = executionService;
         _cacheService = cacheService;
         _backgroundTaskService = backgroundTaskService;
         _progressService = progressService;
@@ -65,18 +56,27 @@ public class AnalysisOrchestrationService : IAnalysisService
             // Store language in session for consistency
             session.SetString("Language", language);
 
-            // Validate the request using validation service
-            var (isValid, validationError, resolvedFilePath) = await _validationService.ValidateAnalysisRequestAsync(request, session, environment);
-            if (!isValid)
-            {
-                _logger.LogWarning("[RunAnalysis] Validation failed: {Error}", validationError);
-                return ("", false, validationError);
-            }
-
-            filePath = resolvedFilePath ?? filePath;
-
             // Generate unique analysis ID
             var analysisId = Guid.NewGuid().ToString();
+
+            // Prepare analysis (validation and content extraction)
+            var preparationResult = await _preparationService.PrepareAnalysisAsync(request, session, environment);
+            if (!preparationResult.isValid)
+            {
+                _logger.LogWarning("[RunAnalysis] Preparation failed: {Error}", preparationResult.error);
+                return ("", false, preparationResult.error);
+            }
+
+            filePath = preparationResult.resolvedFilePath ?? filePath;
+
+            // Cache the content and isFileContent flag after successful preparation
+            if (!string.IsNullOrEmpty(preparationResult.content))
+            {
+                _cacheService.StoreContent(analysisId, preparationResult.content);
+                _cacheService.StoreIsFileContent(analysisId, preparationResult.isFileContent);
+                _logger.LogInformation("[Analysis {AnalysisId}] Content and isFileContent flag cached after preparation, length: {Length}, isFileContent: {IsFileContent}",
+                    analysisId, preparationResult.content.Length, preparationResult.isFileContent);
+            }
 
             // Create initial analysis result and store in cache
             var analysisResult = new AnalysisResult
@@ -99,17 +99,12 @@ public class AnalysisOrchestrationService : IAnalysisService
                 analysisId,
                 () => RunBackgroundAnalysisAsync(
                     analysisId,
-                    repositoryPath,
                     selectedDocuments,
                     documentsFolder,
                     apiKey,
                     model,
                     fallbackModel,
                     language,
-                    analysisType,
-                    commitId,
-                    filePath,
-                    fileContent,
                     session),
                 async (ex) => await _progressService.BroadcastErrorAsync(analysisId, $"Background analysis error: {ex.Message}")
             );
@@ -157,21 +152,15 @@ public class AnalysisOrchestrationService : IAnalysisService
 
     private async Task RunBackgroundAnalysisAsync(
         string analysisId,
-        string repositoryPath,
         List<string> selectedDocuments,
         string documentsFolder,
         string apiKey,
         string model,
         string fallbackModel,
         string language,
-        AnalysisType analysisType,
-        string? commitId,
-        string? filePath,
-        string? fileContent,
         ISession session)
     {
         _logger.LogInformation($"[Analysis {analysisId}] Starting background analysis");
-        _logger.LogInformation($"[Analysis {analysisId}] Repository path: {repositoryPath}");
         _logger.LogInformation($"[Analysis {analysisId}] Selected documents: {string.Join(", ", selectedDocuments)}");
         _logger.LogInformation($"[Analysis {analysisId}] Documents folder: {documentsFolder}");
         _logger.LogInformation($"[Analysis {analysisId}] Language: {language}");
@@ -189,54 +178,45 @@ public class AnalysisOrchestrationService : IAnalysisService
                 return;
             }
 
-            // Update status to content extraction
-            _cacheService.UpdateAnalysisStatus(analysisId, "Reading git changes...");
-            await _progressService.BroadcastProgressAsync(analysisId, "Reading git changes...", model, fallbackModel);
-
-            // Extract content
-            var extractionResult = await _contentExtractionService.ExtractContentAsync(repositoryPath, analysisType, commitId, filePath, fileContent);
-            string content = extractionResult.content;
-            bool contentError = extractionResult.contentError;
-            bool isFileContent = extractionResult.isFileContent;
-            string? contentErrorMsg = extractionResult.error;
-
-            if (contentError)
+            // Get content from cache (stored during preparation phase)
+            var content = _cacheService.GetContent(analysisId);
+            if (string.IsNullOrEmpty(content))
             {
-                _logger.LogError($"[Analysis {analysisId}] Content extraction failed: {contentErrorMsg}");
-                await _resultProcessorService.ProcessAndBroadcastAsync(analysisId, "", contentErrorMsg, true, model, fallbackModel, session);
+                _logger.LogError($"[Analysis {analysisId}] Content not found in cache - aborting");
+                await _progressService.BroadcastErrorAsync(analysisId, "Analysis content not found");
                 return;
             }
 
-            // Cache the content
-            _cacheService.StoreContent(analysisId, content);
+            // Get isFileContent flag from cache
+            var isFileContentFromCache = _cacheService.GetIsFileContent(analysisId);
+            bool isFileContent = isFileContentFromCache ?? false;
+            
+            if (isFileContentFromCache == null)
+            {
+                _logger.LogWarning("[Analysis {AnalysisId}] IsFileContent flag not found in cache, defaulting to false", analysisId);
+            }
 
-            _logger.LogInformation($"[Analysis {analysisId}] Content extraction complete, length: {content.Length}");
+            _logger.LogInformation($"[Analysis {analysisId}] Retrieved content from cache, length: {content.Length}");
 
             // Update status to document loading
             _cacheService.UpdateAnalysisStatus(analysisId, "Loading documents...");
             await _progressService.BroadcastProgressAsync(analysisId, "Loading documents...", model, fallbackModel);
 
-            // Load documents
-            var codingStandards = await _documentRetrievalService.LoadDocumentsAsync(selectedDocuments, documentsFolder);
-            _logger.LogInformation($"[Analysis {analysisId}] Loaded {codingStandards.Count} documents");
-
-            // Update status to AI analysis
+            // Execute AI analysis using the execution service
             _cacheService.UpdateAnalysisStatus(analysisId, $"AI analysis... (Using: {model})");
             await _progressService.BroadcastProgressAsync(analysisId, $"AI analysis... (Using: {model})", model, fallbackModel);
 
-            // Get requirements
-            var requirements = "Follow .NET best practices and coding standards";
-            _logger.LogInformation($"[Analysis {analysisId}] Requirements: {requirements}");
-
-            // Perform AI analysis
-            var aiResult = await _aiAnalysisOrchestrator.AnalyzeAsync(content, codingStandards, requirements, apiKey, model, fallbackModel, language, isFileContent);
-            string aiAnalysis = aiResult.analysis;
-            bool aiError = aiResult.error;
-            string? aiErrorMsg = aiResult.errorMsg;
-            string usedModel = aiResult.usedModel;
-
-            // Process results
-            await _resultProcessorService.ProcessAndBroadcastAsync(analysisId, aiAnalysis, aiErrorMsg, aiError, usedModel, fallbackModel, session);
+            await _executionService.ExecuteAnalysisAsync(
+                analysisId,
+                content,
+                selectedDocuments,
+                documentsFolder,
+                apiKey,
+                model,
+                fallbackModel,
+                language,
+                isFileContent,
+                session);
 
             _logger.LogInformation($"[Analysis {analysisId}] Background analysis task completed");
         }

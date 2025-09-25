@@ -114,6 +114,9 @@ export class ExecutionService {
                             console.warn('⚠️ Failed to load document content:', error);
                         }
                     }
+                } else if (!analysisState.selectedFilePath && selectedDocuments.length === 0) {
+                    // If no file path and no documents selected, we can't proceed with single file analysis
+                    throw new Error('No file selected for single file analysis. Please select a document or file.');
                 } else {
                     targetFile = analysisState.selectedFilePath;
                 }

@@ -59,6 +59,10 @@ builder.Services.AddScoped<AnalysisCacheService>();
 builder.Services.AddScoped<BackgroundTaskService>();
 builder.Services.AddScoped<AnalysisProgressService>();
 
+// Register new coordinator services
+builder.Services.AddScoped<IAnalysisPreparationService, AICodeReviewer.Web.Application.Services.AnalysisPreparationService>();
+builder.Services.AddScoped<IAnalysisExecutionService, AICodeReviewer.Web.Application.Services.AnalysisExecutionService>();
+
 // Register Application layer service as the main analysis service
 builder.Services.AddScoped<IAnalysisService, AICodeReviewer.Web.Application.Services.AnalysisOrchestrationService>();
 builder.Services.AddScoped<IRepositoryManagementService, RepositoryManagementService>();
