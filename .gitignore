@@ -11,6 +11,9 @@ appsettings.Production.json
 # dotenv files
 .env
 
+# Qwen context file
+QWEN.md
+
 # User-specific files
 *.rsuser
 *.suo
