@@ -58,6 +58,15 @@ public class AnalysisCacheService
     }
 
     /// <summary>
+    /// Store isFileContent flag in cache
+    /// </summary>
+    public void StoreIsFileContent(string analysisId, bool isFileContent)
+    {
+        _cache.Set($"isFileContent_{analysisId}", isFileContent, CacheEntryOptions);
+        _logger.LogInformation($"[Analysis {analysisId}] IsFileContent flag stored in cache: {isFileContent}");
+    }
+
+    /// <summary>
     /// Retrieve content from cache
     /// </summary>
     public string? GetContent(string analysisId)
@@ -69,6 +78,21 @@ public class AnalysisCacheService
         }
 
         _logger.LogWarning($"[Analysis {analysisId}] Content not found in cache");
+        return null;
+    }
+
+    /// <summary>
+    /// Retrieve isFileContent flag from cache
+    /// </summary>
+    public bool? GetIsFileContent(string analysisId)
+    {
+        if (_cache.TryGetValue($"isFileContent_{analysisId}", out bool isFileContent))
+        {
+            _logger.LogInformation($"[Analysis {analysisId}] Retrieved isFileContent flag from cache: {isFileContent}");
+            return isFileContent;
+        }
+
+        _logger.LogWarning($"[Analysis {analysisId}] IsFileContent flag not found in cache");
         return null;
     }
 

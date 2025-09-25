@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using AICodeReviewer.Web.Models;
+using AICodeReviewer.Web.Infrastructure.Services;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -44,7 +45,7 @@ namespace AICodeReviewer.Web.Controllers
             catch (System.Exception ex)
             {
                 Console.WriteLine($"❌ Error in GetAvailableModels: {ex.Message}");
-                return StatusCode(500, new { success = false, error = $"Error loading models: {ex.Message}" });
+                return ErrorHandlingUtils.CreateSanitizedError("Model Loading", ErrorHandlingUtils.ErrorMessages.ModelLoadingError);
             }
         }
 

@@ -52,7 +52,7 @@ public class AnalysisApiController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting analysis options for {Path}", request.RepositoryPath);
-            return StatusCode(500, new { success = false, error = ex.Message });
+            return StatusCode(500, new { success = false, error = "An error occurred while retrieving analysis options. Please try again." });
         }
     }
 
@@ -87,7 +87,7 @@ public class AnalysisApiController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error previewing changes for {Path}", request.RepositoryPath);
-            return StatusCode(500, new { success = false, error = ex.Message });
+            return StatusCode(500, new { success = false, error = "An error occurred while previewing changes. Please try again." });
         }
     }
 }

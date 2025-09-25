@@ -53,9 +53,9 @@ export class ExecutionService {
 
     /**
      * Builds the complete analysis request from workflow state
-     * @returns {Object} Complete StartAnalysisRequest payload
+     * @returns {Promise<Object>} Complete StartAnalysisRequest payload
      */
-    buildAnalysisRequest() {
+    async buildAnalysisRequest() {
         try {
             console.log('📋 Building analysis request from workflow state...');
             
@@ -90,7 +90,36 @@ export class ExecutionService {
             // Check what type of analysis was configured
             if (analysisType === 'single-file') {
                 analysisType = "singlefile";
-                targetFile = workflowState.targetFile;
+                targetFile = analysisState.selectedFilePath;
+            } else if (analysisType === 'singlefile') {
+                // Handle singlefile analysis type - use selected documents if no file path is set
+                if (!analysisState.selectedFilePath && selectedDocuments.length > 0) {
+                    targetFile = documentsFolder
+                        ? `${documentsFolder}/${selectedDocuments[0]}`
+                        : selectedDocuments[0];
+                    
+                    // Load document content if not already loaded
+                    if (!analysisState.selectedFileContent) {
+                        try {
+                            console.log(`📄 Loading document content for: ${selectedDocuments[0]}`);
+                            const response = await fetch(`/api/documents/content/${encodeURIComponent(selectedDocuments[0])}`);
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.success) {
+                                    analysisState.selectedFileContent = data.content;
+                                    console.log(`✅ Document content loaded, length: ${data.content.length}`);
+                                }
+                            }
+                        } catch (error) {
+                            console.warn('⚠️ Failed to load document content:', error);
+                        }
+                    }
+                } else if (!analysisState.selectedFilePath && selectedDocuments.length === 0) {
+                    // If no file path and no documents selected, we can't proceed with single file analysis
+                    throw new Error('No file selected for single file analysis. Please select a document or file.');
+                } else {
+                    targetFile = analysisState.selectedFilePath;
+                }
             } else if (analysisType === 'commit') {
                 targetCommit = analysisState.selectedCommit; // Fixed: Use analysisState.selectedCommit instead of workflowState.targetCommit
             } else if (analysisType === 'pullrequest') {
@@ -124,9 +153,10 @@ export class ExecutionService {
                 request.targetBranch = analysisState.selectedTargetBranch;
             }
 
-            // Only include filePath for single file analysis
+            // Include filePath and fileContent for single file analysis
             if (analysisType === "singlefile") {
                 request.filePath = targetFile;
+                request.fileContent = analysisState.selectedFileContent;
             }
 
             console.log('✅ Analysis request built successfully:', request);
@@ -157,7 +187,7 @@ export class ExecutionService {
             console.log('🚀 Starting analysis execution...');
 
             // Build request payload
-            const request = this.buildAnalysisRequest();
+            const request = await this.buildAnalysisRequest();
 
             // Show loading state
             this.showLoadingState();

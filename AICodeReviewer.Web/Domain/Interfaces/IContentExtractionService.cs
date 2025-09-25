@@ -16,11 +16,13 @@ namespace AICodeReviewer.Web.Domain.Interfaces
         /// <param name="analysisType">The type of analysis.</param>
         /// <param name="commitId">Commit ID for commit analysis.</param>
         /// <param name="filePath">File path for single file analysis.</param>
+        /// <param name="fileContent">File content for single file analysis (optional).</param>
         /// <returns>Tuple with content, error flag, is file content flag, and error message.</returns>
         Task<(string content, bool contentError, bool isFileContent, string? error)> ExtractContentAsync(
             string repositoryPath,
             AnalysisType analysisType,
             string? commitId = null,
-            string? filePath = null);
+            string? filePath = null,
+            string? fileContent = null);
     }
 }

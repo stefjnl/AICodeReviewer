@@ -3,6 +3,7 @@ using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Models;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
+using FileSystemItem = AICodeReviewer.Web.Models.FileSystemItem;
 
 namespace AICodeReviewer.Web.Infrastructure.Services;
 
@@ -472,6 +473,16 @@ public class RepositoryManagementService : IRepositoryManagementService
                         diffContent = diff.Content;
                         break;
 
+                    case AnalysisType.SingleFile:
+                        // For single file analysis, we don't need a diff - just return file info
+                        return (new
+                        {
+                            filesModified = 1,
+                            additions = 0,
+                            deletions = 0,
+                            fileList = new List<string> { "Single file analysis" }
+                        }, true, null);
+
                     default:
                         return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, $"Analysis type '{analysisType}' is not supported for preview");
                 }
@@ -623,5 +634,111 @@ public class RepositoryManagementService : IRepositoryManagementService
 
         return repo.Diff.Compare<Patch>(targetBranchObj.Tip.Tree, sourceBranchObj.Tip.Tree, branchCompareOptions);
     }
+
+    /// <summary>
+    /// Get file content for single file analysis
+    /// </summary>
+    public async Task<(string content, bool isError)> GetFileContentAsync(string repositoryPath, string filePath)
+    {
+        try
+        {
+            if (!await Task.Run(() => System.IO.File.Exists(filePath)))
+            {
+                _logger.LogWarning("File not found: {FilePath}", filePath);
+                return ($"File not found: {filePath}", true);
+            }
+
+            // Check file size (1MB limit)
+            var fileInfo = new FileInfo(filePath);
+            const long maxFileSize = 1024 * 1024; // 1MB
+
+            if (fileInfo.Length > maxFileSize)
+            {
+                _logger.LogWarning("File too large: {Size} bytes in {FilePath}", fileInfo.Length, filePath);
+                return ($"File too large ({fileInfo.Length} bytes > 1MB).", true);
+            }
+
+            var content = await System.IO.File.ReadAllTextAsync(filePath);
+
+            _logger.LogInformation("Retrieved file content: {FilePath} ({Size} bytes)", filePath, fileInfo.Length);
+            return (content, false);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _logger.LogWarning("Access denied to file: {FilePath}", filePath);
+            return ("Access denied to file.", true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reading file content: {FilePath}", filePath);
+            return ($"Error reading file: {ex.Message}", true);
+        }
+    }
+
+    /// <summary>
+    /// Get files in a directory within the repository for single file analysis
+    /// </summary>
+    public async Task<(List<FileSystemItem> files, bool isError)> GetFilesInDirectoryAsync(string repositoryPath, string relativePath = "")
+    {
+        try
+        {
+            var targetPath = string.IsNullOrEmpty(relativePath)
+                ? repositoryPath
+                : Path.Combine(repositoryPath, relativePath);
+
+            if (!await Task.Run(() => Directory.Exists(targetPath)))
+            {
+                _logger.LogWarning("Directory not found: {TargetPath}", targetPath);
+                return (new List<FileSystemItem>(), true);
+            }
+
+            var files = new List<FileSystemItem>();
+            var programmingExtensions = new[] { ".cs", ".js", ".ts", ".py", ".java", ".cpp", ".c", ".h", ".hpp", ".css", ".html", ".xml", ".json", ".md", ".txt" };
+
+            // Get all files and directories
+            var dirInfo = new DirectoryInfo(targetPath);
+
+            // Add directories
+            foreach (var dir in dirInfo.GetDirectories())
+            {
+                files.Add(new FileSystemItem
+                {
+                    Name = dir.Name,
+                    FullPath = dir.FullName,
+                    IsDirectory = true,
+                    Size = 0
+                });
+            }
+
+            // Add programming files only
+            foreach (var file in dirInfo.GetFiles())
+            {
+                if (programmingExtensions.Contains(file.Extension.ToLower()))
+                {
+                    files.Add(new FileSystemItem
+                    {
+                        Name = file.Name,
+                        FullPath = file.FullName,
+                        IsDirectory = false,
+                        Size = file.Length
+                    });
+                }
+            }
+
+            _logger.LogInformation("Retrieved {FileCount} files from directory: {TargetPath}", files.Count, targetPath);
+            return (files, false);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _logger.LogWarning("Access denied to directory: {TargetPath}", Path.Combine(repositoryPath, relativePath));
+            return (new List<FileSystemItem>(), true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting files from directory: {TargetPath}", Path.Combine(repositoryPath, relativePath));
+            return (new List<FileSystemItem>(), true);
+        }
+    }
 }
+
 

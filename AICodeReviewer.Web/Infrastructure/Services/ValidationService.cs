@@ -41,6 +41,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                 var analysisType = request.AnalysisType ?? AnalysisType.Uncommitted;
                 var commitId = request.CommitId;
                 var filePath = request.FilePath;
+                var fileContent = request.FileContent;
 
                 _logger.LogInformation($"[Validation] Request SelectedDocuments count: {selectedDocuments.Count}");
 
@@ -75,16 +76,25 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                         return (false, "File path is required for single file analysis", null);
                     }
 
-                    // Validate the file path
-                    var (resolvedPath, isValid, validationError) = _pathService.ValidateSingleFilePath(filePath, repositoryPath, environment.ContentRootPath);
-                    if (!isValid)
+                    // If file content is provided, we don't need to validate the file path on the file system
+                    if (!string.IsNullOrEmpty(fileContent))
                     {
-                        _logger.LogWarning("[Validation] File path validation failed: {Error}", validationError);
-                        return (false, validationError, null);
+                        _logger.LogInformation("[Validation] File content provided, skipping file system validation");
+                        resolvedFilePath = filePath;
                     }
+                    else
+                    {
+                        // Validate the file path
+                        var (resolvedPath, isValid, validationError) = _pathService.ValidateSingleFilePath(filePath, repositoryPath, environment.ContentRootPath);
+                        if (!isValid)
+                        {
+                            _logger.LogWarning("[Validation] File path validation failed: {Error}", validationError);
+                            return (false, validationError, null);
+                        }
 
-                    resolvedFilePath = resolvedPath;
-                    _logger.LogInformation("[Validation] File validation passed for: {FilePath}", resolvedPath);
+                        resolvedFilePath = resolvedPath;
+                        _logger.LogInformation("[Validation] File validation passed for: {FilePath}", resolvedPath);
+                    }
                 }
                 else
                 {

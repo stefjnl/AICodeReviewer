@@ -11,6 +11,8 @@ export const analysisState = {
     selectedCommit: null,
     selectedSourceBranch: null,
     selectedTargetBranch: null,
+    selectedFilePath: null,
+    selectedFileContent: null,
     changesSummary: null,
     loading: false,
     error: null
@@ -23,6 +25,8 @@ export function initializeAnalysisState() {
     analysisState.selectedCommit = null;
     analysisState.selectedSourceBranch = null;
     analysisState.selectedTargetBranch = null;
+    analysisState.selectedFilePath = null;
+    analysisState.selectedFileContent = null;
     analysisState.changesSummary = null;
     analysisState.availableOptions = {
         commits: [],

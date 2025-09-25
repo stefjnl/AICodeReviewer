@@ -1,6 +1,7 @@
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Hubs;
 using AICodeReviewer.Web.Infrastructure.Extensions;
+using AICodeReviewer.Web.Infrastructure.Services;
 using AICodeReviewer.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -88,7 +89,7 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error setting repository path");
-            return Json(new { success = false, error = ex.Message });
+            return Json(new { success = false, error = ErrorHandlingUtils.ErrorMessages.RepositoryAccessError });
         }
     }
 
@@ -142,7 +143,7 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error selecting documents");
-            return Json(new { success = false, error = ex.Message });
+            return Json(new { success = false, error = "An error occurred while selecting documents. Please try again." });
         }
     }
 
@@ -172,7 +173,7 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error starting analysis");
-            return Json(new { success = false, error = ex.Message });
+            return Json(new { success = false, error = "An error occurred while starting the analysis. Please try again." });
         }
     }
 
@@ -190,7 +191,7 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting analysis status for ID: {AnalysisId}", analysisId);
-            return Json(new { status = "Error", result = (string?)null, error = ex.Message, isComplete = true });
+            return Json(new { status = "Error", result = (string?)null, error = "An error occurred while retrieving analysis status. Please try again.", isComplete = true });
         }
     }
 
@@ -214,7 +215,7 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error storing analysis ID");
-            return Json(new { success = false, error = ex.Message });
+            return Json(new { success = false, error = "An error occurred while storing the analysis ID. Please try again." });
         }
     }
 
@@ -250,7 +251,7 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating commit {CommitId}", request.CommitId);
-            return Json(new { success = false, error = $"Validation error: {ex.Message}" });
+            return Json(new { success = false, error = "An error occurred while validating the commit. Please check the commit ID and try again." });
         }
     }
 
@@ -322,7 +323,7 @@ public class HomeController : Controller
                 CurrentPath = request?.CurrentPath ?? string.Empty,
                 ParentPath = null,
                 IsGitRepository = false,
-                Error = $"Unexpected error: {ex.Message}"
+                Error = "An error occurred while browsing the directory. Please check the path and try again."
             });
         }
     }

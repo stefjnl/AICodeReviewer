@@ -58,6 +58,15 @@ export function updateAnalysisUI(state) {
                 branchSelectionEl.classList.remove('hidden');
                 populateBranchDropdowns();
             }
+
+            // Show file selection if needed for single file analysis
+            if (analysisState.analysisType === 'singlefile') {
+                const fileSelectionEl = document.getElementById('file-selection');
+                if (fileSelectionEl) {
+                    fileSelectionEl.classList.remove('hidden');
+                    populateFileSelection();
+                }
+            }
             
             // Show options if available
             if ((analysisState.availableOptions.commits.length > 0 ||
@@ -186,6 +195,48 @@ function populateBranchDropdowns() {
         });
     } else if (targetBranchDropdown) {
         targetBranchDropdown.innerHTML = '<option value="">No branches available</option>';
+    }
+}
+
+// File selection population
+function populateFileSelection() {
+    const filePathInput = document.getElementById('selected-file-path');
+    const filePreview = document.getElementById('file-content-preview');
+    const fileContentText = document.getElementById('file-content-text');
+
+    if (filePathInput) {
+        if (analysisState.selectedFilePath) {
+            filePathInput.value = analysisState.selectedFilePath;
+
+            // Show file content preview if available
+            if (analysisState.selectedFileContent && filePreview && fileContentText) {
+                fileContentText.textContent = analysisState.selectedFileContent;
+                filePreview.classList.remove('hidden');
+            } else {
+                filePreview.classList.add('hidden');
+            }
+
+            // Update validation icons
+            const validIcon = document.getElementById('file-valid-icon');
+            const invalidIcon = document.getElementById('file-invalid-icon');
+
+            if (validIcon && invalidIcon) {
+                validIcon.classList.remove('hidden');
+                invalidIcon.classList.add('hidden');
+            }
+        } else {
+            filePathInput.value = '';
+            filePreview.classList.add('hidden');
+
+            // Hide validation icons
+            const validIcon = document.getElementById('file-valid-icon');
+            const invalidIcon = document.getElementById('file-invalid-icon');
+
+            if (validIcon && invalidIcon) {
+                validIcon.classList.add('hidden');
+                invalidIcon.classList.add('hidden');
+            }
+        }
     }
 }
 
