@@ -1,6 +1,7 @@
 using AICodeReviewer.Web.Hubs;
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Infrastructure.Services;
+using AICodeReviewer.Web.Application.Factories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,9 +56,9 @@ builder.Services.AddScoped<IAIAnalysisOrchestrator, AIAnalysisOrchestrator>();
 builder.Services.AddScoped<IResultProcessorService, ResultProcessorService>();
 
 // Register new specialized services
-builder.Services.AddScoped<AnalysisCacheService>();
-builder.Services.AddScoped<BackgroundTaskService>();
-builder.Services.AddScoped<AnalysisProgressService>();
+builder.Services.AddScoped<IAnalysisCacheService, AnalysisCacheService>();
+builder.Services.AddScoped<IBackgroundTaskService, BackgroundTaskService>();
+builder.Services.AddScoped<IAnalysisProgressService, AnalysisProgressService>();
 
 // Register new coordinator services
 builder.Services.AddScoped<IAnalysisPreparationService, AICodeReviewer.Web.Application.Services.AnalysisPreparationService>();
@@ -65,6 +66,7 @@ builder.Services.AddScoped<IAnalysisExecutionService, AICodeReviewer.Web.Applica
 
 // Register Application layer service as the main analysis service
 builder.Services.AddScoped<IAnalysisService, AICodeReviewer.Web.Application.Services.AnalysisOrchestrationService>();
+builder.Services.AddScoped<IAnalysisContextFactory, AnalysisContextFactory>();
 builder.Services.AddScoped<IRepositoryManagementService, RepositoryManagementService>();
 builder.Services.AddScoped<IDocumentManagementService, DocumentManagementService>();
 builder.Services.AddScoped<IPathValidationService, PathValidationService>();

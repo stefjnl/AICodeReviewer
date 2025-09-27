@@ -42,7 +42,7 @@ public class ResultsController : Controller
     /// API endpoint to retrieve structured analysis results
     /// </summary>
     [HttpGet("/api/results/{analysisId}")]
-    public async Task<IActionResult> GetResults(string analysisId)
+    public IActionResult GetResults(string analysisId)
     {
         if (string.IsNullOrEmpty(analysisId))
         {
@@ -90,7 +90,7 @@ public class ResultsController : Controller
     /// API endpoint to retrieve raw content data (git diff or file content)
     /// </summary>
     [HttpGet("/api/diff/{analysisId}")]
-    public async Task<IActionResult> GetDiff(string analysisId)
+    public IActionResult GetDiff(string analysisId)
     {
         if (string.IsNullOrEmpty(analysisId))
         {

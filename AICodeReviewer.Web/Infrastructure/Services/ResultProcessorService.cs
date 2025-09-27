@@ -55,18 +55,24 @@ namespace AICodeReviewer.Web.Infrastructure.Services
 
             if (aiError)
             {
-                result.Status = "Error";
-                result.Error = $"AI analysis failed: {errorMessage}";
-                result.CompletedAt = DateTime.UtcNow;
+                if (result != null)
+                {
+                    result.Status = "Error";
+                    result.Error = $"AI analysis failed: {errorMessage}";
+                    result.CompletedAt = DateTime.UtcNow;
+                }
 
                 await _signalRService.BroadcastErrorAsync(analysisId, $"AI analysis failed: {errorMessage}");
                 _logger.LogError("[ResultProcessor] Broadcasted AI error for {AnalysisId}: {Error}", analysisId, errorMessage);
             }
             else
             {
-                result.Status = "Complete";
-                result.Result = analysis;
-                result.CompletedAt = DateTime.UtcNow;
+                if (result != null)
+                {
+                    result.Status = "Complete";
+                    result.Result = analysis;
+                    result.CompletedAt = DateTime.UtcNow;
+                }
 
                 // Parse the AI response into structured feedback items
                 var feedback = _aiPromptResponseService.ParseAIResponse(analysis);

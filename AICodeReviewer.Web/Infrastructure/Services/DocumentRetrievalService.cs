@@ -58,7 +58,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services
             var documentResults = await Task.WhenAll(documentTasks);
 
             // Collect successful documents
-            var codingStandards = documentResults.Where(content => !string.IsNullOrEmpty(content)).ToList();
+            var codingStandards = documentResults.Where(content => !string.IsNullOrEmpty(content)).ToList() as List<string> ?? new List<string>();
 
             _logger.LogInformation("[DocumentRetrieval] Document loading complete - loaded {LoadedCount} out of {TotalCount} documents", codingStandards.Count, selectedDocuments.Count);
 

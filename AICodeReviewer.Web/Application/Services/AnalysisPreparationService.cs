@@ -16,13 +16,13 @@ public class AnalysisPreparationService : IAnalysisPreparationService
     private readonly ILogger<AnalysisPreparationService> _logger;
     private readonly IValidationService _validationService;
     private readonly IContentExtractionService _contentExtractionService;
-    private readonly AnalysisProgressService _progressService;
+    private readonly IAnalysisProgressService _progressService;
 
     public AnalysisPreparationService(
         ILogger<AnalysisPreparationService> logger,
         IValidationService validationService,
         IContentExtractionService contentExtractionService,
-        AnalysisProgressService progressService)
+        IAnalysisProgressService progressService)
     {
         _logger = logger;
         _validationService = validationService;

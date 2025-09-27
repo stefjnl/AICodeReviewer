@@ -456,7 +456,7 @@ public class RepositoryManagementService : IRepositoryManagementService
                         break;
 
                     case AnalysisType.Commit:
-                        diff = ComputeCommitDiff(repo, targetCommit);
+                        diff = ComputeCommitDiff(repo, targetCommit) ?? repo.Diff.Compare<Patch>(null, null);
                         if (diff == null)
                         {
                             return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Commit not found or invalid");
@@ -465,7 +465,7 @@ public class RepositoryManagementService : IRepositoryManagementService
                         break;
 
                     case AnalysisType.PullRequestDifferential:
-                        diff = ComputePullRequestDiff(repo, sourceBranch, targetBranch);
+                        diff = ComputePullRequestDiff(repo, sourceBranch, targetBranch) ?? repo.Diff.Compare<Patch>(null, null);
                         if (diff == null)
                         {
                             return (new { filesModified = 0, additions = 0, deletions = 0, fileList = new List<string>() }, false, "Branch comparison failed");

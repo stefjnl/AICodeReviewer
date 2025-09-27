@@ -26,7 +26,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services
             _configuration = configuration;
         }
 
-        public async Task<(bool isValid, string? error, string? resolvedFilePath)> ValidateAnalysisRequestAsync(
+        public Task<(bool isValid, string? error, string? resolvedFilePath)> ValidateAnalysisRequestAsync(
             RunAnalysisRequest request,
             ISession session,
             IWebHostEnvironment environment)
@@ -53,14 +53,14 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                 if (string.IsNullOrEmpty(apiKey))
                 {
                     _logger.LogError("API key not configured");
-                    return (false, "API key not configured", null);
+                    return Task.FromResult<(bool isValid, string? error, string? resolvedFilePath)>((false, "API key not configured", null));
                 }
 
                 // Validate selected documents
                 if (selectedDocuments.Count == 0)
                 {
                     _logger.LogError("No coding standards selected");
-                    return (false, "No coding standards selected", null);
+                    return Task.FromResult<(bool isValid, string? error, string? resolvedFilePath)>((false, "No coding standards selected", null));
                 }
 
                 string? resolvedFilePath = null;
@@ -73,7 +73,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                     if (string.IsNullOrEmpty(filePath))
                     {
                         _logger.LogWarning("[Validation] File path is missing for single file analysis");
-                        return (false, "File path is required for single file analysis", null);
+                        return Task.FromResult<(bool isValid, string? error, string? resolvedFilePath)>((false, "File path is required for single file analysis", null));
                     }
 
                     // If file content is provided, we don't need to validate the file path on the file system
@@ -89,7 +89,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                         if (!isValid)
                         {
                             _logger.LogWarning("[Validation] File path validation failed: {Error}", validationError);
-                            return (false, validationError, null);
+                            return Task.FromResult<(bool isValid, string? error, string? resolvedFilePath)>((false, validationError, null));
                         }
 
                         resolvedFilePath = resolvedPath;
@@ -103,7 +103,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                     if (!isValid)
                     {
                         _logger.LogWarning("[Validation] Repository validation failed: {Error}", repoError);
-                        return (false, repoError, null);
+                        return Task.FromResult<(bool isValid, string? error, string? resolvedFilePath)>((false, repoError, null));
                     }
 
                     // Validate commit ID if commit analysis requested
@@ -112,7 +112,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                         if (string.IsNullOrEmpty(commitId))
                         {
                             _logger.LogWarning("[Validation] Commit ID is missing for commit analysis");
-                            return (false, "Commit ID is required for commit analysis", null);
+                            return Task.FromResult<(bool isValid, string? error, string? resolvedFilePath)>((false, "Commit ID is required for commit analysis", null));
                         }
                     }
 
@@ -123,18 +123,18 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                         if (!hasStaged)
                         {
                             _logger.LogWarning("[Validation] No staged changes found: {Error}", stagedError);
-                            return (false, "No staged changes found. Use 'git add' to stage files for analysis.", null);
+                            return Task.FromResult<(bool isValid, string? error, string? resolvedFilePath)>((false, "No staged changes found. Use 'git add' to stage files for analysis.", null));
                         }
                     }
                 }
 
                 _logger.LogInformation("[Validation] All validations passed for analysis type {AnalysisType}", analysisType);
-                return (true, null, resolvedFilePath);
+                return Task.FromResult<(bool isValid, string? error, string? resolvedFilePath)>((true, null, resolvedFilePath));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[Validation] Unexpected error during request validation");
-                return (false, $"Validation error: {ex.Message}", null);
+                return Task.FromResult<(bool isValid, string? error, string? resolvedFilePath)>((false, $"Validation error: {ex.Message}", null));
             }
         }
     }

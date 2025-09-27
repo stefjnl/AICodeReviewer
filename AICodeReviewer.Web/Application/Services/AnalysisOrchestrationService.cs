@@ -1,3 +1,4 @@
+using AICodeReviewer.Web.Application.Factories;
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Infrastructure.Extensions;
 using AICodeReviewer.Web.Models;
@@ -16,6 +17,7 @@ public class AnalysisOrchestrationService : IAnalysisService
     private readonly IAnalysisCacheService _cacheService;
     private readonly IBackgroundTaskService _backgroundTaskService;
     private readonly IAnalysisProgressService _progressService;
+    private readonly IAnalysisContextFactory _analysisContextFactory;
 
     public AnalysisOrchestrationService(
         ILogger<AnalysisOrchestrationService> logger,
@@ -23,7 +25,8 @@ public class AnalysisOrchestrationService : IAnalysisService
         IAnalysisExecutionService executionService,
         IAnalysisCacheService cacheService,
         IBackgroundTaskService backgroundTaskService,
-        IAnalysisProgressService progressService)
+        IAnalysisProgressService progressService,
+        IAnalysisContextFactory analysisContextFactory)
     {
         _logger = logger;
         _preparationService = preparationService;
@@ -31,6 +34,7 @@ public class AnalysisOrchestrationService : IAnalysisService
         _cacheService = cacheService;
         _backgroundTaskService = backgroundTaskService;
         _progressService = progressService;
+        _analysisContextFactory = analysisContextFactory;
     }
 
     public async Task<(string analysisId, bool success, string? error)> StartAnalysisAsync(
@@ -41,24 +45,11 @@ public class AnalysisOrchestrationService : IAnalysisService
     {
         try
         {
-            // Use request data or fall back to session data
-            var defaultRepositoryPath = Path.Combine(environment.ContentRootPath, "..");
-            var repositoryPath = request.RepositoryPath ?? session.GetString(SessionKeys.RepositoryPath) ?? defaultRepositoryPath;
-            var selectedDocuments = request.SelectedDocuments ?? session.GetObject<List<string>>(SessionKeys.SelectedDocuments) ?? new List<string>();
-            var documentsFolder = !string.IsNullOrEmpty(request.DocumentsFolder) ? request.DocumentsFolder : session.GetString(SessionKeys.DocumentsFolder) ?? Path.Combine(environment.ContentRootPath, "..", "Documents");
-            var language = request.Language ?? session.GetString(SessionKeys.Language) ?? "NET";
-            var analysisType = request.AnalysisType ?? AnalysisType.Uncommitted;
-            var commitId = request.CommitId;
-            var filePath = request.FilePath;
-            var fileContent = request.FileContent;
+            var context = _analysisContextFactory.Create(request, session, environment, configuration);
+            session.SetString(SessionKeys.Language, context.Language);
 
-            // Store language in session for consistency
-            session.SetString(SessionKeys.Language, language);
-
-            // Generate unique analysis ID
             var analysisId = Guid.NewGuid().ToString();
 
-            // Prepare analysis (validation and content extraction)
             var preparationResult = await _preparationService.PrepareAnalysisAsync(request, session, environment);
             if (!preparationResult.isValid)
             {
@@ -66,9 +57,6 @@ public class AnalysisOrchestrationService : IAnalysisService
                 return ("", false, preparationResult.error);
             }
 
-            filePath = preparationResult.resolvedFilePath ?? filePath;
-
-            // Cache the content and isFileContent flag after successful preparation
             if (!string.IsNullOrEmpty(preparationResult.content))
             {
                 _cacheService.StoreContent(analysisId, preparationResult.content);
@@ -77,38 +65,18 @@ public class AnalysisOrchestrationService : IAnalysisService
                     analysisId, preparationResult.content.Length, preparationResult.isFileContent);
             }
 
-            // Create initial analysis result and store in cache
-            var analysisResult = new AnalysisResult
-            {
-                Status = "Starting",
-                CreatedAt = DateTime.UtcNow
-            };
-
+            var analysisResult = new AnalysisResult { Status = "Starting", CreatedAt = DateTime.UtcNow };
             _cacheService.StoreAnalysisResult(analysisId, analysisResult);
             _logger.LogInformation($"[Analysis {analysisId}] Initial analysis result stored in cache");
 
-            // Get configuration values
-            var apiKey = configuration["OpenRouter:ApiKey"] ?? "";
-            var model = request.Model ?? configuration["OpenRouter:Model"] ?? "";
-            var fallbackModel = configuration["OpenRouter:FallbackModel"] ?? "";
-
-            // Start background analysis
             _backgroundTaskService.ExecuteBackgroundTask(
                 "Analysis Execution",
                 analysisId,
-                () => RunBackgroundAnalysisAsync(
-                    analysisId,
-                    selectedDocuments,
-                    documentsFolder,
-                    apiKey,
-                    model,
-                    fallbackModel,
-                    language,
-                    session),
+                async () => await RunBackgroundAnalysisAsync(analysisId, context.SelectedDocuments, context.DocumentsFolder, context.ApiKey, context.Model, context.FallbackModel, context.Language, session),
                 async (ex) => await _progressService.BroadcastErrorAsync(analysisId, $"Background analysis error: {ex.Message}")
             );
 
-            _logger.LogInformation("Started analysis {AnalysisId} of type {AnalysisType}", analysisId, analysisType);
+            _logger.LogInformation("Started analysis {AnalysisId} of type {AnalysisType}", analysisId, context.AnalysisType);
             return (analysisId, true, null);
         }
         catch (Exception ex)
@@ -199,11 +167,11 @@ public class AnalysisOrchestrationService : IAnalysisService
 
             // Update status to document loading
             _cacheService.UpdateAnalysisStatus(analysisId, "Loading documents...");
-            await _progressService.BroadcastProgressAsync(analysisId, "Loading documents...", model, fallbackModel);
+            await _progressService.BroadcastProgressAsync(analysisId, "Loading documents...", model, fallbackModel ?? string.Empty);
 
             // Execute AI analysis using the execution service
             _cacheService.UpdateAnalysisStatus(analysisId, $"AI analysis... (Using: {model})");
-            await _progressService.BroadcastProgressAsync(analysisId, $"AI analysis... (Using: {model})", model, fallbackModel);
+            await _progressService.BroadcastProgressAsync(analysisId, $"AI analysis... (Using: {model})", model, fallbackModel ?? string.Empty);
 
             var executionRequest = new AnalysisExecutionRequest(
                 analysisId,
