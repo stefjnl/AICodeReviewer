@@ -1,3 +1,4 @@
+using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -7,7 +8,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services;
 /// <summary>
 /// Service for managing analysis-related cache operations
 /// </summary>
-public class AnalysisCacheService
+public class AnalysisCacheService : IAnalysisCacheService
 {
     private readonly ILogger<AnalysisCacheService> _logger;
     private readonly IMemoryCache _cache;

@@ -1,6 +1,5 @@
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Infrastructure.Extensions;
-using AICodeReviewer.Web.Infrastructure.Services;
 using AICodeReviewer.Web.Models;
 using Microsoft.Extensions.Logging;
 
@@ -14,17 +13,17 @@ public class AnalysisOrchestrationService : IAnalysisService
     private readonly ILogger<AnalysisOrchestrationService> _logger;
     private readonly IAnalysisPreparationService _preparationService;
     private readonly IAnalysisExecutionService _executionService;
-    private readonly AnalysisCacheService _cacheService;
-    private readonly BackgroundTaskService _backgroundTaskService;
-    private readonly AnalysisProgressService _progressService;
+    private readonly IAnalysisCacheService _cacheService;
+    private readonly IBackgroundTaskService _backgroundTaskService;
+    private readonly IAnalysisProgressService _progressService;
 
     public AnalysisOrchestrationService(
         ILogger<AnalysisOrchestrationService> logger,
         IAnalysisPreparationService preparationService,
         IAnalysisExecutionService executionService,
-        AnalysisCacheService cacheService,
-        BackgroundTaskService backgroundTaskService,
-        AnalysisProgressService progressService)
+        IAnalysisCacheService cacheService,
+        IBackgroundTaskService backgroundTaskService,
+        IAnalysisProgressService progressService)
     {
         _logger = logger;
         _preparationService = preparationService;
@@ -44,17 +43,17 @@ public class AnalysisOrchestrationService : IAnalysisService
         {
             // Use request data or fall back to session data
             var defaultRepositoryPath = Path.Combine(environment.ContentRootPath, "..");
-            var repositoryPath = request.RepositoryPath ?? session.GetString("RepositoryPath") ?? defaultRepositoryPath;
-            var selectedDocuments = request.SelectedDocuments ?? session.GetObject<List<string>>("SelectedDocuments") ?? new List<string>();
-            var documentsFolder = !string.IsNullOrEmpty(request.DocumentsFolder) ? request.DocumentsFolder : session.GetString("DocumentsFolder") ?? Path.Combine(environment.ContentRootPath, "..", "Documents");
-            var language = request.Language ?? session.GetString("Language") ?? "NET";
+            var repositoryPath = request.RepositoryPath ?? session.GetString(SessionKeys.RepositoryPath) ?? defaultRepositoryPath;
+            var selectedDocuments = request.SelectedDocuments ?? session.GetObject<List<string>>(SessionKeys.SelectedDocuments) ?? new List<string>();
+            var documentsFolder = !string.IsNullOrEmpty(request.DocumentsFolder) ? request.DocumentsFolder : session.GetString(SessionKeys.DocumentsFolder) ?? Path.Combine(environment.ContentRootPath, "..", "Documents");
+            var language = request.Language ?? session.GetString(SessionKeys.Language) ?? "NET";
             var analysisType = request.AnalysisType ?? AnalysisType.Uncommitted;
             var commitId = request.CommitId;
             var filePath = request.FilePath;
             var fileContent = request.FileContent;
 
             // Store language in session for consistency
-            session.SetString("Language", language);
+            session.SetString(SessionKeys.Language, language);
 
             // Generate unique analysis ID
             var analysisId = Guid.NewGuid().ToString();
@@ -146,7 +145,7 @@ public class AnalysisOrchestrationService : IAnalysisService
             return;
         }
 
-        session.SetString("AnalysisId", analysisId);
+        session.SetString(SessionKeys.AnalysisId, analysisId);
         _logger.LogInformation("Stored analysis ID {AnalysisId} in session", analysisId);
     }
 
@@ -206,7 +205,7 @@ public class AnalysisOrchestrationService : IAnalysisService
             _cacheService.UpdateAnalysisStatus(analysisId, $"AI analysis... (Using: {model})");
             await _progressService.BroadcastProgressAsync(analysisId, $"AI analysis... (Using: {model})", model, fallbackModel);
 
-            await _executionService.ExecuteAnalysisAsync(
+            var executionRequest = new AnalysisExecutionRequest(
                 analysisId,
                 content,
                 selectedDocuments,
@@ -216,7 +215,9 @@ public class AnalysisOrchestrationService : IAnalysisService
                 fallbackModel,
                 language,
                 isFileContent,
-                session);
+                session
+            );
+            await _executionService.ExecuteAnalysisAsync(executionRequest);
 
             _logger.LogInformation($"[Analysis {analysisId}] Background analysis task completed");
         }

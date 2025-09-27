@@ -1,12 +1,15 @@
 using AICodeReviewer.Web.Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 
 namespace AICodeReviewer.Web.Infrastructure.Services;
 
 /// <summary>
 /// Service for managing analysis progress broadcasting via SignalR
 /// </summary>
-public class AnalysisProgressService
+public class AnalysisProgressService : IAnalysisProgressService
 {
     private readonly ILogger<AnalysisProgressService> _logger;
     private readonly ISignalRBroadcastService _signalRService;

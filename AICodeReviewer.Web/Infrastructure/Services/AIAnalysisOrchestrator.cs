@@ -50,14 +50,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                 _logger.LogInformation("[AIAnalysis] Calling AI service with timeout");
 
                 // Call AI service with timeout
-                var (analysisResult, isError, errorMessage) = await Task.Run(async () =>
-                    await _aiService.AnalyzeCodeAsync(content, codingStandards, requirements, apiKey, primaryModel, language, isFileContent),
-                    cts.Token);
-
-                analysis = analysisResult;
-                error = isError;
-                errorMsg = errorMessage;
-
+                (analysis, error, errorMsg) = await ExecuteAnalysisWithModelAsync(content, codingStandards, requirements, apiKey, primaryModel, language, isFileContent, cts.Token);
                 _logger.LogInformation("[AIAnalysis] Primary model call complete - Error: {Error}, Result length: {Length}", error, analysis.Length);
 
                 if (error && IsRateLimitError(errorMsg) && !string.IsNullOrEmpty(fallbackModel))
@@ -67,14 +60,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                     _logger.LogInformation("[AIAnalysis] Rate limit detected, falling back to {FallbackModel}", fallbackModel);
 
                     // Retry with fallback model
-                    (analysisResult, isError, errorMessage) = await Task.Run(async () =>
-                        await _aiService.AnalyzeCodeAsync(content, codingStandards, requirements, apiKey, fallbackModel, language, isFileContent),
-                        cts.Token);
-
-                    analysis = analysisResult;
-                    error = isError;
-                    errorMsg = errorMessage;
-
+                    (analysis, error, errorMsg) = await ExecuteAnalysisWithModelAsync(content, codingStandards, requirements, apiKey, fallbackModel, language, isFileContent, cts.Token);
                     _logger.LogInformation("[AIAnalysis] Fallback model call complete - Error: {Error}, Result length: {Length}", error, analysis.Length);
                 }
             }
@@ -100,6 +86,15 @@ namespace AICodeReviewer.Web.Infrastructure.Services
 
             _logger.LogInformation("[AIAnalysis] AI analysis completed - Used model: {UsedModel}, Error: {Error}", usedModel, error);
             return (analysis, error, errorMsg, usedModel);
+        }
+
+        private async Task<(string analysis, bool error, string? errorMsg)> ExecuteAnalysisWithModelAsync(
+            string content, List<string> codingStandards, string requirements,
+            string apiKey, string model, string language, bool isFileContent, CancellationToken cancellationToken)
+        {
+            return await Task.Run(async () =>
+                await _aiService.AnalyzeCodeAsync(content, codingStandards, requirements, apiKey, model, language, isFileContent),
+                cancellationToken);
         }
 
         /// <summary>

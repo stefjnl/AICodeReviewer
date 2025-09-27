@@ -28,79 +28,60 @@ public class AnalysisExecutionService : IAnalysisExecutionService
     }
 
     /// <summary>
-    /// Executes AI analysis with the provided content and documents
+    /// Executes AI analysis using the provided request context
     /// </summary>
-    /// <param name="analysisId">The unique analysis identifier</param>
-    /// <param name="content">The code content to analyze</param>
-    /// <param name="selectedDocuments">List of selected coding standards documents</param>
-    /// <param name="documentsFolder">Path to the documents folder</param>
-    /// <param name="apiKey">API key for AI service</param>
-    /// <param name="primaryModel">Primary AI model to use</param>
-    /// <param name="fallbackModel">Fallback AI model</param>
-    /// <param name="language">Programming language</param>
-    /// <param name="isFileContent">Whether the content is from a single file</param>
-    /// <param name="session">User session</param>
-    /// <returns>Task representing the async operation</returns>
-    public async Task ExecuteAnalysisAsync(
-        string analysisId,
-        string content,
-        List<string> selectedDocuments,
-        string documentsFolder,
-        string apiKey,
-        string primaryModel,
-        string? fallbackModel,
-        string language,
-        bool isFileContent,
-        ISession session)
+    /// <param name="request">The analysis execution request containing all necessary parameters</param>
+    /// <returns>A task representing the asynchronous operation</returns>
+    public async Task ExecuteAnalysisAsync(AnalysisExecutionRequest request)
     {
-        _logger.LogInformation("[Analysis {AnalysisId}] Starting AI analysis execution", analysisId);
+        _logger.LogInformation("[Analysis {AnalysisId}] Starting AI analysis execution", request.AnalysisId);
 
         try
         {
             // Load documents
-            _logger.LogInformation("[Analysis {AnalysisId}] Loading documents...", analysisId);
-            var codingStandards = await _documentRetrievalService.LoadDocumentsAsync(selectedDocuments, documentsFolder);
-            _logger.LogInformation("[Analysis {AnalysisId}] Loaded {Count} documents", analysisId, codingStandards.Count);
+            _logger.LogInformation("[Analysis {AnalysisId}] Loading documents...", request.AnalysisId);
+            var codingStandards = await _documentRetrievalService.LoadDocumentsAsync(request.SelectedDocuments, request.DocumentsFolder);
+            _logger.LogInformation("[Analysis {AnalysisId}] Loaded {Count} documents", request.AnalysisId, codingStandards.Count);
 
             // Get requirements
             var requirements = "Follow .NET best practices and coding standards";
-            _logger.LogInformation("[Analysis {AnalysisId}] Requirements: {Requirements}", analysisId, requirements);
+            _logger.LogInformation("[Analysis {AnalysisId}] Requirements: {Requirements}", request.AnalysisId, requirements);
 
             // Perform AI analysis
-            _logger.LogInformation("[Analysis {AnalysisId}] Performing AI analysis with model: {Model}", analysisId, primaryModel);
+            _logger.LogInformation("[Analysis {AnalysisId}] Performing AI analysis with model: {Model}", request.AnalysisId, request.PrimaryModel);
             var aiResult = await _aiAnalysisOrchestrator.AnalyzeAsync(
-                content, 
-                codingStandards, 
-                requirements, 
-                apiKey, 
-                primaryModel, 
-                fallbackModel, 
-                language, 
-                isFileContent);
+                request.Content,
+                codingStandards,
+                requirements,
+                request.ApiKey,
+                request.PrimaryModel,
+                request.FallbackModel,
+                request.Language,
+                request.IsFileContent);
 
             string aiAnalysis = aiResult.analysis;
             bool aiError = aiResult.error;
             string? aiErrorMsg = aiResult.errorMsg;
             string usedModel = aiResult.usedModel;
 
-            _logger.LogInformation("[Analysis {AnalysisId}] AI analysis completed using model: {UsedModel}, Error: {HasError}", 
-                analysisId, usedModel, aiError);
+            _logger.LogInformation("[Analysis {AnalysisId}] AI analysis completed using model: {UsedModel}, Error: {HasError}",
+                request.AnalysisId, usedModel, aiError);
 
             // Process results
             await _resultProcessorService.ProcessAndBroadcastAsync(
-                analysisId, 
-                aiAnalysis, 
-                aiErrorMsg, 
-                aiError, 
-                usedModel, 
-                fallbackModel ?? string.Empty, 
-                session);
+                request.AnalysisId,
+                aiAnalysis,
+                aiErrorMsg,
+                aiError,
+                usedModel,
+                request.FallbackModel ?? string.Empty,
+                request.Session);
 
-            _logger.LogInformation("[Analysis {AnalysisId}] Analysis execution completed", analysisId);
+            _logger.LogInformation("[Analysis {AnalysisId}] Analysis execution completed", request.AnalysisId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Analysis {AnalysisId}] Error during AI analysis execution", analysisId);
+            _logger.LogError(ex, "[Analysis {AnalysisId}] Error during AI analysis execution", request.AnalysisId);
             throw;
         }
     }
