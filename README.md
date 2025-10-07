@@ -1,4 +1,4 @@
-# AI Code Reviewer
+# CodeGuard: AI Code Reviewer
 
 AI Code Reviewer is a comprehensive .NET 9 web application that provides automated code review and analysis using AI-powered insights. The application integrates with Git repositories to analyze code changes and provide structured feedback on potential issues, best practices, and improvement suggestions.
 
@@ -21,6 +21,14 @@ AI Code Reviewer is a comprehensive .NET 9 web application that provides automat
 - **Git Integration**: LibGit2Sharp
 - **Containerization**: Docker & Docker Compose
 - **Testing**: xUnit, Moq, Vitest
+
+![CG1](https://github.com/user-attachments/assets/e9e48539-97d6-4bd3-a8d2-820fd8256c26)
+![CG2](https://github.com/user-attachments/assets/134092dd-98d2-49b5-b1a3-6e6b71b6783e)
+![CG3](https://github.com/user-attachments/assets/a6c20be5-2cbe-4510-bfca-c1fc68b4f2d9)
+![CG4](https://github.com/user-attachments/assets/5da8ef61-e774-4842-85c2-0e54ed740ddc)
+![CG5](https://github.com/user-attachments/assets/725fc4b5-50f8-4748-9e19-00e9bdd837a6)
+![CG6](https://github.com/user-attachments/assets/54ec929e-43da-4eea-b3a2-279daedfd44a)
+![CG7](https://github.com/user-attachments/assets/e2bd3d44-0a25-42e5-92ef-291611c46fab)
 
 ## 📋 Prerequisites
 
