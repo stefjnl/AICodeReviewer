@@ -57,15 +57,15 @@ public class PathValidationService : IPathValidationService
             _logger.LogInformation("Validating single file path: {FilePath} in repository: {RepositoryPath}", filePath, repositoryPath);
 
             var originalFilePath = filePath;
-            
+
             // Check if it's just a filename (no path)
             if (!filePath.Contains(Path.DirectorySeparatorChar) && !filePath.Contains(Path.AltDirectorySeparatorChar))
             {
                 _logger.LogInformation("File path appears to be just a filename: {FileName}", filePath);
-                
+
                 // Try to find the file in common locations
                 var searchPaths = new List<string>();
-                
+
                 // Add repository path and its subdirectories
                 if (Directory.Exists(repositoryPath))
                 {
@@ -82,11 +82,11 @@ public class PathValidationService : IPathValidationService
                         _logger.LogWarning("Could not enumerate subdirectories in repository: {Path} - {Message}", repositoryPath, ex.Message);
                     }
                 }
-                
+
                 // Add other common paths
                 searchPaths.Add(contentRootPath);
                 searchPaths.Add(Directory.GetCurrentDirectory());
-                
+
                 // Search for the file
                 bool fileFound = false;
                 foreach (var searchPath in searchPaths)
@@ -103,7 +103,7 @@ public class PathValidationService : IPathValidationService
                                 _logger.LogInformation("File found at: {ResolvedPath}", filePath);
                                 break;
                             }
-                            
+
                             // Also try with common extensions if not provided
                             if (!Path.HasExtension(filePath))
                             {
@@ -127,7 +127,7 @@ public class PathValidationService : IPathValidationService
                         }
                     }
                 }
-                
+
                 if (!fileFound)
                 {
                     _logger.LogWarning("File not found in search paths. Original filename: {OriginalFile}", originalFilePath);
@@ -143,7 +143,7 @@ public class PathValidationService : IPathValidationService
                 if (!Path.IsPathRooted(filePath))
                 {
                     _logger.LogInformation("Relative path detected, resolving: {RelativePath}", filePath);
-                    
+
                     // Try resolving relative to repository path first
                     var relativePath = Path.Combine(repositoryPath, filePath);
                     if (File.Exists(relativePath))
@@ -180,7 +180,7 @@ public class PathValidationService : IPathValidationService
             {
                 return (filePath, false, extensionError);
             }
-            
+
             _logger.LogInformation("File validation passed for: {FilePath}", filePath);
             return (filePath, true, null);
         }
@@ -202,7 +202,7 @@ public class PathValidationService : IPathValidationService
                 _logger.LogWarning("Unsupported file extension: {Extension} for file: {FilePath}", extension, filePath);
                 return (false, error);
             }
-            
+
             _logger.LogInformation("File extension validated: {Extension} for file: {FilePath}", extension, filePath);
             return (true, null);
         }
@@ -251,17 +251,55 @@ public class PathValidationService : IPathValidationService
     {
         try
         {
-            // Look in the solution root (parent of ContentRootPath) for Documents folder
-            var solutionRoot = Directory.GetParent(contentRootPath)?.FullName ?? contentRootPath;
-            var documentsFolder = Path.Combine(solutionRoot, "Documents");
+            Console.WriteLine($"[DEBUG] GetDocumentsFolderPath called");
+            Console.WriteLine($"[DEBUG] contentRootPath = {contentRootPath}");
 
-            _logger.LogInformation("Resolved documents folder path: {Path}", documentsFolder);
+            // In production/Docker, Documents is directly in the app folder
+            var documentsFolder = Path.Combine(contentRootPath, "Documents");
+            Console.WriteLine($"[DEBUG] documentsFolder = {documentsFolder}");
+            Console.WriteLine($"[DEBUG] Directory.Exists(documentsFolder) = {Directory.Exists(documentsFolder)}");
+
+            // Check if this path exists
+            if (Directory.Exists(documentsFolder))
+            {
+                var files = Directory.GetFiles(documentsFolder, "*.md");
+                Console.WriteLine($"[DEBUG] Found {files.Length} .md files in {documentsFolder}");
+                foreach (var file in files)
+                {
+                    Console.WriteLine($"[DEBUG]   - {file}");
+                }
+                _logger.LogInformation("Found documents folder at: {Path}", documentsFolder);
+                return documentsFolder;
+            }
+
+            Console.WriteLine($"[DEBUG] Documents folder not found at {documentsFolder}, trying parent");
+
+            // Fallback: Try parent directory (for local development)
+            var solutionRoot = Directory.GetParent(contentRootPath)?.FullName;
+            Console.WriteLine($"[DEBUG] solutionRoot = {solutionRoot}");
+
+            if (solutionRoot != null)
+            {
+                var parentDocuments = Path.Combine(solutionRoot, "Documents");
+                Console.WriteLine($"[DEBUG] parentDocuments = {parentDocuments}");
+                Console.WriteLine($"[DEBUG] Directory.Exists(parentDocuments) = {Directory.Exists(parentDocuments)}");
+
+                if (Directory.Exists(parentDocuments))
+                {
+                    _logger.LogInformation("Found documents folder in parent at: {Path}", parentDocuments);
+                    return parentDocuments;
+                }
+            }
+
+            // Default to app folder
+            Console.WriteLine($"[DEBUG] Returning default: {documentsFolder}");
+            _logger.LogWarning("Documents folder not found, using default: {Path}", documentsFolder);
             return documentsFolder;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error resolving documents folder path for content root: {ContentRootPath}", contentRootPath);
-            // Fallback to a documents folder in the content root
+            Console.WriteLine($"[DEBUG] Exception: {ex.Message}");
+            _logger.LogError(ex, "Error resolving documents folder path");
             return Path.Combine(contentRootPath, "Documents");
         }
     }
