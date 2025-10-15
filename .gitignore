@@ -490,3 +490,4 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+.kilocode/mcp.json

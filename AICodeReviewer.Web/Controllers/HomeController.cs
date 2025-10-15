@@ -103,10 +103,10 @@ public class HomeController : Controller
         {
             // Validate and normalize path
             string normalizedPath = string.IsNullOrWhiteSpace(folderPath)
-                ? Path.Combine(_environment.ContentRootPath, "..", "Documents")
+                ? _pathService.GetDocumentsFolderPath(_environment.ContentRootPath)
                 : Path.IsPathRooted(folderPath)
                     ? folderPath
-                    : Path.Combine(_environment.ContentRootPath, folderPath);
+                    : Path.Combine(_pathService.GetDocumentsFolderPath(_environment.ContentRootPath), folderPath);
 
             HttpContext.Session.SetString("DocumentsFolder", normalizedPath);
             _logger.LogInformation("Documents folder set to: {Path}", normalizedPath);

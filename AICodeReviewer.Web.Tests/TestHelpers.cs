@@ -21,9 +21,17 @@ namespace AICodeReviewer.Web.Tests
         public void Remove(string key) => _data.Remove(key);
         public void Set(string key, byte[] value) => _data[key] = value;
 
-        public bool TryGetValue(string key, out byte[] value)
+        bool ISession.TryGetValue(string key, out byte[] value)
         {
-            return _data.TryGetValue(key, out value);
+            return _data.TryGetValue(key, out value!);
+        }
+
+        public bool TryGetValue(string key, out byte[]? value)
+        {
+            byte[] result;
+            var found = ((ISession)this).TryGetValue(key, out result!);
+            value = result;
+            return found;
         }
     }
 
@@ -34,7 +42,7 @@ namespace AICodeReviewer.Web.Tests
             session.Set(key, Encoding.UTF8.GetBytes(value));
         }
 
-        public static string GetString(this ISession session, string key)
+        public static string? GetString(this ISession session, string key)
         {
             var data = session.Get(key);
             if (data == null)
@@ -44,9 +52,9 @@ namespace AICodeReviewer.Web.Tests
             return Encoding.UTF8.GetString(data);
         }
 
-        public static byte[] Get(this ISession session, string key)
+        public static byte[]? Get(this ISession session, string key)
         {
-            byte[] value;
+            byte[]? value;
             session.TryGetValue(key, out value);
             return value;
         }

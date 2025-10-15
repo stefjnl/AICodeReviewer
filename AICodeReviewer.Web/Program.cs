@@ -17,15 +17,20 @@ builder.Services.AddControllersWithViews(options =>
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
+// Also add explicit API controllers to ensure they're discovered
+builder.Services.AddControllers();
+
+builder.Services.AddHealthChecks();
+
 // Add CORS services
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowLocalhost",
         policy =>
         {
-            policy.WithOrigins("http://localhost:8097") // frontend URL
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
+            policy.WithOrigins("http://localhost:8097", "http://192.168.68.112:8097")
+               .AllowAnyMethod()
+               .AllowAnyHeader();
         });
 });
 
@@ -126,6 +131,8 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllers(); // Map API controllers
+
+app.MapHealthChecks("/health");
 
 // After app.UseRouting()
 app.MapHub<ProgressHub>("/hubs/progress");

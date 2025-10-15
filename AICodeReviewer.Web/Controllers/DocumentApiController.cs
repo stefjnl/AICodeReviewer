@@ -14,13 +14,19 @@ public class DocumentApiController : ControllerBase
     private readonly ILogger<DocumentApiController> _logger;
     private readonly IDocumentManagementService _documentService;
     private readonly IWebHostEnvironment _environment;
-    
-public DocumentApiController(ILogger<DocumentApiController> logger, IDocumentManagementService documentService, IWebHostEnvironment environment)
-{
-    _logger = logger;
-    _documentService = documentService;
-    _environment = environment;
-}
+    private readonly IPathValidationService _pathService;
+
+    public DocumentApiController(
+        ILogger<DocumentApiController> logger,
+        IDocumentManagementService documentService,
+        IWebHostEnvironment environment,
+        IPathValidationService pathService)
+    {
+        _logger = logger;
+        _documentService = documentService;
+        _environment = environment;
+        _pathService = pathService;
+    }
 
     /// <summary>
     /// Scans the documents folder for available markdown files
@@ -32,10 +38,9 @@ public DocumentApiController(ILogger<DocumentApiController> logger, IDocumentMan
         try
         {
             _logger.LogInformation("Scanning documents via API");
-            
+
             // Use default documents folder if none provided
-            var defaultDocumentsFolder = Path.Combine(_environment.ContentRootPath, "..", "Documents");
-            var documentsFolder = defaultDocumentsFolder;
+            var documentsFolder = _pathService.GetDocumentsFolderPath(_environment.ContentRootPath);
 
             // Use document service to scan for documents
             var (files, isError) = _documentService.ScanDocumentsFolder(documentsFolder);
@@ -104,10 +109,9 @@ public DocumentApiController(ILogger<DocumentApiController> logger, IDocumentMan
             }
 
             _logger.LogInformation("Loading document content: {DocumentName}", documentName);
-            
+
             // Use default documents folder if none provided
-            var defaultDocumentsFolder = Path.Combine(_environment.ContentRootPath, "..", "Documents");
-            var documentsFolder = defaultDocumentsFolder;
+            var documentsFolder = _pathService.GetDocumentsFolderPath(_environment.ContentRootPath);
 
             // Use document service to load document content
             var (content, isError) = _documentService.LoadDocument(documentName, documentsFolder);

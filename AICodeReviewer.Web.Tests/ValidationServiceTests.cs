@@ -238,7 +238,7 @@ namespace AICodeReviewer.Web.Tests
 
             // Act
             session.Set(key, valueBytes);
-            byte[] retrievedValueBytes;
+            byte[]? retrievedValueBytes;
             var result = session.TryGetValue(key, out retrievedValueBytes);
 
             // Assert

@@ -72,7 +72,7 @@ TestResults/
 
 # Documentation
 docs/
-Documents/
+# Documents/  # Uncomment to include in build
 README.md
 SETUP.md
 
