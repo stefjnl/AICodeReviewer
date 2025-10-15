@@ -94,13 +94,23 @@ docker run -d \
   -e ASPNETCORE_ENVIRONMENT=Production \
   aicodereviewer
 
-# Run with volume for git repositories
+# Run with volume for git repositories and documents
 docker run -d \
   --name aicodereviewer \
   -p 8097:8097 \
   -e OPENROUTER_API_KEY="your-api-key" \
-  -v aicodereviewer_git-repos:/app/git-repos \
+  -v C:\git:/git \
+  -v ./Documents:/app/Documents \
   aicodereviewer
+
+# Simple setup (recommended)
+docker run -d \
+  --name aicodereviewer-test \
+  -p 8099:8097 \
+  -e OPENROUTER_API_KEY="your-api-key" \
+  -v C:\git:/git \
+  -v ./Documents:/app/Documents \
+  aicodereviewer-test
 ```
 
 ### Managing the Container

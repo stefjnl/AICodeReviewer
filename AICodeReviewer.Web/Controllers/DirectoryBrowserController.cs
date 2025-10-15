@@ -39,8 +39,15 @@ public class DirectoryBrowserController : ControllerBase
                 }
                 else
                 {
-                    // On Unix systems, start from root
-                    result = _directoryService.BrowseDirectory("/");
+                    // On Unix systems (including Docker), show the container root entry
+                    var drives = _directoryService.GetRootDrives();
+                    result = new DirectoryBrowseResponse
+                    {
+                        Directories = drives,
+                        CurrentPath = "",
+                        ParentPath = null,
+                        IsGitRepository = false
+                    };
                 }
             }
             else

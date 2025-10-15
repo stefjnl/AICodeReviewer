@@ -38,4 +38,11 @@ public interface IPathValidationService
     /// <param name="directoryPath">Directory path to validate</param>
     /// <returns>Validation result and error message</returns>
     (bool isValid, string? error) ValidateDirectoryExists(string directoryPath);
+
+    /// <summary>
+    /// Get the default documents folder path for the application
+    /// </summary>
+    /// <param name="contentRootPath">Web application content root path</param>
+    /// <returns>Resolved documents folder path</returns>
+    string GetDocumentsFolderPath(string contentRootPath);
 }

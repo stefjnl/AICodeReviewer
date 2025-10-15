@@ -31,7 +31,9 @@ public class AnalysisContextFactory : IAnalysisContextFactory
         var defaultRepositoryPath = Path.Combine(environment.ContentRootPath, "..");
         var repositoryPath = request.RepositoryPath ?? session.GetString(SessionKeys.RepositoryPath) ?? defaultRepositoryPath;
         var selectedDocuments = request.SelectedDocuments ?? session.GetObject<List<string>>(SessionKeys.SelectedDocuments) ?? new List<string>();
-        var documentsFolder = !string.IsNullOrEmpty(request.DocumentsFolder) ? request.DocumentsFolder : session.GetString(SessionKeys.DocumentsFolder) ?? Path.Combine(environment.ContentRootPath, "..", "Documents");
+        // Look in the solution root (parent of ContentRootPath) for Documents folder
+        var solutionRoot = Directory.GetParent(environment.ContentRootPath)?.FullName ?? environment.ContentRootPath;
+        var documentsFolder = !string.IsNullOrEmpty(request.DocumentsFolder) ? request.DocumentsFolder : session.GetString(SessionKeys.DocumentsFolder) ?? Path.Combine(solutionRoot, "Documents");
         var language = request.Language ?? session.GetString(SessionKeys.Language) ?? "NET";
         var analysisType = request.AnalysisType ?? AnalysisType.Uncommitted;
         var apiKey = configuration["OpenRouter:ApiKey"] ?? "";

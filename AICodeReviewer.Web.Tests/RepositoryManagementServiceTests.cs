@@ -197,9 +197,9 @@ namespace AICodeReviewer.Web.Tests
                 Assert.True(isValid);
                 Assert.Null(error);
                 var summaryType = summary.GetType();
-                var filesModified = (int)summaryType.GetProperty("filesModified").GetValue(summary, null);
-                var additions = (int)summaryType.GetProperty("additions").GetValue(summary, null);
-                var deletions = (int)summaryType.GetProperty("deletions").GetValue(summary, null);
+                var filesModified = (int?)summaryType.GetProperty("filesModified")?.GetValue(summary, null) ?? 0;
+                var additions = (int?)summaryType.GetProperty("additions")?.GetValue(summary, null) ?? 0;
+                var deletions = (int?)summaryType.GetProperty("deletions")?.GetValue(summary, null) ?? 0;
 
                 Assert.Equal(1, filesModified);
                 Assert.Equal(1, additions);

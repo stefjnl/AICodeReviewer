@@ -158,12 +158,30 @@ public class DirectoryBrowsingService : IDirectoryBrowsingService
             return drives;
         }
 
-        // On Unix systems, return root
+        // Check if /git is mounted (Docker setup)
+        if (Directory.Exists("/git"))
+        {
+            _logger.LogInformation("Found /git mount, using as root directory");
+            return new List<DirectoryItem>
+            {
+                new DirectoryItem
+                {
+                    Name = "Git Repositories",
+                    FullPath = "/git",
+                    IsDirectory = true,
+                    IsGitRepository = false,
+                    LastModified = DateTime.Now,
+                    Size = 0
+                }
+            };
+        }
+
+        // On Unix systems (including Docker containers), return root with a note
         return new List<DirectoryItem>
         {
             new DirectoryItem
             {
-                Name = "/",
+                Name = "Container Root (Docker)",
                 FullPath = "/",
                 IsDirectory = true,
                 IsGitRepository = false,
@@ -205,6 +223,12 @@ public class DirectoryBrowsingService : IDirectoryBrowsingService
                 (currentPath.Length == 3 && currentPath.EndsWith(":\\")))
             {
                 return null; // Go back to drive selection
+            }
+
+            // Special case for /git root in Docker
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT && currentPath == "/git")
+            {
+                return null; // Go back to root selection
             }
 
             try

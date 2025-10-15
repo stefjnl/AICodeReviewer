@@ -231,7 +231,7 @@ public class PathValidationService : IPathValidationService
 
             // Test accessibility
             Directory.GetFiles(directoryPath, "*", SearchOption.TopDirectoryOnly);
-            
+
             _logger.LogInformation("Directory validated: {Path}", directoryPath);
             return (true, null);
         }
@@ -244,6 +244,25 @@ public class PathValidationService : IPathValidationService
         {
             _logger.LogError(ex, "Error validating directory: {Path}", directoryPath);
             return (false, $"Directory validation error: {ex.Message}");
+        }
+    }
+
+    public string GetDocumentsFolderPath(string contentRootPath)
+    {
+        try
+        {
+            // Look in the solution root (parent of ContentRootPath) for Documents folder
+            var solutionRoot = Directory.GetParent(contentRootPath)?.FullName ?? contentRootPath;
+            var documentsFolder = Path.Combine(solutionRoot, "Documents");
+
+            _logger.LogInformation("Resolved documents folder path: {Path}", documentsFolder);
+            return documentsFolder;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resolving documents folder path for content root: {ContentRootPath}", contentRootPath);
+            // Fallback to a documents folder in the content root
+            return Path.Combine(contentRootPath, "Documents");
         }
     }
 }

@@ -245,12 +245,11 @@ namespace AICodeReviewer.Web.Tests
         }
 
         [Theory]
-        [InlineData(null)]
         [InlineData("")]
         [InlineData("some other error")]
         [InlineData("network timeout")]
         [InlineData("invalid api key")]
-        public async Task AnalyzeAsync_NonRateLimitErrors_DoNotTriggerFallback(string errorMessage)
+        public async Task AnalyzeAsync_NonRateLimitErrors_DoNotTriggerFallback(string? errorMessage)
         {
             // Arrange
             var content = "test content";

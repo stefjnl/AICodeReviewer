@@ -33,6 +33,9 @@ RUN groupadd -g 1000 appuser && \
 # Copy published application
 COPY --from=publish /app/publish .
 
+# Copy documents directory
+COPY Documents/ ./Documents/
+
 # Create directory for git repositories with secure permissions
 RUN mkdir -p /app/git-repos && \
     chown -R appuser:appuser /app && \

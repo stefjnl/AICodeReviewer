@@ -12,10 +12,16 @@ services:
       - OpenRouter__ApiKey=${OPENROUTER_API_KEY:?API key is required. Set OPENROUTER_API_KEY environment variable.}
       - OpenRouter__Model=${OPENROUTER_MODEL:-moonshotai/kimi-k2-0905}
     volumes:
+      # Mount git repositories directory as /git
+      - C:\git:/git
+      # Mount Documents folder for coding standards
+      - ./Documents:/app/Documents
       # Persist git repositories between container restarts
       - git-repos:/app/git-repos
       # Mount local git config if needed
       - ~/.gitconfig:/home/appuser/.gitconfig:ro
+      # Mount appsettings.json for configuration
+      - ./AICodeReviewer.Web/appsettings.json:/app/appsettings.json:ro
     networks:
       - aicodereviewer-network
     restart: unless-stopped
