@@ -123,7 +123,6 @@ resource containerAppEnvironment 'Microsoft.App/managedEnvironments@2023-05-01' 
 // CONTAINER APP - Your CodeGuard application
 // ============================================================================
 
-/*
 resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: '${resourcePrefix}-app'
   location: location
@@ -203,12 +202,10 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
   ]
 }
 
-*/
-
 // ============================================================================
 // OUTPUTS - Information you'll need after deployment
 // ============================================================================
-//output containerAppUrl string = 'https://${containerApp.properties.configuration.ingress.fqdn}'
+output containerAppUrl string = 'https://${containerApp.properties.configuration.ingress.fqdn}'
 output containerRegistryLoginServer string = containerRegistry.properties.loginServer
 output containerRegistryName string = containerRegistry.name
 output managedIdentityClientId string = managedIdentity.properties.clientId
