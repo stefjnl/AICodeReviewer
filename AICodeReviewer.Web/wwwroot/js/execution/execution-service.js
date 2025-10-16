@@ -1,14 +1,14 @@
 // AI Code Reviewer - Analysis Execution Service
 // Handles the complete analysis execution workflow
 
+import { analysisState } from '../analysis/analysis-state.js';
 import { apiClient } from '../api/api-client.js';
+import { cleanupRepository } from '../api/git-clone-api.js';
 import { apiEndpoints } from '../core/constants.js';
-import { workflowState } from '../workflow/workflow-state.js';
-import { repositoryState } from '../repository/repository-state.js';
+import { documentManager } from '../documents/document-manager.js';
 import { languageState } from '../language/language-state.js';
 import { modelState } from '../models/model-state.js';
-import { documentManager } from '../documents/document-manager.js';
-import { analysisState } from '../analysis/analysis-state.js';
+import { repositoryState } from '../repository/repository-state.js';
 import { getSignalRConnection } from '../signalr/signalr-client.js';
 
 export class ExecutionService {
@@ -18,7 +18,7 @@ export class ExecutionService {
         this.pollingTimeoutId = null;
         this.initialPollingTimeoutId = null;
     }
-    
+
     /**
      * Joins the SignalR group for the current analysis
      * @param {string} analysisId Analysis identifier
@@ -34,7 +34,7 @@ export class ExecutionService {
             console.warn(`⚠️ Failed to join SignalR group for analysis ${analysisId}:`, error);
         }
     }
-    
+
     /**
      * Leaves the SignalR group for the current analysis
      * @param {string} analysisId Analysis identifier
@@ -58,7 +58,7 @@ export class ExecutionService {
     async buildAnalysisRequest() {
         try {
             console.log('📋 Building analysis request from workflow state...');
-            
+
             // Get repository path from repository state
             const repositoryPath = repositoryState.path;
             if (!repositoryPath) {
@@ -97,7 +97,7 @@ export class ExecutionService {
                     targetFile = documentsFolder
                         ? `${documentsFolder}/${selectedDocuments[0]}`
                         : selectedDocuments[0];
-                    
+
                     // Load document content if not already loaded
                     if (!analysisState.selectedFileContent) {
                         try {
@@ -180,7 +180,7 @@ export class ExecutionService {
         try {
             // Clear any previous polling timeouts before starting new analysis
             this.clearPollingTimeouts();
-            
+
             this.isRunning = true;
             this.analysisId = null;
 
@@ -196,17 +196,17 @@ export class ExecutionService {
             console.log(`📞 Calling API: POST ${apiEndpoints.executionStart}`, request);
             const response = await apiClient.post(apiEndpoints.executionStart, request);
             console.log('📤 API Response:', response);
-            
+
             if (response.success) {
                 this.analysisId = response.analysisId;
                 console.log(`✅ Analysis started successfully with ID: ${this.analysisId}`);
-                
+
                 // Join the SignalR group for this analysis
                 await this.joinAnalysisGroup(this.analysisId);
-                
+
                 // Start monitoring progress
                 this.startProgressMonitoring();
-                
+
                 return {
                     success: true,
                     analysisId: this.analysisId
@@ -349,7 +349,43 @@ export class ExecutionService {
             await this.leaveAnalysisGroup(this.analysisId);
         }
 
+        // Cleanup cloned repository if applicable
+        await this.cleanupClonedRepository();
+
         this.isRunning = false;
+    }
+
+    /**
+     * Cleanup cloned repository after analysis completes
+     */
+    async cleanupClonedRepository() {
+        // Only cleanup if repository was cloned (not a local path)
+        if (!repositoryState.isCloned || !repositoryState.path) {
+            return;
+        }
+
+        // Check if the path looks like a temporary cloned repository
+        if (!repositoryState.path.includes('codeguard-repos')) {
+            console.log('⚠️ Repository path is not a temporary clone, skipping cleanup');
+            return;
+        }
+
+        try {
+            console.log('🧹 Cleaning up cloned repository:', repositoryState.path);
+
+            const result = await cleanupRepository(repositoryState.path);
+
+            if (result.success) {
+                console.log('✅ Cloned repository cleaned up successfully');
+                repositoryState.isCloned = false;
+            } else {
+                console.warn('⚠️ Repository cleanup failed:', result.error);
+                // Non-fatal error - log but don't throw
+            }
+        } catch (error) {
+            console.error('❌ Error cleaning up cloned repository:', error);
+            // Non-fatal error - don't propagate
+        }
     }
 
     /**
@@ -512,10 +548,10 @@ export class ExecutionService {
      */
     startProgressMonitoring() {
         console.log('📊 Starting progress monitoring for analysis ID:', this.analysisId);
-        
+
         // Clear any existing polling timeouts
         this.clearPollingTimeouts();
-        
+
         // Listen for progress updates
         document.addEventListener('progress-update', (event) => {
             this.updateLoadingState(event.detail);
@@ -540,27 +576,27 @@ export class ExecutionService {
      */
     startPollingFallback() {
         console.log('🔍 Starting polling fallback for analysis status');
-        
+
         let pollCount = 0;
         const maxPolls = 120; // 10 minutes max (120 * 5 seconds)
-        
+
         const pollStatus = async () => {
             // Check if analysis is still running and this is the current analysis
             if (!this.analysisId || pollCount >= maxPolls || !this.isRunning) {
                 this.clearPollingTimeouts();
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/results/${this.analysisId}`);
                 if (response.ok) {
                     const results = await response.json();
-                    
+
                     if (results && results.isComplete && !results.error) {
                         console.log('✅ Analysis completed via polling:', results);
                         // Transform the results to match what the frontend expects
                         const feedback = results.feedback || results.Feedback || [];
-                        
+
                         // Transform feedback items to match frontend expectations
                         const transformedFeedback = feedback.map(item => {
                             // Convert numeric severity enum to string
@@ -578,7 +614,7 @@ export class ExecutionService {
                             } else {
                                 severityString = item.severity || item.Severity || 'Suggestion';
                             }
-                            
+
                             return {
                                 title: item.message ? item.message.substring(0, 50) + (item.message.length > 50 ? '...' : '') : 'Untitled Issue',
                                 description: item.message || '',
@@ -588,7 +624,7 @@ export class ExecutionService {
                                 line: item.lineNumber || item.LineNumber || ''
                             };
                         });
-                        
+
                         const transformedResults = {
                             summary: {
                                 totalIssues: feedback.length,
@@ -611,11 +647,11 @@ export class ExecutionService {
             } catch (error) {
                 console.warn('⚠️ Polling failed, continuing SignalR monitoring:', error);
             }
-            
+
             pollCount++;
             this.pollingTimeoutId = setTimeout(pollStatus, 5000); // Poll every 5 seconds
         };
-        
+
         // Start polling after 10 seconds to give SignalR time
         this.initialPollingTimeoutId = setTimeout(pollStatus, 10000);
     }

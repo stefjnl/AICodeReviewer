@@ -251,13 +251,22 @@ public class PathValidationService : IPathValidationService
     {
         try
         {
-            Console.WriteLine($"[DEBUG] GetDocumentsFolderPath called");
-            Console.WriteLine($"[DEBUG] contentRootPath = {contentRootPath}");
+            Console.WriteLine($"[DEBUG] GetDocumentsFolderPath called with: '{contentRootPath}'");
+            Console.WriteLine($"[DEBUG] contentRootPath is null or empty: {string.IsNullOrEmpty(contentRootPath)}");
+
+            var basePath = string.IsNullOrEmpty(contentRootPath)
+                ? Directory.GetCurrentDirectory()
+                : contentRootPath;
+
+            if (string.IsNullOrEmpty(contentRootPath))
+            {
+                Console.WriteLine($"[DEBUG] contentRootPath missing, falling back to current directory: '{basePath}'");
+            }
 
             // In production/Docker, Documents is directly in the app folder
-            var documentsFolder = Path.Combine(contentRootPath, "Documents");
-            Console.WriteLine($"[DEBUG] documentsFolder = {documentsFolder}");
-            Console.WriteLine($"[DEBUG] Directory.Exists(documentsFolder) = {Directory.Exists(documentsFolder)}");
+            var documentsFolder = Path.Combine(basePath, "Documents");
+            Console.WriteLine($"[DEBUG] Combined path result: '{documentsFolder}'");
+            Console.WriteLine($"[DEBUG] Directory.Exists: {Directory.Exists(documentsFolder)}");
 
             // Check if this path exists
             if (Directory.Exists(documentsFolder))
@@ -275,10 +284,10 @@ public class PathValidationService : IPathValidationService
             Console.WriteLine($"[DEBUG] Documents folder not found at {documentsFolder}, trying parent");
 
             // Fallback: Try parent directory (for local development)
-            var solutionRoot = Directory.GetParent(contentRootPath)?.FullName;
+            var solutionRoot = Directory.GetParent(basePath)?.FullName;
             Console.WriteLine($"[DEBUG] solutionRoot = {solutionRoot}");
 
-            if (solutionRoot != null)
+            if (!string.IsNullOrEmpty(solutionRoot))
             {
                 var parentDocuments = Path.Combine(solutionRoot, "Documents");
                 Console.WriteLine($"[DEBUG] parentDocuments = {parentDocuments}");
@@ -300,7 +309,8 @@ public class PathValidationService : IPathValidationService
         {
             Console.WriteLine($"[DEBUG] Exception: {ex.Message}");
             _logger.LogError(ex, "Error resolving documents folder path");
-            return Path.Combine(contentRootPath, "Documents");
+            var fallbackBase = string.IsNullOrEmpty(contentRootPath) ? Directory.GetCurrentDirectory() : contentRootPath;
+            return Path.Combine(fallbackBase, "Documents");
         }
     }
 }

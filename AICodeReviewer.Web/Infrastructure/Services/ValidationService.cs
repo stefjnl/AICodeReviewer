@@ -50,6 +50,10 @@ namespace AICodeReviewer.Web.Infrastructure.Services
 
                 // Validate API key
                 var apiKey = _configuration["OpenRouter:ApiKey"] ?? "";
+                var apiKeyExists = !string.IsNullOrWhiteSpace(apiKey);
+                var maskedPrefix = apiKey?.Length > 0 ? $"{apiKey.Substring(0, Math.Min(6, apiKey.Length))}..." : "";
+                _logger.LogDebug("[OpenRouter] API key exists: {Exists}; length: {Len}; startsWith(masked): {Prefix}",
+                    apiKeyExists, apiKey?.Length ?? 0, maskedPrefix);
                 if (string.IsNullOrEmpty(apiKey))
                 {
                     _logger.LogError("API key not configured");

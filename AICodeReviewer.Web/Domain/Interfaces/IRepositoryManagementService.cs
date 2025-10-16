@@ -46,14 +46,14 @@ public interface IRepositoryManagementService
     /// <param name="repositoryPath">Repository path to validate</param>
     /// <returns>Validation result and error message</returns>
     (bool isValid, string? error) ValidateRepositoryForAnalysis(string repositoryPath);
-    
+
     /// <summary>
     /// Extract git diff for staged changes only
     /// </summary>
     /// <param name="repositoryPath">Path to the git repository</param>
     /// <returns>Staged diff content and error status</returns>
     (string diff, bool isError) ExtractStagedDiff(string repositoryPath);
-    
+
     /// <summary>
     /// Check if repository has staged changes
     /// </summary>
@@ -94,4 +94,19 @@ public interface IRepositoryManagementService
     /// <param name="relativePath">Relative path within the repository</param>
     /// <returns>List of files and directories with error status</returns>
     Task<(List<FileSystemItem> files, bool isError)> GetFilesInDirectoryAsync(string repositoryPath, string relativePath = "");
+
+    /// <summary>
+    /// Clone a Git repository from a URL
+    /// </summary>
+    /// <param name="gitUrl">URL of the Git repository</param>
+    /// <param name="accessToken">Optional access token for private repositories</param>
+    /// <returns>Success status, local path, and error message</returns>
+    (bool success, string? localPath, string? error) CloneRepository(string gitUrl, string? accessToken = null);
+
+    /// <summary>
+    /// Cleanup a cloned repository directory
+    /// </summary>
+    /// <param name="repositoryPath">Path to the repository to delete</param>
+    /// <returns>Success status and error message</returns>
+    (bool success, string? error) CleanupRepository(string repositoryPath);
 }

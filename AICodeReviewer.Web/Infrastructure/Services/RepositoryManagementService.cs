@@ -12,7 +12,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services;
 /// </summary>
 public class RepositoryManagementService : IRepositoryManagementService
 {
-    
+
     private readonly ILogger<RepositoryManagementService> _logger;
 
     public RepositoryManagementService(
@@ -79,19 +79,19 @@ public class RepositoryManagementService : IRepositoryManagementService
                 var diff = repo.Diff.Compare<Patch>(
                     repo.Head.Tip?.Tree,
                     DiffTargets.Index | DiffTargets.WorkingDirectory);
-                
+
                 var diffContent = diff.Content;
-                
+
                 // Simple size check - 200KB limit
                 if (diffContent.Length > DiffConstants.MaxUncommittedDiffSize) // 200KB
                 {
                     _logger.LogWarning("Diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
                     return ($"Diff too large ({diffContent.Length} bytes > 100KB). Commit some changes first.", true);
                 }
-                
+
                 // Include current branch information
                 var branchInfo = $"Branch: {repo.Head.FriendlyName}\n\n";
-                
+
                 return string.IsNullOrEmpty(diffContent)
                     ? (branchInfo + "No changes detected.", false)  // Empty repo graceful handling
                     : (branchInfo + diffContent, false);
@@ -122,7 +122,7 @@ public class RepositoryManagementService : IRepositoryManagementService
                     _logger.LogWarning("Commit '{CommitId}' not found in repository: {Path}", commitId, repositoryPath);
                     return ($"Commit '{commitId}' not found.", true);
                 }
-                
+
                 // Handle initial commit (no parent)
                 if (!commit.Parents.Any())
                 {
@@ -132,7 +132,7 @@ public class RepositoryManagementService : IRepositoryManagementService
                     var branchInfo = $"Branch: {repo.Head.FriendlyName}\nCommit: {commit.Sha.Substring(0, 7)} - {commit.MessageShort}\n\n";
                     return (branchInfo + diff.Content, false);
                 }
-                
+
                 // Normal case: compare with parent
                 var parentCommit = commit.Parents.First();
                 var compareOptions = new CompareOptions
@@ -140,20 +140,20 @@ public class RepositoryManagementService : IRepositoryManagementService
                     Similarity = SimilarityOptions.Renames,
                     IncludeUnmodified = false
                 };
-                
+
                 var commitDiff = repo.Diff.Compare<Patch>(parentCommit.Tree, commit.Tree, compareOptions);
                 var diffContent = commitDiff.Content;
-                
+
                 // Size check - 100KB limit
                 if (diffContent.Length > DiffConstants.MaxDiffSize)
                 {
                     _logger.LogWarning("Commit diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
                     return ($"Commit diff too large ({diffContent.Length} bytes > 100KB).", true);
                 }
-                
+
                 // Include commit information
                 var commitInfo = $"Branch: {repo.Head.FriendlyName}\nCommit: {commit.Sha.Substring(0, 7)} - {commit.MessageShort}\n\n";
-                
+
                 return string.IsNullOrEmpty(diffContent)
                     ? (commitInfo + "No changes in this commit.", false)
                     : (commitInfo + diffContent, false);
@@ -183,13 +183,13 @@ public class RepositoryManagementService : IRepositoryManagementService
             using (var repo = new Repository(repositoryPath))
             {
                 var commit = repo.Lookup<Commit>(commitId);
-                
+
                 if (commit == null)
                 {
                     _logger.LogWarning("Commit '{CommitId}' not found in repository: {Path}", commitId, repositoryPath);
                     return (false, null, $"Commit '{commitId}' not found");
                 }
-                
+
                 var message = $"{commit.Sha.Substring(0, 7)} - {commit.MessageShort}";
                 _logger.LogInformation("Validated commit '{CommitId}' in repository: {Path} - {Message}", commitId, repositoryPath, message);
                 return (true, message, null);
@@ -212,13 +212,13 @@ public class RepositoryManagementService : IRepositoryManagementService
         try
         {
             var (branchInfo, isGitError) = DetectRepository(repositoryPath);
-            
+
             if (isGitError || branchInfo == "No git repository found")
             {
                 _logger.LogWarning("No valid git repository found at path: {Path}", repositoryPath);
                 return (false, "No valid git repository found at the specified path. Please select a valid git repository.");
             }
-            
+
             _logger.LogInformation("Validated repository for analysis: {Path} - Branch: {Branch}", repositoryPath, branchInfo);
             return (true, null);
         }
@@ -239,19 +239,19 @@ public class RepositoryManagementService : IRepositoryManagementService
                 var diff = repo.Diff.Compare<Patch>(
                     repo.Head.Tip?.Tree,
                     DiffTargets.Index);
-                
+
                 var diffContent = diff.Content;
-                
+
                 // Simple size check - 100KB limit
                 if (diffContent.Length > DiffConstants.MaxDiffSize)
                 {
                     _logger.LogWarning("Staged diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
                     return ($"Staged diff too large ({diffContent.Length} bytes > 100KB).", true);
                 }
-                
+
                 // Include current branch information
                 var branchInfo = $"Branch: {repo.Head.FriendlyName}\n\n";
-                
+
                 return string.IsNullOrEmpty(diffContent)
                     ? (branchInfo + "No staged changes detected.", false)  // No staged changes graceful handling
                     : (branchInfo + diffContent, false);
@@ -279,9 +279,9 @@ public class RepositoryManagementService : IRepositoryManagementService
                 var diff = repo.Diff.Compare<Patch>(
                     repo.Head.Tip?.Tree,
                     DiffTargets.Index);
-                
+
                 var hasStaged = !string.IsNullOrEmpty(diff.Content);
-                
+
                 _logger.LogInformation("Checked for staged changes in repository: {Path} - Has staged: {HasStaged}", repositoryPath, hasStaged);
                 return (hasStaged, null);
             }
@@ -362,54 +362,54 @@ public class RepositoryManagementService : IRepositoryManagementService
                 // Find the source and target branches
                 var sourceBranchObj = repo.Branches[sourceBranch];
                 var targetBranchObj = repo.Branches[targetBranch];
-                
+
                 if (sourceBranchObj == null)
                 {
                     _logger.LogWarning("Source branch '{SourceBranch}' not found in repository: {Path}", sourceBranch, repositoryPath);
                     return ($"Source branch '{sourceBranch}' not found.", true);
                 }
-                
+
                 if (targetBranchObj == null)
                 {
                     _logger.LogWarning("Target branch '{TargetBranch}' not found in repository: {Path}", targetBranch, repositoryPath);
                     return ($"Target branch '{targetBranch}' not found.", true);
                 }
-                
+
                 // Handle case where branches might not have commits yet
                 if (sourceBranchObj.Tip == null)
                 {
                     _logger.LogWarning("Source branch '{SourceBranch}' has no commits in repository: {Path}", sourceBranch, repositoryPath);
                     return ($"Source branch '{sourceBranch}' has no commits.", true);
                 }
-                
+
                 if (targetBranchObj.Tip == null)
                 {
                     _logger.LogWarning("Target branch '{TargetBranch}' has no commits in repository: {Path}", targetBranch, repositoryPath);
                     return ($"Target branch '{targetBranch}' has no commits.", true);
                 }
-                
+
                 // Compare the two branches
                 var compareOptions = new CompareOptions
                 {
                     Similarity = SimilarityOptions.Renames,
                     IncludeUnmodified = false
                 };
-                
+
                 var branchDiff = repo.Diff.Compare<Patch>(targetBranchObj.Tip.Tree, sourceBranchObj.Tip.Tree, compareOptions);
                 var diffContent = branchDiff.Content;
-                
+
                 // Size check - 100KB limit
                 if (diffContent.Length > DiffConstants.MaxDiffSize)
                 {
                     _logger.LogWarning("Branch diff too large: {Size} bytes in repository: {Path}", diffContent.Length, repositoryPath);
                     return ($"Branch diff too large ({diffContent.Length} bytes > 100KB).", true);
                 }
-                
+
                 // Include branch information
                 var branchInfo = $"Comparing {sourceBranch} → {targetBranch}\n" +
                                 $"Source: {sourceBranchObj.Tip.Sha.Substring(0, 7)} - {sourceBranchObj.Tip.MessageShort}\n" +
                                 $"Target: {targetBranchObj.Tip.Sha.Substring(0, 7)} - {targetBranchObj.Tip.MessageShort}\n\n";
-                
+
                 return string.IsNullOrEmpty(diffContent)
                     ? (branchInfo + "No changes between branches.", false)
                     : (branchInfo + diffContent, false);
@@ -737,6 +737,239 @@ public class RepositoryManagementService : IRepositoryManagementService
         {
             _logger.LogError(ex, "Error getting files from directory: {TargetPath}", Path.Combine(repositoryPath, relativePath));
             return (new List<FileSystemItem>(), true);
+        }
+    }
+
+    /// <summary>
+    /// Clone a Git repository from a URL
+    /// </summary>
+    public (bool success, string? localPath, string? error) CloneRepository(string gitUrl, string? accessToken = null)
+    {
+        try
+        {
+            // Validate URL
+            if (string.IsNullOrWhiteSpace(gitUrl))
+            {
+                _logger.LogWarning("Git URL is empty or null");
+                return (false, null, "Git URL is required");
+            }
+
+            // Validate URL format
+            if (!gitUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) &&
+                !gitUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Invalid Git URL format: {GitUrl}", gitUrl);
+                return (false, null, "Git URL must start with https:// or http://");
+            }
+
+            // Generate unique directory
+            var tempReposPath = Path.Combine(Path.GetTempPath(), "codeguard-repos", Guid.NewGuid().ToString());
+
+            // Create directory if it doesn't exist
+            Directory.CreateDirectory(tempReposPath);
+
+            _logger.LogInformation("Cloning repository from {GitUrl} to {LocalPath}", gitUrl, tempReposPath);
+
+            // Prepare clone options
+            var cloneOptions = new CloneOptions();
+
+            // Set credentials if access token provided
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                cloneOptions.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) =>
+                    new UsernamePasswordCredentials
+                    {
+                        Username = accessToken,
+                        Password = string.Empty
+                    };
+            }
+
+            // Clone the repository with timeout
+            var cloneTask = Task.Run(() =>
+            {
+                try
+                {
+                    Repository.Clone(gitUrl, tempReposPath, cloneOptions);
+                    return true;
+                }
+                catch
+                {
+                    throw;
+                }
+            });
+
+            // Wait for clone with 5-minute timeout
+            if (!cloneTask.Wait(TimeSpan.FromMinutes(5)))
+            {
+                _logger.LogError("Repository clone timed out after 5 minutes: {GitUrl}", gitUrl);
+                CleanupRepository(tempReposPath);
+                return (false, null, "Repository clone timed out (5 minute limit). The repository may be too large.");
+            }
+
+            // Validate clone succeeded
+            var gitDir = Path.Combine(tempReposPath, ".git");
+            if (!Directory.Exists(gitDir))
+            {
+                _logger.LogError("Clone completed but .git directory not found: {GitUrl}", gitUrl);
+                CleanupRepository(tempReposPath);
+                return (false, null, "Clone failed: .git directory not found after clone");
+            }
+
+            _logger.LogInformation("Successfully cloned repository from {GitUrl} to {LocalPath}", gitUrl, tempReposPath);
+            return (true, tempReposPath, null);
+        }
+        catch (LibGit2SharpException ex)
+        {
+            _logger.LogError(ex, "Git error while cloning repository from {GitUrl}", gitUrl);
+
+            // Handle specific error cases
+            if (ex.Message.Contains("authentication", StringComparison.OrdinalIgnoreCase) ||
+                ex.Message.Contains("credentials", StringComparison.OrdinalIgnoreCase))
+            {
+                return (false, null, "Authentication failed. Please provide a valid access token for private repositories.");
+            }
+            else if (ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase) ||
+                     ex.Message.Contains("404", StringComparison.OrdinalIgnoreCase))
+            {
+                return (false, null, "Repository not found. Please verify the URL is correct.");
+            }
+            else if (ex.Message.Contains("network", StringComparison.OrdinalIgnoreCase) ||
+                     ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+            {
+                return (false, null, "Network error. Please check your internet connection and try again.");
+            }
+
+            return (false, null, $"Git error: {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogError(ex, "Access denied while cloning repository");
+            return (false, null, "Access denied. Unable to create temporary directory.");
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "I/O error while cloning repository");
+
+            if (ex.Message.Contains("disk", StringComparison.OrdinalIgnoreCase) ||
+                ex.Message.Contains("space", StringComparison.OrdinalIgnoreCase))
+            {
+                return (false, null, "Insufficient disk space to clone repository.");
+            }
+
+            return (false, null, $"I/O error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while cloning repository from {GitUrl}", gitUrl);
+            return (false, null, $"Unexpected error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Cleanup a cloned repository directory
+    /// </summary>
+    public (bool success, string? error) CleanupRepository(string repositoryPath)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(repositoryPath))
+            {
+                _logger.LogWarning("Repository path is empty or null");
+                return (false, "Repository path is required");
+            }
+
+            // Safety check: only delete directories under temp/codeguard-repos/
+            var tempPath = Path.Combine(Path.GetTempPath(), "codeguard-repos");
+            if (!repositoryPath.StartsWith(tempPath, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogError("Attempted to delete directory outside temp repos path: {RepositoryPath}", repositoryPath);
+                return (false, "Invalid repository path. Can only cleanup temporary repositories.");
+            }
+
+            if (!Directory.Exists(repositoryPath))
+            {
+                _logger.LogWarning("Repository path does not exist: {RepositoryPath}", repositoryPath);
+                return (true, null); // Already cleaned up
+            }
+
+            _logger.LogInformation("Cleaning up repository at: {RepositoryPath}", repositoryPath);
+
+            // Try to delete with retries for locked files
+            var maxRetries = 3;
+            var retryDelay = TimeSpan.FromSeconds(1);
+
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    // Remove read-only attributes recursively
+                    RemoveReadOnlyAttributes(repositoryPath);
+
+                    // Delete directory and all contents
+                    Directory.Delete(repositoryPath, recursive: true);
+
+                    _logger.LogInformation("Successfully cleaned up repository at: {RepositoryPath}", repositoryPath);
+                    return (true, null);
+                }
+                catch (IOException) when (i < maxRetries - 1)
+                {
+                    _logger.LogWarning("Cleanup attempt {Attempt} failed, retrying...", i + 1);
+                    Thread.Sleep(retryDelay);
+                }
+            }
+
+            // If we get here, all retries failed
+            _logger.LogError("Failed to cleanup repository after {MaxRetries} attempts: {RepositoryPath}", maxRetries, repositoryPath);
+            return (false, "Directory is in use and cannot be deleted. It will be cleaned up later.");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogError(ex, "Access denied while cleaning up repository: {RepositoryPath}", repositoryPath);
+            return (false, "Access denied while cleaning up repository.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cleaning up repository: {RepositoryPath}", repositoryPath);
+            return (false, $"Cleanup error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Remove read-only attributes from all files in a directory recursively
+    /// </summary>
+    private void RemoveReadOnlyAttributes(string path)
+    {
+        try
+        {
+            var dirInfo = new DirectoryInfo(path);
+
+            // Remove read-only from directory itself
+            if (dirInfo.Attributes.HasFlag(FileAttributes.ReadOnly))
+            {
+                dirInfo.Attributes &= ~FileAttributes.ReadOnly;
+            }
+
+            // Process all files
+            foreach (var file in dirInfo.GetFiles("*", SearchOption.AllDirectories))
+            {
+                if (file.Attributes.HasFlag(FileAttributes.ReadOnly))
+                {
+                    file.Attributes &= ~FileAttributes.ReadOnly;
+                }
+            }
+
+            // Process all subdirectories
+            foreach (var dir in dirInfo.GetDirectories("*", SearchOption.AllDirectories))
+            {
+                if (dir.Attributes.HasFlag(FileAttributes.ReadOnly))
+                {
+                    dir.Attributes &= ~FileAttributes.ReadOnly;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error removing read-only attributes from: {Path}", path);
         }
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
 using System.IO;
 using AICodeReviewer.Web.Infrastructure.Extensions;
+using AICodeReviewer.Web.Domain.Interfaces;
 
 namespace AICodeReviewer.Web.Application.Factories;
 
@@ -26,14 +27,19 @@ public interface IAnalysisContextFactory
 
 public class AnalysisContextFactory : IAnalysisContextFactory
 {
+    private readonly IPathValidationService _pathService;
+
+    public AnalysisContextFactory(IPathValidationService pathService)
+    {
+        _pathService = pathService;
+    }
+
     public AnalysisContext Create(RunAnalysisRequest request, ISession session, IWebHostEnvironment environment, IConfiguration configuration)
     {
         var defaultRepositoryPath = Path.Combine(environment.ContentRootPath, "..");
         var repositoryPath = request.RepositoryPath ?? session.GetString(SessionKeys.RepositoryPath) ?? defaultRepositoryPath;
         var selectedDocuments = request.SelectedDocuments ?? session.GetObject<List<string>>(SessionKeys.SelectedDocuments) ?? new List<string>();
-        // Look in the solution root (parent of ContentRootPath) for Documents folder
-        var solutionRoot = Directory.GetParent(environment.ContentRootPath)?.FullName ?? environment.ContentRootPath;
-        var documentsFolder = !string.IsNullOrEmpty(request.DocumentsFolder) ? request.DocumentsFolder : session.GetString(SessionKeys.DocumentsFolder) ?? Path.Combine(solutionRoot, "Documents");
+        var documentsFolder = ResolveDocumentsFolder(request, session, environment.ContentRootPath);
         var language = request.Language ?? session.GetString(SessionKeys.Language) ?? "NET";
         var analysisType = request.AnalysisType ?? AnalysisType.Uncommitted;
         var apiKey = configuration["OpenRouter:ApiKey"] ?? "";
@@ -41,5 +47,30 @@ public class AnalysisContextFactory : IAnalysisContextFactory
         var fallbackModel = configuration["OpenRouter:FallbackModel"] ?? "";
 
         return new AnalysisContext(repositoryPath, selectedDocuments, documentsFolder, language, analysisType, apiKey, model, fallbackModel);
+    }
+
+    private string ResolveDocumentsFolder(RunAnalysisRequest request, ISession session, string contentRootPath)
+    {
+        var defaultDocumentsFolder = _pathService.GetDocumentsFolderPath(contentRootPath);
+
+        if (!string.IsNullOrWhiteSpace(request.DocumentsFolder))
+        {
+            var requestedPath = request.DocumentsFolder;
+            if (!Path.IsPathRooted(requestedPath))
+            {
+                // Ensure relative overrides resolve against the default documents folder
+                requestedPath = Path.GetFullPath(Path.Combine(defaultDocumentsFolder, requestedPath));
+            }
+
+            return requestedPath;
+        }
+
+        var sessionDocuments = session.GetString(SessionKeys.DocumentsFolder);
+        if (!string.IsNullOrWhiteSpace(sessionDocuments))
+        {
+            return sessionDocuments;
+        }
+
+        return defaultDocumentsFolder;
     }
 }

@@ -103,6 +103,14 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
+// Startup sanity check for OpenRouter API key
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+var apiKey = builder.Configuration["OpenRouter:ApiKey"];
+var apiKeyExists = !string.IsNullOrWhiteSpace(apiKey);
+var maskedPrefix = apiKey?.Length > 0 ? $"{apiKey.Substring(0, Math.Min(6, apiKey.Length))}..." : "";
+logger.LogDebug("[OpenRouter] Startup check - API key exists: {Exists}; length: {Len}; startsWith(masked): {Prefix}",
+    apiKeyExists, apiKey?.Length ?? 0, maskedPrefix);
+
 app.UseCors("AllowLocalhost");
 
 // Configure the HTTP request pipeline.

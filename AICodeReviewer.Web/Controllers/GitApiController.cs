@@ -8,7 +8,7 @@ namespace AICodeReviewer.Web.Controllers;
 /// Provides endpoints for validating and inspecting git repositories
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/git")]
 public class GitApiController : ControllerBase
 {
     private readonly ILogger<GitApiController> _logger;
@@ -150,12 +150,158 @@ public class GitApiController : ControllerBase
             });
         }
     }
+
+    /// <summary>
+    /// Clones a Git repository from a URL
+    /// </summary>
+    /// <param name="request">Clone repository request with Git URL and optional access token</param>
+    /// <returns>Clone operation result</returns>
+    [HttpPost("clone")]
+    public IActionResult CloneRepository([FromBody] CloneRepositoryRequest request)
+    {
+        try
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.GitUrl))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    error = "Git URL is required"
+                });
+            }
+
+            var gitUrl = request.GitUrl.Trim();
+            _logger.LogInformation("Cloning repository from URL: {GitUrl}", gitUrl);
+
+            // Basic URL validation
+            if (!gitUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) &&
+                !gitUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    error = "Git URL must start with https:// or http://"
+                });
+            }
+
+            // Validate URL contains known Git hosting patterns
+            var validPatterns = new[] { "github.com", "gitlab.com", "bitbucket.org", "dev.azure.com" };
+            var isValidHost = validPatterns.Any(pattern => gitUrl.Contains(pattern, StringComparison.OrdinalIgnoreCase));
+
+            if (!isValidHost)
+            {
+                _logger.LogWarning("Git URL does not contain recognized hosting pattern: {GitUrl}", gitUrl);
+            }
+
+            // Clone repository
+            var (success, localPath, error) = _repositoryService.CloneRepository(gitUrl, request.AccessToken);
+
+            if (!success)
+            {
+                _logger.LogWarning("Repository clone failed: {Error}", error);
+                return Ok(new
+                {
+                    success = false,
+                    repositoryPath = (string?)null,
+                    error
+                });
+            }
+
+            _logger.LogInformation("Repository cloned successfully to: {LocalPath}", localPath);
+            return Ok(new
+            {
+                success = true,
+                repositoryPath = localPath,
+                error = (string?)null
+            });
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cloning repository");
+            return StatusCode(500, new
+            {
+                success = false,
+                error = "An error occurred while cloning the repository"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Cleans up a cloned repository directory
+    /// </summary>
+    /// <param name="request">Cleanup request with repository path</param>
+    /// <returns>Cleanup operation result</returns>
+    [HttpPost("cleanup")]
+    public IActionResult CleanupRepository([FromBody] CleanupRepositoryRequest request)
+    {
+        try
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.RepositoryPath))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    error = "Repository path is required"
+                });
+            }
+
+            var repositoryPath = request.RepositoryPath.Trim();
+            _logger.LogInformation("Cleaning up repository at: {RepositoryPath}", repositoryPath);
+
+            var (success, error) = _repositoryService.CleanupRepository(repositoryPath);
+
+            if (!success)
+            {
+                _logger.LogWarning("Repository cleanup failed: {Error}", error);
+                return Ok(new
+                {
+                    success = false,
+                    error
+                });
+            }
+
+            _logger.LogInformation("Repository cleaned up successfully: {RepositoryPath}", repositoryPath);
+            return Ok(new
+            {
+                success = true,
+                error = (string?)null
+            });
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cleaning up repository");
+            return StatusCode(500, new
+            {
+                success = false,
+                error = "An error occurred while cleaning up the repository"
+            });
+        }
+    }
 }
 
 /// <summary>
 /// Request model for repository validation
 /// </summary>
 public class RepositoryValidationRequest
+{
+    public string RepositoryPath { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Request model for cloning a repository
+/// </summary>
+public class CloneRepositoryRequest
+{
+    public string GitUrl { get; set; } = string.Empty;
+    public string? AccessToken { get; set; }
+}
+
+/// <summary>
+/// Request model for cleaning up a repository
+/// </summary>
+public class CleanupRepositoryRequest
 {
     public string RepositoryPath { get; set; } = string.Empty;
 }

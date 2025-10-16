@@ -114,23 +114,31 @@
     <!-- Main Application Container -->
     <div id="app" class="min-h-full">
         <!-- Enhanced Header -->
-        <header class="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 backdrop-blur-lg shadow-2xl border-b border-gray-700/30 sticky top-0 z-50 animate-gradient-x">
+        <header
+            class="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 backdrop-blur-lg shadow-2xl border-b border-gray-700/30 sticky top-0 z-50 animate-gradient-x">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center py-5">
                     <div class="flex items-center space-x-5">
                         <!-- Modern Logo/Icon -->
                         <div class="relative group">
-                            <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
-                            <div class="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 shadow-modern-lg transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+                            <div
+                                class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse">
+                            </div>
+                            <div
+                                class="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 shadow-modern-lg transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
                                 <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                                    </path>
                                 </svg>
                             </div>
                         </div>
                         <div>
                             <h1 class="text-2xl font-bold text-white tracking-tight flex items-center space-x-2">
-                                <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-200">CodeGuard</span>
-                                <span class="px-2.5 py-0.5 text-xs font-semibold text-purple-200 bg-purple-800/50 rounded-full backdrop-blur-sm border border-purple-600/30">
+                                <span
+                                    class="bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-200">CodeGuard</span>
+                                <span
+                                    class="px-2.5 py-0.5 text-xs font-semibold text-purple-200 bg-purple-800/50 rounded-full backdrop-blur-sm border border-purple-600/30">
                                     Beta
                                 </span>
                             </h1>
@@ -139,7 +147,8 @@
                     </div>
                     <div class="flex items-center space-x-6">
                         <!-- Enhanced Status Indicator -->
-                        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 backdrop-blur-sm rounded-lg border border-green-500/30">
+                        <div
+                            class="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 backdrop-blur-sm rounded-lg border border-green-500/30">
                             <div class="flex-shrink-0">
                                 <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                             </div>
@@ -147,15 +156,17 @@
                         </div>
                         <!-- Enhanced Theme Toggle Button -->
                         <button id="theme-toggle"
-                                class="relative p-2.5 rounded-xl text-purple-200 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-purple-900 transition-all duration-300 shadow-modern-md hover:shadow-modern-lg transform hover:scale-105"
-                                aria-label="Toggle theme"
-                                title="Toggle dark/light theme">
+                            class="relative p-2.5 rounded-xl text-purple-200 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-purple-900 transition-all duration-300 shadow-modern-md hover:shadow-modern-lg transform hover:scale-105"
+                            aria-label="Toggle theme" title="Toggle dark/light theme">
                             <!-- Sun icon for light mode (shown when in dark mode) -->
                             <svg id="theme-toggle-light-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+                                <path fill-rule="evenodd"
+                                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                                    clip-rule="evenodd"></path>
                             </svg>
                             <!-- Moon icon for dark mode (shown when in light mode) -->
-                            <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor"
+                                viewBox="0 0 20 20">
                                 <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
                             </svg>
                         </button>
@@ -174,11 +185,13 @@
                         <!-- Progress bar background -->
                         <div class="absolute top-5 left-0 right-0 h-1 bg-gray-200 rounded-full z-0"></div>
                         <!-- Progress bar fill -->
-                        <div class="absolute top-5 left-0 h-1 bg-gradient-to-r from-primary to-secondary rounded-full z-0 transition-all duration-500 ease-out" style="width: 20%"></div>
-                        
+                        <div class="absolute top-5 left-0 h-1 bg-gradient-to-r from-primary to-secondary rounded-full z-0 transition-all duration-500 ease-out"
+                            style="width: 20%"></div>
+
                         <!-- Step 1: Documents -->
                         <div class="step-indicator active relative z-10 flex flex-col items-center" data-step="1">
-                            <div class="step-circle w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary shadow-modern-md flex items-center justify-center text-white font-semibold transition-all duration-300 transform hover:scale-110">
+                            <div
+                                class="step-circle w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary shadow-modern-md flex items-center justify-center text-white font-semibold transition-all duration-300 transform hover:scale-110">
                                 1
                             </div>
                             <div class="step-label mt-2 text-sm font-medium text-gray-900">Documents</div>
@@ -186,7 +199,8 @@
 
                         <!-- Step 2: Repository -->
                         <div class="step-indicator relative z-10 flex flex-col items-center" data-step="2">
-                            <div class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
+                            <div
+                                class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
                                 2
                             </div>
                             <div class="step-label mt-2 text-sm font-medium text-gray-500">Repository</div>
@@ -194,7 +208,8 @@
 
                         <!-- Step 3: Language -->
                         <div class="step-indicator relative z-10 flex flex-col items-center" data-step="3">
-                            <div class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
+                            <div
+                                class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
                                 3
                             </div>
                             <div class="step-label mt-2 text-sm font-medium text-gray-500">Language</div>
@@ -202,7 +217,8 @@
 
                         <!-- Step 4: Analysis -->
                         <div class="step-indicator relative z-10 flex flex-col items-center" data-step="4">
-                            <div class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
+                            <div
+                                class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
                                 4
                             </div>
                             <div class="step-label mt-2 text-sm font-medium text-gray-500">Analysis</div>
@@ -210,7 +226,8 @@
 
                         <!-- Step 5: Results -->
                         <div class="step-indicator relative z-10 flex flex-col items-center" data-step="5">
-                            <div class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
+                            <div
+                                class="step-circle w-10 h-10 rounded-full bg-white border-2 border-gray-300 shadow-modern-sm flex items-center justify-center text-gray-500 font-semibold transition-all duration-300 transform hover:scale-110">
                                 5
                             </div>
                             <div class="step-label mt-2 text-sm font-medium text-gray-500">Results</div>
@@ -222,11 +239,16 @@
                 <div class="workflow-content-container">
                     <!-- Step 1: Document Selection -->
                     <div class="step-content active" id="step-1-content">
-                        <div class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
+                        <div
+                            class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
                             <div class="flex items-center mb-4">
-                                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                <div
+                                    class="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
                                     </svg>
                                 </div>
                                 <h3 class="ml-3 text-lg font-semibold text-gray-900">Step 1: Document Selection</h3>
@@ -374,21 +396,27 @@
 
                     <!-- Step 2: Repository Selection -->
                     <div class="step-content" id="step-2-content">
-                        <div class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
+                        <div
+                            class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
                             <div class="flex items-center mb-4">
-                                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                                <div
+                                    class="flex-shrink-0 w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z">
+                                        </path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
                                     </svg>
                                 </div>
                                 <h3 class="ml-3 text-lg font-semibold text-gray-900">Step 2: Repository Selection</h3>
                             </div>
 
-                            <!-- Repository Path Input -->
-                            <div class="mb-4">
+                            <!-- Repository Path Input (kept for local development) -->
+                            <div class="mb-4" id="local-path-section" style="display: none;">
                                 <label for="repository-path" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Repository Path
+                                    Repository Path (Local Development)
                                 </label>
                                 <div class="flex gap-2">
                                     <div class="relative flex-1">
@@ -413,8 +441,84 @@
                                 </div>
                             </div>
 
-                            <!-- Validation Buttons -->
-                            <div class="mb-4 flex items-center space-x-2">
+                            <!-- Git Clone Section -->
+                            <div class="space-y-4 mb-4" id="git-clone-section">
+                                <!-- Git URL Input -->
+                                <div>
+                                    <label for="git-url-input" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Git Repository URL
+                                    </label>
+                                    <input id="git-url-input" type="text"
+                                        placeholder="https://github.com/username/repository.git"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-modern-sm focus:border-primary focus:ring-primary sm:text-sm transition-colors" />
+                                    <p class="mt-1 text-xs text-gray-500">Enter the HTTPS URL of the Git repository you
+                                        want to analyze</p>
+                                </div>
+
+                                <!-- Optional Access Token -->
+                                <div>
+                                    <label for="git-token-input" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Personal Access Token <span class="text-gray-400 font-normal">(optional, for
+                                            private repos)</span>
+                                    </label>
+                                    <input id="git-token-input" type="password" placeholder="ghp_xxxxxxxxxxxx"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-modern-sm focus:border-primary focus:ring-primary sm:text-sm transition-colors" />
+                                    <p class="mt-1 text-xs text-gray-500">Required only for private repositories. Token
+                                        is never logged or stored.</p>
+                                </div>
+
+                                <!-- Clone Button -->
+                                <div>
+                                    <button id="clone-repository-btn"
+                                        class="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 font-medium">
+                                        <svg id="clone-spinner"
+                                            class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10">
+                                            </path>
+                                        </svg>
+                                        <span id="clone-button-text">Clone Repository</span>
+                                    </button>
+                                </div>
+
+                                <!-- Clone Status Message -->
+                                <div id="clone-status" class="hidden rounded-xl p-4 shadow-modern-sm">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg id="clone-status-icon" class="h-5 w-5" viewBox="0 0 20 20"
+                                                fill="currentColor"></svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <h3 id="clone-status-title" class="text-sm font-medium"></h3>
+                                            <div class="mt-2 text-sm">
+                                                <p id="clone-status-message"></p>
+                                            </div>
+                                        </div>
+                                        <div class="ml-auto pl-3">
+                                            <button id="close-clone-status-btn"
+                                                class="inline-flex rounded-md p-1.5 hover:bg-opacity-20">
+                                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd"
+                                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Validation Buttons (for local path) -->
+                            <div class="mb-4 flex items-center space-x-2" id="local-validation-buttons"
+                                style="display: none;">
                                 <button id="browse-repository-btn"
                                     class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-modern-sm hover:bg-gray-200 hover:shadow-modern-md transition-all duration-300 text-sm font-medium"
                                     title="Browse for repository directory">
@@ -556,11 +660,15 @@
 
                     <!-- Step 3: Language Selection -->
                     <div class="step-content" id="step-3-content">
-                        <div class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
+                        <div
+                            class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
                             <div class="flex items-center mb-4">
-                                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                                <div
+                                    class="flex-shrink-0 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                                     </svg>
                                 </div>
                                 <h3 class="ml-3 text-lg font-semibold text-gray-900">Step 3: Language Selection</h3>
@@ -583,7 +691,8 @@
                             </div>
 
                             <!-- Language Error State -->
-                            <div id="language-error" class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
+                            <div id="language-error"
+                                class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -677,11 +786,16 @@
 
                     <!-- Step 4: Analysis Options -->
                     <div class="step-content" id="step-4-content">
-                        <div class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
+                        <div
+                            class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
                             <div class="flex items-center mb-4">
-                                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-info/10 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                <div
+                                    class="flex-shrink-0 w-8 h-8 rounded-lg bg-info/10 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-info" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                                        </path>
                                     </svg>
                                 </div>
                                 <h3 class="ml-3 text-lg font-semibold text-gray-900">Step 4: Analysis Configuration</h3>
@@ -704,7 +818,8 @@
                             </div>
 
                             <!-- Analysis Error State -->
-                            <div id="analysis-error" class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
+                            <div id="analysis-error"
+                                class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -749,10 +864,10 @@
                                             </div>
                                         </label>
                                     </div>
-                                    
+
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                                       <label
-                                           class="flex items-start space-x-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-modern-sm transition-all duration-300">
+                                        <label
+                                            class="flex items-start space-x-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-modern-sm transition-all duration-300">
                                             <input type="radio" name="analysis-type" value="commit"
                                                 class="mt-1 text-primary">
                                             <div>
@@ -767,7 +882,8 @@
                                                 class="mt-1 text-primary">
                                             <div>
                                                 <div class="font-medium text-gray-900">📄 Single File</div>
-                                                <div class="text-sm text-gray-500">Review a specific file from the repository</div>
+                                                <div class="text-sm text-gray-500">Review a specific file from the
+                                                    repository</div>
                                             </div>
                                         </label>
                                     </div>
@@ -778,11 +894,14 @@
                                             <input type="radio" name="analysis-type" value="pullrequest"
                                                 class="mt-1 text-primary">
                                             <div>
-                                                <div class="font-medium text-gray-900">🔀 Pull Request Differential</div>
-                                                <div class="text-sm text-gray-500">Review changes between two branches</div>
+                                                <div class="font-medium text-gray-900">🔀 Pull Request Differential
+                                                </div>
+                                                <div class="text-sm text-gray-500">Review changes between two branches
+                                                </div>
                                             </div>
                                         </label>
-                                        <div class="flex items-start space-x-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
+                                        <div
+                                            class="flex items-start space-x-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
                                             <!-- Empty space for layout balance -->
                                         </div>
                                     </div>
@@ -803,7 +922,8 @@
                                     <h4 class="text-sm font-medium text-gray-700 mb-3">Branch Comparison</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label for="source-branch-dropdown" class="block text-sm font-medium text-gray-700 mb-2">
+                                            <label for="source-branch-dropdown"
+                                                class="block text-sm font-medium text-gray-700 mb-2">
                                                 Source Branch
                                             </label>
                                             <select id="source-branch-dropdown"
@@ -813,7 +933,8 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label for="target-branch-dropdown" class="block text-sm font-medium text-gray-700 mb-2">
+                                            <label for="target-branch-dropdown"
+                                                class="block text-sm font-medium text-gray-700 mb-2">
                                                 Target Branch
                                             </label>
                                             <select id="target-branch-dropdown"
@@ -825,7 +946,9 @@
                                     </div>
                                     <div id="branch-selection-error" class="mt-2 text-sm text-red-600 hidden">
                                         <svg class="inline h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                            <path fill-rule="evenodd"
+                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                                clip-rule="evenodd" />
                                         </svg>
                                         <span id="branch-selection-error-message"></span>
                                     </div>
@@ -877,11 +1000,13 @@
                                             <button id="browse-file-btn"
                                                 class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg shadow-modern-sm hover:bg-gray-200 hover:shadow-modern-md transition-all duration-300 text-sm font-medium"
                                                 title="Browse for file within repository">
-                                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
                                                         d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
                                                 </svg>
                                                 Browse
                                             </button>
@@ -890,8 +1015,10 @@
                                         <!-- File Content Preview -->
                                         <div id="file-content-preview" class="hidden">
                                             <h5 class="text-sm font-medium text-gray-700 mb-2">File Preview:</h5>
-                                            <div class="bg-gray-50 rounded-xl p-4 shadow-modern-sm max-h-48 overflow-y-auto">
-                                                <pre id="file-content-text" class="text-sm text-gray-800 whitespace-pre-wrap"></pre>
+                                            <div
+                                                class="bg-gray-50 rounded-xl p-4 shadow-modern-sm max-h-48 overflow-y-auto">
+                                                <pre id="file-content-text"
+                                                    class="text-sm text-gray-800 whitespace-pre-wrap"></pre>
                                             </div>
                                         </div>
                                     </div>
@@ -937,11 +1064,16 @@
 
                     <!-- Step 5: AI Model Selection -->
                     <div class="step-content" id="step-5-content">
-                        <div class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
+                        <div
+                            class="bg-white rounded-xl shadow-modern-md border border-gray-100 p-6 mb-6 transition-all duration-300 hover:shadow-modern-lg">
                             <div class="flex items-center mb-4">
-                                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                <div
+                                    class="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                                        </path>
                                     </svg>
                                 </div>
                                 <h3 class="ml-3 text-lg font-semibold text-gray-900">Step 5: AI Model Selection</h3>
@@ -964,7 +1096,8 @@
                             </div>
 
                             <!-- Model Error State -->
-                            <div id="model-error" class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
+                            <div id="model-error"
+                                class="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 hidden shadow-modern-sm">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
                                         <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -1083,10 +1216,12 @@
                         </p>
                     </div>
                     <div class="flex items-center space-x-4 text-sm text-gray-500">
-                        <span class="px-2 py-1 bg-gray-100 rounded-md text-gray-600 font-medium">Vanilla JS v1.0.0</span>
+                        <span class="px-2 py-1 bg-gray-100 rounded-md text-gray-600 font-medium">Vanilla JS
+                            v1.0.0</span>
                         <div class="flex items-center">
                             <span class="text-gray-500 mr-2">SignalR:</span>
-                            <span id="signalr-status" class="px-2 py-1 bg-gray-100 rounded-md text-xs font-medium text-gray-600">Initializing...</span>
+                            <span id="signalr-status"
+                                class="px-2 py-1 bg-gray-100 rounded-md text-xs font-medium text-gray-600">Initializing...</span>
                         </div>
                     </div>
                 </div>
@@ -1109,13 +1244,17 @@
         }
     </script>
     <!-- File Browser Modal -->
-    <div id="file-browser-modal" class="fixed inset-0 bg-black/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="modal-content bg-white rounded-2xl shadow-modern-xl mx-auto max-w-4xl w-full max-h-[90vh] flex flex-col transform transition-all duration-300 scale-95 opacity-0" id="file-modal-content-wrapper">
+    <div id="file-browser-modal"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="modal-content bg-white rounded-2xl shadow-modern-xl mx-auto max-w-4xl w-full max-h-[90vh] flex flex-col transform transition-all duration-300 scale-95 opacity-0"
+            id="file-modal-content-wrapper">
             <div class="modal-header p-5 border-b border-gray-100 flex justify-between items-center">
                 <h3 class="text-lg font-semibold text-gray-900">Select File for Review</h3>
-                <button id="close-file-modal" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <button id="close-file-modal"
+                    class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
                     </svg>
                 </button>
             </div>
@@ -1131,13 +1270,16 @@
             </div>
 
             <div class="modal-footer p-5 border-t border-gray-100 flex justify-between">
-                <button id="file-up-level" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                <button id="file-up-level"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
                     <svg class="w-4 h-4 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
                     Up One Level
                 </button>
-                <button id="select-file" class="px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md transition-all duration-300 transform hover:-translate-y-0.5 font-medium">
+                <button id="select-file"
+                    class="px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md transition-all duration-300 transform hover:-translate-y-0.5 font-medium">
                     Select This File
                     <svg class="w-4 h-4 ml-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -1147,35 +1289,43 @@
         </div>
     </div>
     <!-- Directory Browser Modal -->
-    <div id="directory-browser-modal" class="fixed inset-0 bg-black/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="modal-content bg-white rounded-2xl shadow-modern-xl mx-auto max-w-2xl w-full transform transition-all duration-300 scale-95 opacity-0" id="modal-content-wrapper">
+    <div id="directory-browser-modal"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="modal-content bg-white rounded-2xl shadow-modern-xl mx-auto max-w-2xl w-full transform transition-all duration-300 scale-95 opacity-0"
+            id="modal-content-wrapper">
             <div class="modal-header p-5 border-b border-gray-100 flex justify-between items-center">
                 <h3 class="text-lg font-semibold text-gray-900">Select Repository Directory</h3>
-                <button id="close-directory-modal" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <button id="close-directory-modal"
+                    class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
                     </svg>
                 </button>
             </div>
-            
+
             <div class="modal-body p-5">
                 <div class="current-path mb-4 px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-600 font-medium">
                     Current Path: <span id="current-path-display" class="text-gray-900"></span>
                 </div>
-                
-                <div id="directory-list" class="border border-gray-200 rounded-xl p-3 max-h-64 overflow-y-auto bg-gray-50">
+
+                <div id="directory-list"
+                    class="border border-gray-200 rounded-xl p-3 max-h-64 overflow-y-auto bg-gray-50">
                     <!-- Directory items will be populated here -->
                 </div>
             </div>
-            
+
             <div class="modal-footer p-5 border-t border-gray-100 flex justify-between">
-                <button id="directory-up-level" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                <button id="directory-up-level"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
                     <svg class="w-4 h-4 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
                     Up One Level
                 </button>
-                <button id="select-directory" class="px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md transition-all duration-300 transform hover:-translate-y-0.5 font-medium">
+                <button id="select-directory"
+                    class="px-5 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-modern-sm hover:shadow-modern-md transition-all duration-300 transform hover:-translate-y-0.5 font-medium">
                     Select This Folder
                     <svg class="w-4 h-4 ml-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>

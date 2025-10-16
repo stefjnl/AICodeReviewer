@@ -8,7 +8,7 @@ export const apiEndpoints = {
     analysisResults: '/api/analysis/results',
     documentsScan: '/api/documentapi/scan',
     documentsContent: '/api/documentapi/content',
-    validateRepository: '/api/GitApi/validate',
+    validateRepository: '/api/git/validate',
     analysisOptions: '/api/analysis/options',
     analysisPreview: '/api/analysis/preview',
     languageSupported: '/api/languageapi/supported',

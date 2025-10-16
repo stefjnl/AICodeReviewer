@@ -68,6 +68,10 @@ public class AIService : IAIService
     {
         try
         {
+            var apiKeyExists = !string.IsNullOrWhiteSpace(apiKey);
+            var maskedPrefix = apiKey?.Length > 0 ? $"{apiKey.Substring(0, Math.Min(6, apiKey.Length))}..." : "";
+            _logger.LogDebug("[OpenRouter] Per-call check - API key exists: {Exists}; length: {Len}; startsWith(masked): {Prefix}",
+                apiKeyExists, apiKey?.Length ?? 0, maskedPrefix);
             if (string.IsNullOrEmpty(apiKey))
                 return ("", true, "OpenRouter API key not configured");
 
