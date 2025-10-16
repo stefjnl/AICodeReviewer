@@ -43,8 +43,32 @@ public class GitApiController : ControllerBase
             var repositoryPath = request.RepositoryPath.Trim();
             _logger.LogInformation("Validating repository path: {RepositoryPath}", repositoryPath);
 
+            // Log directory and .git existence
+            var directoryExists = System.IO.Directory.Exists(repositoryPath);
+            var gitDirExists = System.IO.Directory.Exists(System.IO.Path.Combine(repositoryPath, ".git"));
+            var isValid = LibGit2Sharp.Repository.IsValid(repositoryPath);
+            _logger.LogInformation("Repository validation: dirExists={DirExists}, gitDirExists={GitDirExists}, isValid={IsValid}",
+                directoryExists, gitDirExists, isValid);
+
+            string branchInfo;
+            bool isError;
+
             // Use repository service to validate repository
-            var (branchInfo, isError) = _repositoryService.DetectRepository(repositoryPath);
+            try
+            {
+                (branchInfo, isError) = _repositoryService.DetectRepository(repositoryPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception during repository detection: path={RepositoryPath}, message={Message}, stackTrace={StackTrace}",
+                    repositoryPath, ex.Message, ex.StackTrace);
+                return Ok(new
+                {
+                    success = true,
+                    isValidRepo = false,
+                    error = "Error detecting repository"
+                });
+            }
 
             if (isError || string.IsNullOrEmpty(branchInfo))
             {

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
 using System.IO;
+using AICodeReviewer.Web.Infrastructure.Configuration;
 using AICodeReviewer.Web.Infrastructure.Extensions;
 using AICodeReviewer.Web.Domain.Interfaces;
 
@@ -28,10 +29,12 @@ public interface IAnalysisContextFactory
 public class AnalysisContextFactory : IAnalysisContextFactory
 {
     private readonly IPathValidationService _pathService;
+    private readonly IOpenRouterSettingsProvider _openRouterSettingsProvider;
 
-    public AnalysisContextFactory(IPathValidationService pathService)
+    public AnalysisContextFactory(IPathValidationService pathService, IOpenRouterSettingsProvider openRouterSettingsProvider)
     {
         _pathService = pathService;
+        _openRouterSettingsProvider = openRouterSettingsProvider;
     }
 
     public AnalysisContext Create(RunAnalysisRequest request, ISession session, IWebHostEnvironment environment, IConfiguration configuration)
@@ -42,9 +45,9 @@ public class AnalysisContextFactory : IAnalysisContextFactory
         var documentsFolder = ResolveDocumentsFolder(request, session, environment.ContentRootPath);
         var language = request.Language ?? session.GetString(SessionKeys.Language) ?? "NET";
         var analysisType = request.AnalysisType ?? AnalysisType.Uncommitted;
-        var apiKey = configuration["OpenRouter:ApiKey"] ?? "";
-        var model = request.Model ?? configuration["OpenRouter:Model"] ?? "";
-        var fallbackModel = configuration["OpenRouter:FallbackModel"] ?? "";
+        var apiKey = _openRouterSettingsProvider.GetApiKey() ?? "";
+        var model = request.Model ?? _openRouterSettingsProvider.GetModel() ?? configuration["OpenRouter:Model"] ?? "";
+        var fallbackModel = _openRouterSettingsProvider.GetFallbackModel() ?? configuration["OpenRouter:FallbackModel"] ?? "";
 
         return new AnalysisContext(repositoryPath, selectedDocuments, documentsFolder, language, analysisType, apiKey, model, fallbackModel);
     }

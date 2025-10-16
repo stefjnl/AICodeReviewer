@@ -3,6 +3,7 @@ using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Models;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
+using System.Runtime.InteropServices;
 using FileSystemItem = AICodeReviewer.Web.Models.FileSystemItem;
 
 namespace AICodeReviewer.Web.Infrastructure.Services;
@@ -21,35 +22,88 @@ public class RepositoryManagementService : IRepositoryManagementService
         _logger = logger;
     }
 
+    private string GetTempRepositoryRoot()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            var linuxRoot = Path.Combine("/app", "temp", "repos");
+            Directory.CreateDirectory(linuxRoot);
+            return linuxRoot;
+        }
+
+        var defaultRoot = Path.Combine(Path.GetTempPath(), "codeguard-repos");
+        Directory.CreateDirectory(defaultRoot);
+        return defaultRoot;
+    }
+
     public (string branchInfo, bool isError) DetectRepository(string startPath)
     {
         try
         {
-            // Discover git repository starting from the given path
-            var repositoryPath = Repository.Discover(startPath);
+            _logger.LogInformation("Detecting repository at path: {Path}", startPath);
 
-            if (string.IsNullOrEmpty(repositoryPath))
+            // Check if the path itself is a valid repository first
+            var dirExists = Directory.Exists(startPath);
+            var gitDirExists = Directory.Exists(Path.Combine(startPath, ".git"));
+            var isValidRepo = Repository.IsValid(startPath);
+
+            _logger.LogInformation("Repository detection: pathExists={PathExists}, gitDirExists={GitDirExists}, isValid={IsValid}",
+                dirExists, gitDirExists, isValidRepo);
+
+            if (isValidRepo)
             {
-                return ("No git repository found", false);
+                // Path is a valid repository root
+                var (dirExists2, gitDirExists2, isValid2, headName, errorMessage) = ValidateWorkingRepository(startPath);
+                _logger.LogInformation("Valid repository at path: HEAD={HeadName}, error={ErrorMessage}", headName, errorMessage ?? "none");
+
+                using (var repo = new Repository(startPath))
+                {
+                    // Handle empty repository (no commits yet)
+                    if (repo.Head.Tip == null)
+                    {
+                        return ($"{repo.Head.FriendlyName} (no commits)", false);
+                    }
+
+                    // Handle detached HEAD state
+                    if (repo.Head.IsRemote)
+                    {
+                        var sha = repo.Head.Tip?.Sha.Substring(0, 7) ?? "unknown";
+                        return ($"Detached HEAD ({sha})", false);
+                    }
+
+                    // Normal branch state
+                    return (repo.Head.FriendlyName, false);
+                }
             }
-
-            using (var repo = new Repository(repositoryPath))
+            else
             {
-                // Handle empty repository (no commits yet)
-                if (repo.Head.Tip == null)
+                // Fall back to discovering repository
+                var repositoryPath = Repository.Discover(startPath);
+                _logger.LogInformation("Repository discovery result: {DiscoveredPath}", repositoryPath ?? "null");
+
+                if (string.IsNullOrEmpty(repositoryPath))
                 {
-                    return ($"{repo.Head.FriendlyName} (no commits)", false);
+                    return ("No git repository found", false);
                 }
 
-                // Handle detached HEAD state
-                if (repo.Head.IsRemote)
+                using (var repo = new Repository(repositoryPath))
                 {
-                    var sha = repo.Head.Tip?.Sha.Substring(0, 7) ?? "unknown";
-                    return ($"Detached HEAD ({sha})", false);
-                }
+                    // Handle empty repository (no commits yet)
+                    if (repo.Head.Tip == null)
+                    {
+                        return ($"{repo.Head.FriendlyName} (no commits)", false);
+                    }
 
-                // Normal branch state
-                return (repo.Head.FriendlyName, false);
+                    // Handle detached HEAD state
+                    if (repo.Head.IsRemote)
+                    {
+                        var sha = repo.Head.Tip?.Sha.Substring(0, 7) ?? "unknown";
+                        return ($"Detached HEAD ({sha})", false);
+                    }
+
+                    // Normal branch state
+                    return (repo.Head.FriendlyName, false);
+                }
             }
         }
         catch (UnauthorizedAccessException)
@@ -763,15 +817,20 @@ public class RepositoryManagementService : IRepositoryManagementService
             }
 
             // Generate unique directory
-            var tempReposPath = Path.Combine(Path.GetTempPath(), "codeguard-repos", Guid.NewGuid().ToString());
+            var tempReposRoot = GetTempRepositoryRoot();
+            var tempReposPath = Path.Combine(tempReposRoot, Guid.NewGuid().ToString());
 
             // Create directory if it doesn't exist
             Directory.CreateDirectory(tempReposPath);
 
             _logger.LogInformation("Cloning repository from {GitUrl} to {LocalPath}", gitUrl, tempReposPath);
 
-            // Prepare clone options
-            var cloneOptions = new CloneOptions();
+            // Prepare clone options with explicit settings
+            var cloneOptions = new CloneOptions
+            {
+                IsBare = false,
+                Checkout = true
+            };
 
             // Set credentials if access token provided
             if (!string.IsNullOrEmpty(accessToken))
@@ -783,6 +842,9 @@ public class RepositoryManagementService : IRepositoryManagementService
                         Password = string.Empty
                     };
             }
+
+            _logger.LogInformation("Cloning URL '{GitUrl}' to '{DestPath}' (bare={IsBare}, checkout={Checkout})",
+                gitUrl, tempReposPath, cloneOptions.IsBare, cloneOptions.Checkout);
 
             // Clone the repository with timeout
             var cloneTask = Task.Run(() =>
@@ -813,6 +875,24 @@ public class RepositoryManagementService : IRepositoryManagementService
                 _logger.LogError("Clone completed but .git directory not found: {GitUrl}", gitUrl);
                 CleanupRepository(tempReposPath);
                 return (false, null, "Clone failed: .git directory not found after clone");
+            }
+
+            // Perform post-clone validation
+            var (directoryExists, gitDirExists, isValid, headName, errorMessage) = ValidateWorkingRepository(tempReposPath);
+            _logger.LogInformation("Post-clone: dirExists={DirExists}, gitDirExists={GitDirExists}, isValid={IsValid}, headName={HeadName}, error={ErrorMessage}",
+                directoryExists, gitDirExists, isValid, headName ?? "null", errorMessage ?? "none");
+
+            // Attempt to open repository and log HEAD
+            try
+            {
+                using (var repo = new Repository(tempReposPath))
+                {
+                    _logger.LogInformation("Post-clone HEAD: {Head}", repo.Head.FriendlyName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to open cloned repository for HEAD check");
             }
 
             _logger.LogInformation("Successfully cloned repository from {GitUrl} to {LocalPath}", gitUrl, tempReposPath);
@@ -878,9 +958,15 @@ public class RepositoryManagementService : IRepositoryManagementService
                 return (false, "Repository path is required");
             }
 
-            // Safety check: only delete directories under temp/codeguard-repos/
-            var tempPath = Path.Combine(Path.GetTempPath(), "codeguard-repos");
-            if (!repositoryPath.StartsWith(tempPath, StringComparison.OrdinalIgnoreCase))
+            // Safety check: only delete directories under managed temporary repository root
+            var tempRoot = GetTempRepositoryRoot();
+            var comparison = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal;
+            var fullRepositoryPath = Path.GetFullPath(repositoryPath);
+            var fullTempRoot = Path.GetFullPath(tempRoot);
+
+            if (!fullRepositoryPath.StartsWith(fullTempRoot, comparison))
             {
                 _logger.LogError("Attempted to delete directory outside temp repos path: {RepositoryPath}", repositoryPath);
                 return (false, "Invalid repository path. Can only cleanup temporary repositories.");
@@ -970,6 +1056,42 @@ public class RepositoryManagementService : IRepositoryManagementService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Error removing read-only attributes from: {Path}", path);
+        }
+    }
+
+    /// <summary>
+    /// Validates a working repository and returns detailed status
+    /// </summary>
+    private (bool DirectoryExists, bool GitDirExists, bool IsValid, string? HeadName, string? ErrorMessage) ValidateWorkingRepository(string repoPath)
+    {
+        try
+        {
+            var directoryExists = Directory.Exists(repoPath);
+            var gitDirExists = Directory.Exists(Path.Combine(repoPath, ".git"));
+            var isValid = Repository.IsValid(repoPath);
+            string? headName = null;
+            string? errorMessage = null;
+
+            if (isValid)
+            {
+                try
+                {
+                    using (var repo = new Repository(repoPath))
+                    {
+                        headName = repo.Head.FriendlyName;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = $"Failed to open repository: {ex.Message}";
+                }
+            }
+
+            return (directoryExists, gitDirExists, isValid, headName, errorMessage);
+        }
+        catch (Exception ex)
+        {
+            return (false, false, false, null, ex.Message);
         }
     }
 }

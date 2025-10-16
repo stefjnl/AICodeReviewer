@@ -3,31 +3,26 @@ using Xunit;
 using Moq;
 using Microsoft.Extensions.Logging;
 using AICodeReviewer.Web.Infrastructure.Services;
-using System.IO;
-using System;
-using System.Linq;
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
+using AICodeReviewer.Web.Infrastructure.Configuration;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-
-
 using AICodeReviewer.Web.Infrastructure.Extensions;
 
 namespace AICodeReviewer.Web.Tests
 {
 
-    
+
 
     public class ValidationServiceTests
     {
         private readonly Mock<ILogger<ValidationService>> _mockLogger;
         private readonly Mock<IRepositoryManagementService> _mockRepositoryService;
         private readonly Mock<IPathValidationService> _mockPathService;
-        private readonly Mock<IConfiguration> _mockConfiguration;
+        private readonly Mock<IOpenRouterSettingsProvider> _mockOpenRouterSettingsProvider;
         private readonly TestSession _testSession;
         private readonly Mock<IWebHostEnvironment> _mockWebHostEnvironment;
         private readonly ValidationService _validationService;
@@ -37,7 +32,7 @@ namespace AICodeReviewer.Web.Tests
             _mockLogger = new Mock<ILogger<ValidationService>>();
             _mockRepositoryService = new Mock<IRepositoryManagementService>();
             _mockPathService = new Mock<IPathValidationService>();
-            _mockConfiguration = new Mock<IConfiguration>();
+            _mockOpenRouterSettingsProvider = new Mock<IOpenRouterSettingsProvider>();
             _testSession = new TestSession();
             _mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
             _mockWebHostEnvironment.Setup(e => e.ContentRootPath).Returns("C:\\git\\AICodeReviewer");
@@ -46,7 +41,7 @@ namespace AICodeReviewer.Web.Tests
                 _mockLogger.Object,
                 _mockRepositoryService.Object,
                 _mockPathService.Object,
-                _mockConfiguration.Object
+                _mockOpenRouterSettingsProvider.Object
             );
         }
 
@@ -55,7 +50,7 @@ namespace AICodeReviewer.Web.Tests
         {
             // Arrange
             var request = new RunAnalysisRequest();
-            _mockConfiguration.Setup(c => c["OpenRouter:ApiKey"]).Returns("");
+            _mockOpenRouterSettingsProvider.Setup(p => p.GetApiKey()).Returns(() => (string?)null);
 
             // Act
             var (isValid, error, _) = await _validationService.ValidateAnalysisRequestAsync(request, _testSession, _mockWebHostEnvironment.Object);
@@ -70,7 +65,7 @@ namespace AICodeReviewer.Web.Tests
         {
             // Arrange
             var request = new RunAnalysisRequest();
-            _mockConfiguration.Setup(c => c["OpenRouter:ApiKey"]).Returns("test_key");
+            _mockOpenRouterSettingsProvider.Setup(p => p.GetApiKey()).Returns(() => "test_key");
 
             // Act
             var (isValid, error, _) = await _validationService.ValidateAnalysisRequestAsync(request, _testSession, _mockWebHostEnvironment.Object);
@@ -85,7 +80,7 @@ namespace AICodeReviewer.Web.Tests
         {
             // Arrange
             var request = new RunAnalysisRequest { AnalysisType = AnalysisType.SingleFile };
-            _mockConfiguration.Setup(c => c["OpenRouter:ApiKey"]).Returns("test_key");
+            _mockOpenRouterSettingsProvider.Setup(p => p.GetApiKey()).Returns(() => "test_key");
             var documents = new List<string> { "doc1" };
             var documentsJson = System.Text.Json.JsonSerializer.Serialize(documents);
             var documentsBytes = System.Text.Encoding.UTF8.GetBytes(documentsJson);
@@ -104,7 +99,7 @@ namespace AICodeReviewer.Web.Tests
         {
             // Arrange
             var request = new RunAnalysisRequest { AnalysisType = AnalysisType.SingleFile, FilePath = "invalid/path" };
-            _mockConfiguration.Setup(c => c["OpenRouter:ApiKey"]).Returns("test_key");
+            _mockOpenRouterSettingsProvider.Setup(p => p.GetApiKey()).Returns(() => "test_key");
             var documents = new List<string> { "doc1" };
             var documentsJson = System.Text.Json.JsonSerializer.Serialize(documents);
             var documentsBytes = System.Text.Encoding.UTF8.GetBytes(documentsJson);
@@ -125,7 +120,7 @@ namespace AICodeReviewer.Web.Tests
         {
             // Arrange
             var request = new RunAnalysisRequest { AnalysisType = AnalysisType.SingleFile, FilePath = "valid/path" };
-            _mockConfiguration.Setup(c => c["OpenRouter:ApiKey"]).Returns("test_key");
+            _mockOpenRouterSettingsProvider.Setup(p => p.GetApiKey()).Returns(() => "test_key");
             var documents = new List<string> { "doc1" };
             var documentsJson = System.Text.Json.JsonSerializer.Serialize(documents);
             var documentsBytes = System.Text.Encoding.UTF8.GetBytes(documentsJson);
@@ -147,7 +142,7 @@ namespace AICodeReviewer.Web.Tests
         {
             // Arrange
             var request = new RunAnalysisRequest { AnalysisType = AnalysisType.Uncommitted };
-            _mockConfiguration.Setup(c => c["OpenRouter:ApiKey"]).Returns("test_key");
+            _mockOpenRouterSettingsProvider.Setup(p => p.GetApiKey()).Returns(() => "test_key");
             var documents = new List<string> { "doc1" };
             var documentsJson = System.Text.Json.JsonSerializer.Serialize(documents);
             var documentsBytes = System.Text.Encoding.UTF8.GetBytes(documentsJson);
@@ -168,7 +163,7 @@ namespace AICodeReviewer.Web.Tests
         {
             // Arrange
             var request = new RunAnalysisRequest { AnalysisType = AnalysisType.Commit };
-            _mockConfiguration.Setup(c => c["OpenRouter:ApiKey"]).Returns("test_key");
+            _mockOpenRouterSettingsProvider.Setup(p => p.GetApiKey()).Returns(() => "test_key");
             var documents = new List<string> { "doc1" };
             var documentsJson = System.Text.Json.JsonSerializer.Serialize(documents);
             var documentsBytes = System.Text.Encoding.UTF8.GetBytes(documentsJson);
@@ -189,7 +184,7 @@ namespace AICodeReviewer.Web.Tests
         {
             // Arrange
             var request = new RunAnalysisRequest { AnalysisType = AnalysisType.Staged };
-            _mockConfiguration.Setup(c => c["OpenRouter:ApiKey"]).Returns("test_key");
+            _mockOpenRouterSettingsProvider.Setup(p => p.GetApiKey()).Returns(() => "test_key");
             var documents = new List<string> { "doc1" };
             var documentsJson = System.Text.Json.JsonSerializer.Serialize(documents);
             var documentsBytes = System.Text.Encoding.UTF8.GetBytes(documentsJson);
@@ -212,7 +207,7 @@ namespace AICodeReviewer.Web.Tests
         {
             // Arrange
             var request = new RunAnalysisRequest { AnalysisType = AnalysisType.Uncommitted };
-            _mockConfiguration.Setup(c => c["OpenRouter:ApiKey"]).Returns("test_key");
+            _mockOpenRouterSettingsProvider.Setup(p => p.GetApiKey()).Returns(() => "test_key");
             var documents = new List<string> { "doc1" };
             var documentsJson = System.Text.Json.JsonSerializer.Serialize(documents);
             var documentsBytes = System.Text.Encoding.UTF8.GetBytes(documentsJson);
@@ -227,7 +222,7 @@ namespace AICodeReviewer.Web.Tests
             Assert.True(isValid);
             Assert.Null(error);
         }
-    [Fact]
+        [Fact]
         public void TestSession_SetAndGet_Works()
         {
             // Arrange

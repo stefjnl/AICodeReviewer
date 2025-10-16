@@ -2,8 +2,15 @@ using AICodeReviewer.Web.Hubs;
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Infrastructure.Services;
 using AICodeReviewer.Web.Application.Factories;
+using AICodeReviewer.Web.Infrastructure.Configuration;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Enrich configuration with local secrets and Azure Key Vault (when available)
+builder.Configuration.AddUserSecrets<Program>(optional: true, reloadOnChange: true);
+ConfigureAzureKeyVault(builder);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews(options =>
@@ -80,6 +87,7 @@ builder.Services.AddScoped<IDirectoryBrowsingService, DirectoryBrowsingService>(
 builder.Services.AddScoped<IResourceService, ResourceService>();
 builder.Services.AddScoped<IDiffProviderFactory, DiffProviderFactory>();
 builder.Services.AddScoped<IDiffStatisticsParser, DiffStatisticsParser>();
+builder.Services.AddSingleton<IOpenRouterSettingsProvider, OpenRouterSettingsProvider>();
 builder.Services.AddHttpClient<IAIService, AIService>(client =>
 {
     client.BaseAddress = new Uri("https://openrouter.ai/api/v1/");
@@ -105,10 +113,11 @@ var app = builder.Build();
 
 // Startup sanity check for OpenRouter API key
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-var apiKey = builder.Configuration["OpenRouter:ApiKey"];
+var openRouterSettings = app.Services.GetRequiredService<IOpenRouterSettingsProvider>();
+var apiKey = openRouterSettings.GetApiKey();
 var apiKeyExists = !string.IsNullOrWhiteSpace(apiKey);
 var maskedPrefix = apiKey?.Length > 0 ? $"{apiKey.Substring(0, Math.Min(6, apiKey.Length))}..." : "";
-logger.LogDebug("[OpenRouter] Startup check - API key exists: {Exists}; length: {Len}; startsWith(masked): {Prefix}",
+logger.LogInformation("[OpenRouter] Startup check - API key exists: {Exists}; length: {Len}; startsWith(masked): {Prefix}",
     apiKeyExists, apiKey?.Length ?? 0, maskedPrefix);
 
 app.UseCors("AllowLocalhost");
@@ -146,3 +155,40 @@ app.MapHealthChecks("/health");
 app.MapHub<ProgressHub>("/hubs/progress");
 
 app.Run();
+
+static void ConfigureAzureKeyVault(WebApplicationBuilder builder)
+{
+    var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+    var keyVaultName = builder.Configuration["KeyVault:Name"] ?? builder.Configuration["Azure:KeyVaultName"];
+
+    if (string.IsNullOrWhiteSpace(keyVaultUri) && !string.IsNullOrWhiteSpace(keyVaultName))
+    {
+        keyVaultUri = $"https://{keyVaultName}.vault.azure.net/";
+    }
+
+    if (string.IsNullOrWhiteSpace(keyVaultUri))
+    {
+        Console.WriteLine("[KeyVault] No Key Vault configuration detected. Skipping Key Vault provider.");
+        return;
+    }
+
+    try
+    {
+        var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+        {
+            ExcludeInteractiveBrowserCredential = builder.Environment.IsProduction()
+        });
+
+        builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), credential, new AzureKeyVaultConfigurationOptions
+        {
+            Manager = new OpenRouterKeyVaultSecretManager(),
+            ReloadInterval = TimeSpan.FromMinutes(5)
+        });
+
+        Console.WriteLine($"[KeyVault] Loaded configuration from {keyVaultUri}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[KeyVault] Unable to load configuration from {keyVaultUri}: {ex.Message}");
+    }
+}

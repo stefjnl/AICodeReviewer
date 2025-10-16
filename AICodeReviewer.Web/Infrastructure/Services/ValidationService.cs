@@ -1,4 +1,5 @@
 using AICodeReviewer.Web.Domain.Interfaces;
+using AICodeReviewer.Web.Infrastructure.Configuration;
 using AICodeReviewer.Web.Infrastructure.Extensions;
 using AICodeReviewer.Web.Models;
 
@@ -12,18 +13,18 @@ namespace AICodeReviewer.Web.Infrastructure.Services
         private readonly ILogger<ValidationService> _logger;
         private readonly IRepositoryManagementService _repositoryService;
         private readonly IPathValidationService _pathService;
-        private readonly IConfiguration _configuration;
+        private readonly IOpenRouterSettingsProvider _openRouterSettingsProvider;
 
         public ValidationService(
             ILogger<ValidationService> logger,
             IRepositoryManagementService repositoryService,
             IPathValidationService pathService,
-            IConfiguration configuration)
+            IOpenRouterSettingsProvider openRouterSettingsProvider)
         {
             _logger = logger;
             _repositoryService = repositoryService;
             _pathService = pathService;
-            _configuration = configuration;
+            _openRouterSettingsProvider = openRouterSettingsProvider;
         }
 
         public Task<(bool isValid, string? error, string? resolvedFilePath)> ValidateAnalysisRequestAsync(
@@ -49,7 +50,7 @@ namespace AICodeReviewer.Web.Infrastructure.Services
                 session.SetString("Language", language);
 
                 // Validate API key
-                var apiKey = _configuration["OpenRouter:ApiKey"] ?? "";
+                var apiKey = _openRouterSettingsProvider.GetApiKey() ?? "";
                 var apiKeyExists = !string.IsNullOrWhiteSpace(apiKey);
                 var maskedPrefix = apiKey?.Length > 0 ? $"{apiKey.Substring(0, Math.Min(6, apiKey.Length))}..." : "";
                 _logger.LogDebug("[OpenRouter] API key exists: {Exists}; length: {Len}; startsWith(masked): {Prefix}",

@@ -72,8 +72,11 @@ public class AIService : IAIService
             var maskedPrefix = apiKey?.Length > 0 ? $"{apiKey.Substring(0, Math.Min(6, apiKey.Length))}..." : "";
             _logger.LogDebug("[OpenRouter] Per-call check - API key exists: {Exists}; length: {Len}; startsWith(masked): {Prefix}",
                 apiKeyExists, apiKey?.Length ?? 0, maskedPrefix);
-            if (string.IsNullOrEmpty(apiKey))
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                _logger.LogError("[OpenRouter] API key is null, empty, or whitespace");
                 return ("", true, "OpenRouter API key not configured");
+            }
 
             if (string.IsNullOrEmpty(content))
                 return ("", true, isFileContent ? "No file content to analyze" : "No code changes to analyze");
@@ -108,6 +111,11 @@ public class AIService : IAIService
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
             _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", "http://localhost:8097");
             _httpClient.DefaultRequestHeaders.Add("X-Title", "AI Code Reviewer");
+
+            Console.WriteLine($"[DEBUG] About to send request to OpenRouter");
+            Console.WriteLine($"[DEBUG] API Key exists: {!string.IsNullOrEmpty(apiKey)}");
+            Console.WriteLine($"[DEBUG] API Key length: {apiKey?.Length ?? 0}");
+            Console.WriteLine($"[DEBUG] API Key prefix: {apiKey?.Substring(0, Math.Min(10, apiKey?.Length ?? 0))}...");
 
             var response = await _httpClient.PostAsync("chat/completions", jsonContent);
 
@@ -176,7 +184,7 @@ public class AIService : IAIService
 
         // Choose the appropriate template based on content type
         var promptTemplate = isFileContent ? _resourceService.GetSingleFilePromptTemplate() : _resourceService.GetPromptTemplate();
-        
+
         return promptTemplate
             .Replace("{LanguageName}", template.LanguageName)
             .Replace("{StandardsText}", standardsText)

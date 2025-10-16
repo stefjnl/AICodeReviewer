@@ -365,7 +365,10 @@ export class ExecutionService {
         }
 
         // Check if the path looks like a temporary cloned repository
-        if (!repositoryState.path.includes('codeguard-repos')) {
+        const normalizedPath = repositoryState.path.toLowerCase();
+        const isKnownTempPath = normalizedPath.includes('codeguard-repos') || normalizedPath.includes('/app/temp/repos');
+
+        if (!isKnownTempPath) {
             console.log('⚠️ Repository path is not a temporary clone, skipping cleanup');
             return;
         }
